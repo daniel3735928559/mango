@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="/suit/mango.xsl" type="text/xsl"?>
+<interface node="mc">The interface to Mango Commander.  MC deals in three primitives: Nodes, connections, and events.  
+
+Nodes correspond usually to things like instances of a program and are the objects that do actual computation.  MC itself is a node.
+
+Connections are the primitive used to send data/commands between nodes.  Any given connection is owned by a particular node, but any node may register as an endpoint to any connection (with appropriate 
+permissions) and will thereafter receive any communication that comes along that connection.  
+
+Events are used as signals: A node may register an event, and then other nodes may request to be added as listeners to that event.  When the original node that registered the event fires it with some 
+given parameters, all listeners will be asynchronously notified and passed the specified parameter values.
+
+All arguments are passed as strings.  
+
+	<cmd name="rt_list">
+	  <arg name="src" default="">[ID of the source
+	  node]/port--leave blank to list all routes</arg>
+
+	  <arg name="dest" default="">[ID of the dest
+	  node]/port--leave blank to list all routes</arg>
+
+	  <return name="list">List of routes</return>
+	</cmd>
+
+	<cmd name="rt_add">
+	  Add a route (will overwrite any existing route between the
+	  source and dest) 
+
+	  <arg name="chain">The route to add.  The syntax, by example,
+	  looks like: <br /><br />
+
+	  node1/port1 > transmogrifier1 > node2/port2 > node3 t2 t3<br /><br />
+
+	  Which will establish that all traffic leaving node1 on port1
+	  will sent too node2 on port2 after being modified according
+	  to transmogrifier1, and that also all traffic originating
+	  from port2 of node2 will be forwarded to stdio of node3,
+	  after being acted on by transmogrifiers t2 and then t3.<br /><br />
+
+	  transmogrifiers, in turn, come in 5 flavours: 
+	  <ul>
+	    <li>add {"key1":"val1",...}: adds the entries in the
+	    dictionary to the message, overwriting any keys of the
+	    same name already present</li>
+
+	    <li>addn {"key1":"val1",...}: adds the entries in dict to
+	    the message, ignoring keys that are already present</li>
+
+	    <li>del ["key1","key2",...]: Delete any keys named in the
+	    given list</li>
+
+	    <li>filter test: Only pass the message along if it passes
+	    the test (no tests are implemented yet)</li>
+
+	    <li>sh "cmd": Execute the given shell script with
+	    variables set up according to the values in the message
+	    dictionary, and where the new dictionary is constructed
+	    from the variable values after the script has
+	    executed.</li>
+	  </ul>
+
+	  Syntax is whitespace-agnostic (except within "") and is
+	  specified more precisely below:
+	  <pre>
+chains : chain; chains
+chains : chain
+chain : target
+chain : target > chain
+target : transmogrifier 
+target : PORT 
+target : PORT transmogrifiers
+transmogrifiers : transmogrifier 
+transmogrifiers : transmogrifier transmogrifiers 
+transmogrifier : JSON_DICT 
+transmogrifier : \+|add JSON_DICT
+transmogrifier : \*|addn JSON_DICT 
+transmogrifier : -|del JSON_LIST 
+transmogrifier : \?|filter TEST 
+transmogrifier : sh "(?:[^"\\]|\\.)*"
+	  </pre>
+	  Where:
+	  <ul>
+	    <li>PORT is nodename (interpreted as nodename/stdio) or nodename/portname</li>
+	    
+	    <li>JSON_DICT is a sequence of entries
+	    {"key1":"val1",...}--if val1=="$keyname", then
+	    dict["key1"] will be set to old_dict["keyname"].</li>
+	    
+	    <li>JSON_LIST is a sequence of keys in the form
+	    ["key1","key2",...]</li>
+	    
+	    <li>TEST is as yet unimplemented</li>
+	  </ul>
+	  </arg>
+	</cmd>
+
+	<cmd name="rt_del">
+	  Remove a route
+	  <arg name="src">The source (node/port) of the route to delete</arg>
+	  <arg name="dest">The endpoint (node/port) of the route to delete</arg>
+	</cmd>
+
+	<cmd name="port_add">
+	  Add a port to a node
+	  <arg name="name">Name of the new port</arg>
+	  <return name="result"></return>
+	</cmd>
+
+	<cmd name="port_del">
+	  Remove a port from a node
+	  <arg name="node">ID of the node in question</arg>
+	  <arg name="name">Name of the port to remove</arg>
+	  <return name="result"></return>
+	</cmd>
+
+	<cmd name="node_del">
+	  Deregister a node
+	  <arg name="id">The id requested</arg>
+	</cmd>
+
+	<cmd name="node_list">
+	  List all available nodes matching the given pattern
+
+	  <arg name="pattern" default="">Pattern to seach for in
+	  existing nodes</arg>
+
+	  <return name="nodes">List of the IDs of nodes matching the pattern</return>
+	</cmd>
+
+	<cmd name="node_flags">
+	  Set node flags
+
+	  <arg name="flags">New flags to set</arg>
+	</cmd>
+
+	<cmd name="start">
+	  Spin up an instance of a given node
+
+	  <arg name="node">Name of the node to spin up</arg>
+	</cmd>
+
+	<cmd name="list">
+	  <arg name="pattern" default="">List the available node types
+	  matching the specified pattern</arg>
+	</cmd>
+
+	<cmd name="remote_connect">
+	  <arg name="target">Connect to the mc instance at this </arg>
+	</cmd>
+
+	<cmd name="remote_disconnect">
+	  <arg name="target">Disconnect from this host</arg>
+	</cmd>
+
+	<cmd name="find_if">
+	  <arg name="if">What interface to get</arg>
+	  <arg name="node">Get the interface descriptor from this node</arg>
+	</cmd>
+</interface>
