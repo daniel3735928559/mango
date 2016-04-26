@@ -90,11 +90,11 @@ class Route:
             src=h['src_node']
             #if not self.endpoint.owner.local: src = self.endpoint.owner.master.srv_addr
             print("R SEND",self.endpoint.owner,self.endpoint.owner.dataflow)
-            self.endpoint.owner.dataflow.send(a,header['src_node'],dport=self.endpoint.get_id(),mid=header['mid'])
+            self.endpoint.owner.dataflow.send(h,a,self.endpoint.owner.node_id)
 
         else:
             print("R SEND RAW",self.endpoint.owner,self.endpoint.owner.dataflow)
-            self.endpoint.owner.dataflow.send_raw(m,route=bytearray(self.endpoint.owner.node_id,'utf-8'))
+            self.endpoint.owner.dataflow.send_raw(m,bytearray(self.endpoint.owner.node_id,'utf-8'))
 
     def __repr__(self):
         return str(self.source) + " > " + "".join([str(t)+" > " for t in self.transmogrifiers]) + str(self.endpoint)

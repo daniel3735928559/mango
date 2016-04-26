@@ -1,3 +1,7 @@
 excite:
-  str:
-    type:string
+  args:
+    str:
+      type: string
+  rets:
+    str:
+      type: string

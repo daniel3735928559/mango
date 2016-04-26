@@ -32,8 +32,10 @@ class m_node:
             self.ports["mc"] = self.dataflows[s]
             self.m_send('excite',{'str':'foo'},port="mc",reply_callback=print)
 
-    def dispatch(self,header,args):
-        return self.interface[header['function']]['handler'](header,args)
+    def dispatch(self,header,args,dataflow):
+        result = self.interface.interface[header['function']]['handler'](header,args)
+        if not result is None:
+            self.m_reply(header,result,dataflow)
         
     def get_if(self,header,args):
         print("GET IF")
@@ -66,13 +68,6 @@ class m_node:
         self.mid = (self.mid + 1)%(2**63)
         return self.mid
 
-    def make_header(self,port):
-        return {'port':port,
-                'src_node':self.node_id,
-                'src_port':port,
-                'mid':self.get_mid(),
-                'command':'call'}
-    
     def reg(self,header,args):
         self.key = args["key"]
         self.node_id = args["node_id"]
@@ -80,14 +75,20 @@ class m_node:
         print('my new node id')
         print(self.node_id)
         print("registered as " + self.node_id)
-        
-    def m_send(self,command,msg_dict,port="stdio",reply_callback=lambda h,a:None,async=True):
-        print('sending',msg_dict)
+
+    def make_header(self,port):
+        return {'port':port,
+                'src_node':self.node_id,
+                'src_port':port,
+                'mid':self.get_mid(),
+                'command':'call'}
+    def m_send(self,command,msg,port="stdio",reply_callback=lambda h,a:None,async=True):
+        print('sending',msg)
         mid = self.get_mid()
         header = self.make_header(port)
         header['function'] = command
         self.outstanding[mid] = reply_callback
-        self.ports[port].send(header,msg_dict)
+        self.ports[port].send(header,msg)
         if not async and not reply_callback is None:
             self.ports[port].recv()
         print("outstanding",self.outstanding)
@@ -104,13 +105,14 @@ class m_node:
     def m_recv(self,dport,h,c,raw,dataflow):
         return self.ports[dport].recv()
     
-    def m_reply(self,msg_dict,src,mid,dport,dataflow):
+    def m_reply(self,header,msg,dataflow):
         # print(msg_dict)
-        print("M REPLY",msg_dict,src,mid,dport)
-        msg_dict["command"] = "reply"
-        msg_dict["mid"] = mid
-        msg_dict["source"] = src
-        dataflow.send(msg_dict,src,mid,dport)
+        print("M REPLY",header,msg)
+        h = {'command':'reply',
+             'mid':header['mid'],
+             'src_node':self.node_id,
+             'src_port':header['port']}
+        dataflow.send(header,msg)
 
     def reg(self,header,args):
         self.key = args["key"]

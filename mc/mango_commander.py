@@ -11,7 +11,6 @@ class mc(m_node):
     
     def __init__(self,ID):
         super().__init__(ID,server=None)
-        self.nodes = {"mc":Node("mc",0,loopback_dataflow(self))}
         self.node_types = {}
         self.route_parser = route_parser()
         
@@ -43,9 +42,10 @@ class mc(m_node):
 
         self.local_gateway = m_ZMQ_transport("tcp://*:"+sys.argv[1],self.context,self.poller,True)
         s = self.local_gateway.socket
-        self.dataflows[s] = mc_router_dataflow(self,self.interface,self.local_gateway,self.serialiser,self.mc_recv,self.handle_reply,self.handle_error)
+        self.dataflows[s] = mc_router_dataflow(self.local_gateway,self.serialiser,self.mc_recv)
         self.poller.register(s,zmq.POLLIN)
         self.routes = {}
+        self.nodes = {"mc":Node("mc",0,mc_loopback_dataflow(self.interface,self.dispatch,self.local_gateway))}
 
         #self.ports["stdio"] = self.dataflows[s]
 
@@ -60,31 +60,41 @@ class mc(m_node):
 
     def excite(self,header,args):
         print(args['str'])
-        return args['str']+'!'
+        return {'str':args['str']+'!'}
         
-    def mc_recv(self,h,c,raw,dataflow):
-        print("MC got")#: ", dataflow.route ,"on",dataflow)
+    def mc_recv(self,h,c,raw,route,dataflow):
+        print("MC got",h,c,raw,route)
         src_node = h['src_node']
         src_port = h['src_port']
         print(h)
         print(c)
         if not src_node in self.nodes:
-            route = dataflow.route
+            # If we don't have a Node for this already, make a Node
+            # object for it and send it the "reg" message
+
+            # Make the ID for the node object
             new_id = self.gen_id(src_node)
             print("New node: " + src_node + " id = " + new_id)
-            trans = mc_ZMQ_transport(self.local_gateway.socket, bytearray(new_id,"ASCII"))
-            df = m_dataflow(self.interface,trans,self.serialiser,self.mc_recv,self.handle_reply,self.handle_error)
-            n = Node(new_id,self.gen_key(),df,master=self.nodes["mc"].ports["stdio"])
+            
+            # Make the Node object
+            n = Node(new_id,self.gen_key(),self.local_gateway,master=self.nodes["mc"].ports["stdio"])
+
+            # Send the "reg" message
             header = self.make_header("stdio")
             header['function'] = 'reg'
-            dataflow.send(header,{"node_id":new_id,"key":n.key})
-            self.routes[route] = df
+            dataflow.send(header,{"node_id":new_id,"key":n.key},route)
+
+            # Add the Node object to our registery
             self.nodes[n.node_id] = n
-            #time.sleep(1) # Nasty hack to give the node time to change its ID
+            
         if not src_port in self.nodes[src_node].ports:
+            # If there is no matching Port object in the specified Node, fail
             print("Invalid port: " + src_node+"/"+src_port)
             return
-        print("sending anyway",h,c,raw,src_node,src_port)
+
+        # Now that we are guaranteed either way a matching Node/Port
+        # combo for the incoming message, send it!,
+        print("sending finally",h,c,raw,src_node,src_port)
         self.nodes[src_node].ports[src_port].send(raw,h,c)
         
     def gen_id(self,ID_req):

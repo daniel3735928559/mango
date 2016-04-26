@@ -5,38 +5,43 @@ from serialiser import *
 from transport import *
 from obj import *
 
-class loopback_dataflow(m_dataflow):
-    def __init__(self,owner):
-        self.owner = owner
+class mc_loopback_dataflow(m_dataflow):
+    def __init__(self,interface,dispatch_cb,reply_df):
+        self.interface = interface
+        self.dispatch_cb = dispatch_cb
+        self.reply_df = reply_df
 
-    def send(self,msg_dict,src,mid=None,dport=None,reply_callback=None):
-        self.owner.m_recv("stdio",{"source":src,"mid":mid},msg_dict,None,self.owner.dataflows[self.owner.local_gateway.socket])
+    def send(self,header,msg,route):
+        print("SS",header,msg)
+        self.interface.validate(header['function'],msg)
+        result = self.dispatch_cb(header,msg)
+        self.reply_df.send(header,result,route)
         
-    def send_raw(msg):
+    def send_raw(msg,route):
         pass#self.owner.ports["stdio"].send_raw(msg)
 
-class mc_router_dataflow(m_dataflow):
-    def __init__(self,owner,interface,transport,serialiser,dispatch_cb,reply_cb,error_cb):
-        super().__init__(interface,transport,serialiser,dispatch_cb,reply_cb,error_cb)
-        self.route = bytes()
-        self.owner = owner
-
+class mc_router_dataflow():
+    def __init__(self,transport,serialiser,dispatch_cb):
+        self.transport = transport
+        self.serialiser = serialiser
+        self.dispatch_cb = dispatch_cb
+    
     def recv(self):
-        self.route = self.transport.rx()
-        if not self.route in self.owner.routes:
-            data = self.transport.rx()
-            header,args = self.serialiser.deserialise(data)
-            self.dispatch_cb(header,args,data,self)
-        else:
-            self.owner.routes[self.route].recv()
+        route = self.transport.rx()
+        data = self.transport.rx()
+        header,args = self.serialiser.deserialise(data)
+        self.dispatch_cb(header,args,data,route,self)
 
-    def send(self,header,msg,reply_callback=None):
-        print("MC ROUTER SEND",header,msg,"route =",self.route)
+    def send(self,header,msg,route):
+        print("MC ROUTER SEND",header,msg,"route =",route)
         data = self.serialiser.serialise(header,msg)
-        self.transport.socket.send(self.route,zmq.SNDMORE)
+        self.transport.socket.send(route,zmq.SNDMORE)
         self.transport.tx(data)
-        if not reply_callback is None:
-            self.owner.outstanding[mid] = reply_callback
+        
+    def send_raw(self,data,route):
+        print("MC ROUTER SEND",header,msg,"route =",route)
+        self.transport.socket.send(route,zmq.SNDMORE)
+        self.transport.tx(data)
     
 
 # class mc_dataflow(m_dataflow):

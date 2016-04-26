@@ -11,6 +11,7 @@ class m_dataflow:
         self.error_cb = error_cb
 
     def send(self,header,msg):
+        print("ML SENDING",header,msg)
         try:
             data = self.serialiser.serialise(header, msg)
             self.transport.tx(data)
@@ -25,9 +26,8 @@ class m_dataflow:
             print("M RECV",header,args)
             if header['command'] == 'call':
                 args = self.interface.validate(header['function'],args)
-                result = self.dispatch_cb(header,args)
+                self.dispatch_cb(header,args,self)
                 #result = self.interface.validate(self.interface.interface[header['function']]['returns'],result)
-                self.send(result,header['port'])
             elif header['command'] == 'reply':
                 self.reply_cb(header,args,data,self)
         except m_error as exc:

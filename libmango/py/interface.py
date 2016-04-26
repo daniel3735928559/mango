@@ -25,7 +25,9 @@ class m_if:
         for f in iface:
             if not namespace is None:
                 f = namespace + "." + f
-            self.interface[f] = {'handler':handlers[f],'args':iface[f]}
+            self.interface[f] = {'handler':handlers[f],'args':iface[f]['args']}
+            if 'rets' in iface[f]:
+                self.interface[f]['rets'] = iface[f]['rets']
         
     def validate(self, function_name, args):
         """
@@ -37,7 +39,8 @@ class m_if:
         """
 
         if(function_name in self.interface):
-            args, messages = self.verify_helper("", args, {'type':'dict','values':self.interface[function_name]})
+            print("VALIDATING",function_name,"AGAINST",self.interface[function_name])
+            args, messages = self.verify_helper("", args, {'type':'dict','values':self.interface[function_name]['args']})
         
             if len(messages)>0:
                 raise m_error(m_error.VALIDATION_ERROR,"\n".join([m['name']+': ' +m['message'] for m in messages]))
@@ -53,6 +56,8 @@ class m_if:
         - modified_input is the input populated with default values
         - list_of_errors is: [{name: name, message: ...}, ...]
         """
+        
+        print("verify",input_element,"AGAINST",reference_dict)
         ans = []
         if reference_dict['type'] == 'dict':
             if not isinstance(input_element, (dict)):
