@@ -43,7 +43,7 @@ class mc(m_node):
 
         self.local_gateway = m_ZMQ_transport("tcp://*:"+sys.argv[1],self.context,self.poller,True)
         s = self.local_gateway.socket
-        self.dataflows[s] = mc_router_dataflow(self,self.interface,self.local_gateway,self.serialiser,self.dispatch,self.handle_reply,self.handle_error)
+        self.dataflows[s] = mc_router_dataflow(self,self.interface,self.local_gateway,self.serialiser,self.mc_recv,self.handle_reply,self.handle_error)
         self.poller.register(s,zmq.POLLIN)
         self.routes = {}
 
@@ -75,7 +75,9 @@ class mc(m_node):
             trans = mc_ZMQ_transport(self.local_gateway.socket, bytearray(new_id,"ASCII"))
             df = m_dataflow(self.interface,trans,self.serialiser,self.mc_recv,self.handle_reply,self.handle_error)
             n = Node(new_id,self.gen_key(),df,master=self.nodes["mc"].ports["stdio"])
-            dataflow.send({"command":"reg","node_id":new_id,"key":n.key},"mc/stdio",dport="stdio")
+            header = self.make_header("stdio")
+            header['function'] = 'reg'
+            dataflow.send(header,{"node_id":new_id,"key":n.key})
             self.routes[route] = df
             self.nodes[n.node_id] = n
             #time.sleep(1) # Nasty hack to give the node time to change its ID
@@ -84,7 +86,7 @@ class mc(m_node):
             return
         print("sending anyway",h,c,raw,src_node,src_port)
         self.nodes[src_node].ports[src_port].send(raw,h,c)
-
+        
     def gen_id(self,ID_req):
         if(not (ID_req in self.nodes.keys())):
             return ID_req

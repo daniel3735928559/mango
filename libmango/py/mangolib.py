@@ -30,7 +30,7 @@ class m_node:
             self.poller.register(s,zmq.POLLIN)
             self.ports["stdio"] = self.dataflows[s]
             self.ports["mc"] = self.dataflows[s]
-            self.m_send({'command':'excite'},{'str':'foo'},port="mc",reply_callback=print)
+            self.m_send('excite',{'str':'foo'},port="mc",reply_callback=print)
 
     def dispatch(self,header,args):
         return self.interface[header['function']]['handler'](header,args)
@@ -66,6 +66,13 @@ class m_node:
         self.mid = (self.mid + 1)%(2**63)
         return self.mid
 
+    def make_header(self,port):
+        return {'port':port,
+                'src_node':self.node_id,
+                'src_port':port,
+                'mid':self.get_mid(),
+                'command':'call'}
+    
     def reg(self,header,args):
         self.key = args["key"]
         self.node_id = args["node_id"]
@@ -74,11 +81,11 @@ class m_node:
         print(self.node_id)
         print("registered as " + self.node_id)
         
-    def m_send(self,header,msg_dict,port="stdio",reply_callback=lambda h,a:None,async=True):
+    def m_send(self,command,msg_dict,port="stdio",reply_callback=lambda h,a:None,async=True):
         print('sending',msg_dict)
         mid = self.get_mid()
-        header['src_port'] = port
-        header['mid'] = mid
+        header = self.make_header(port)
+        header['function'] = command
         self.outstanding[mid] = reply_callback
         self.ports[port].send(header,msg_dict)
         if not async and not reply_callback is None:
@@ -94,6 +101,9 @@ class m_node:
     #     msg_dict["error"] = error_msg
     #     dataflow.send(msg_dict,src,mid)
 
+    def m_recv(self,dport,h,c,raw,dataflow):
+        return self.ports[dport].recv()
+    
     def m_reply(self,msg_dict,src,mid,dport,dataflow):
         # print(msg_dict)
         print("M REPLY",msg_dict,src,mid,dport)

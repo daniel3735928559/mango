@@ -24,14 +24,15 @@ class mc_router_dataflow(m_dataflow):
     def recv(self):
         self.route = self.transport.rx()
         if not self.route in self.owner.routes:
-            super(mc_router_dataflow, self).recv()
+            data = self.transport.rx()
+            header,args = self.serialiser.deserialise(data)
+            self.dispatch_cb(header,args,data,self)
         else:
             self.owner.routes[self.route].recv()
 
-    def send(self,msg_dict,src,mid=None,dport=None,reply_callback=None):
-        print("MC ROUTER SEND",msg_dict,src,dport,"route =",self.route)
-        mid=self.owner.get_mid() if mid is None else mid
-        data = self.owner.serialiser.pack(self.serialiser_method,msg_dict,self.owner.node_id + "/" + src,mid,dport)
+    def send(self,header,msg,reply_callback=None):
+        print("MC ROUTER SEND",header,msg,"route =",self.route)
+        data = self.serialiser.serialise(header,msg)
         self.transport.socket.send(self.route,zmq.SNDMORE)
         self.transport.tx(data)
         if not reply_callback is None:

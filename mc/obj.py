@@ -87,10 +87,10 @@ class Route:
         if m is None:
             #self.endpoint.owner.conn.send(a,self.source.name,dest=self.endpoint.get_id(),route=bytearray(self.endpoint.owner.node_id,'utf-8'))
             print("ROUTE send",h,a,m,self.endpoint.get_id())
-            src=h['source']
+            src=h['src_node']
             #if not self.endpoint.owner.local: src = self.endpoint.owner.master.srv_addr
             print("R SEND",self.endpoint.owner,self.endpoint.owner.dataflow)
-            self.endpoint.owner.dataflow.send(a,header['source'],dport=self.endpoint.get_id(),mid=header['mid'])
+            self.endpoint.owner.dataflow.send(a,header['src_node'],dport=self.endpoint.get_id(),mid=header['mid'])
 
         else:
             print("R SEND RAW",self.endpoint.owner,self.endpoint.owner.dataflow)

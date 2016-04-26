@@ -22,10 +22,11 @@ class m_dataflow:
         data = self.transport.rx()
         try:
             header,args = self.serialiser.deserialise(data)
+            print("M RECV",header,args)
             if header['command'] == 'call':
-                args = self.interface.validate(self.interface[header['function']]['args'],args)
+                args = self.interface.validate(header['function'],args)
                 result = self.dispatch_cb(header,args)
-                result = self.interface.validate(self.interface[header['function']]['returns'],result)
+                #result = self.interface.validate(self.interface.interface[header['function']]['returns'],result)
                 self.send(result,header['port'])
             elif header['command'] == 'reply':
                 self.reply_cb(header,args,data,self)

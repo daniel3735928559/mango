@@ -1,5 +1,6 @@
 from lxml import etree
 import yaml
+from error import *
 
 class m_if:
     def __init__(self):
