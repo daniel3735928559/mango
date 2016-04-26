@@ -4,16 +4,14 @@ import hmac, re, json
 HMAC_LENGTH = 32
 
 class m_serialiser:
-    def __init__(self,version):
+    def __init__(self,version,method="json"):
         self.version = version
-        self.serialisers = {"json":m_json_serialiser(self.version),
-                            "std":m_std_serialiser(self.version)}
+        self.method = method
+        self.serialisers = {"json":m_json_serialiser(),
+                            "std":m_std_serialiser()}
 
-    def make_preamble(self,method,dest=None):
-        if(dest is None):
-            return bytes("MANGO{0} {1}\n".format(self.version,method),"ASCII")
-        else:
-            return bytes("MANGO{0} {1} {2}\n".format(self.version,method,dest),"ASCII")
+    def make_preamble(self):
+        return bytes("MANGO{0} {1}\n".format(self.version,self.method),"ASCII")
 
     def parse_preamble(self,msg):
         nl1 = msg.find(b'\n')
@@ -24,21 +22,21 @@ class m_serialiser:
             raise m_error(m_error.SERIALISATION_ERROR,"Preamble failed to parse")
         return m.group(1),m.group(2),msg
 
-    def serialise(self,method,msg_dict,source,mid,dport=None):
-        return self.make_preamble(method,dport)+self.serialisers[method].pack(msg_dict,source,mid,dport)
+    def serialise(self,header,msg):
+        return self.make_preamble()+self.serialisers[self.method].pack(header,msg)
 
     def deserialise(self,message):
         ver,method,msg = self.parse_preamble(message)
         if ver != self.version:
             raise m_error(m_error.VERSION_MISMATCH, ver + " given, " + self.version + " expected")
         h,a = self.serialisers[method].unpack(msg)
-        return ver,h,a
+        return h,a
 
 
     
 class m_json_serialiser:
-    def pack(self,msg_dict,source,mid,dport=None):
-        d = {"header":{"source":source,"mid":mid},"args":msg_dict}
+    def pack(self,header,msg):
+        d = {"header":header,"args":msg}
         return bytes(json.dumps(d),"ASCII")
 
     def unpack(self,message):
@@ -48,8 +46,6 @@ class m_json_serialiser:
 
 
 class m_std_serialiser:
-    def __init__(self,version):
-        self.version = version
 
     def dict_pack(self,msg_dict):
         msg = bytearray()

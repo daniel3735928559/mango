@@ -10,7 +10,7 @@ from obj import *
 class mc(m_node):
     
     def __init__(self,ID):
-        super().__init__(ID,recv_cb=self.mc_recv,server=None)
+        super().__init__(ID,server=None)
         self.nodes = {"mc":Node("mc",0,loopback_dataflow(self))}
         self.node_types = {}
         self.route_parser = route_parser()
@@ -41,9 +41,9 @@ class mc(m_node):
         print(self.interface.interface);
         self.uuid = str(self.gen_key())
 
-        self.local_gateway = m_ZMQ_transport(self,"tcp://*:"+sys.argv[1],self.context,self.poller,True)
+        self.local_gateway = m_ZMQ_transport("tcp://*:"+sys.argv[1],self.context,self.poller,True)
         s = self.local_gateway.socket
-        self.dataflows[s] = mc_router_dataflow(self,self.mc_recv,self.local_gateway)
+        self.dataflows[s] = mc_router_dataflow(self,self.interface,self.local_gateway,self.serialiser,self.dispatch,self.handle_reply,self.handle_error)
         self.poller.register(s,zmq.POLLIN)
         self.routes = {}
 
@@ -51,26 +51,29 @@ class mc(m_node):
 
         # Remote listening stuff: 
 
-        self.remote_gateway = m_srv_sock(int(sys.argv[2]))
-        f = self.remote_gateway.socket.fileno()
-        self.dataflows[f] = mc_remote_srv_dataflow(self,self.remote_recv,self.remote_gateway)
-        self.poller.register(f,zmq.POLLIN)
+        # self.remote_gateway = m_srv_sock(int(sys.argv[2]))
+        # f = self.remote_gateway.socket.fileno()
+        # self.dataflows[f] = mc_remote_srv_dataflow(self,self.remote_recv,self.remote_gateway)
+        # self.poller.register(f,zmq.POLLIN)
 
         self.run()
 
     def excite(self,header,args):
+        print(args['str'])
         return args['str']+'!'
         
-    def mc_recv(self,port,h,c,raw,dataflow,local=True):
+    def mc_recv(self,h,c,raw,dataflow):
         print("MC got")#: ", dataflow.route ,"on",dataflow)
-        src_node,src_port = self.parse_port(h['source'])
+        src_node = h['src_node']
+        src_port = h['src_port']
         print(h)
         print(c)
-        if not src_node in self.nodes and local:
+        if not src_node in self.nodes:
             route = dataflow.route
             new_id = self.gen_id(src_node)
             print("New node: " + src_node + " id = " + new_id)
-            df = mc_dataflow(self,self.mc_recv,self.local_gateway,"json",bytearray(new_id,"ASCII"))
+            trans = mc_ZMQ_transport(self.local_gateway.socket, bytearray(new_id,"ASCII"))
+            df = m_dataflow(self.interface,trans,self.serialiser,self.mc_recv,self.handle_reply,self.handle_error)
             n = Node(new_id,self.gen_key(),df,master=self.nodes["mc"].ports["stdio"])
             dataflow.send({"command":"reg","node_id":new_id,"key":n.key},"mc/stdio",dport="stdio")
             self.routes[route] = df

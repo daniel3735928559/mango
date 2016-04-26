@@ -11,11 +11,9 @@ class m_node:
 
         self.context = zmq.Context()
         self.poller = zmq.Poller()
-        self.local_gateway = m_ZMQ_transport(self,server,self.context,self.poller)
         self.serialiser = m_serialiser(self.version)
         self.interface = m_if()
-        
-        
+        self.dataflows = {}
         self.node_id = node_id
         self.mid = 0
         self.ports = {}
@@ -24,17 +22,15 @@ class m_node:
         self.default_handler = lambda h,c: print("type not understood: "+ h['type'])
         self.default_cmd = lambda h,c: print("\n".join([x+": "+c[x] for x in c.keys() if x != 'command']))
         self.interfaces = {}
-        self.recv_cb = recv_cb
-        self.recv_handlers = {"stdio":self.dispatch_cmd}
-        self.interface.add_interface('../node_if.xml',{'get_if':self.get_if})
+        self.interface.add_interface('/home/zoom/suit/mango/libmango/node_if.yaml',{'get_if':self.get_if,'reg':self.reg})
         if not server is None:
-            self.local_gateway = m_ZMQ_transport(self,server,self.context,self.poller)
+            self.local_gateway = m_ZMQ_transport(server,self.context,self.poller)
             s = self.local_gateway.socket
             self.dataflows[s] = m_dataflow(self.interface,self.local_gateway,self.serialiser,self.dispatch,self.handle_reply,self.handle_error)
             self.poller.register(s,zmq.POLLIN)
             self.ports["stdio"] = self.dataflows[s]
             self.ports["mc"] = self.dataflows[s]
-            #self.m_send({'command':'get_if','if':'node'},"mc",print,async=False)
+            self.m_send({'command':'excite'},{'str':'foo'},port="mc",reply_callback=print)
 
     def dispatch(self,header,args):
         return self.interface[header['function']]['handler'](header,args)
@@ -74,14 +70,19 @@ class m_node:
         self.key = args["key"]
         self.node_id = args["node_id"]
         self.local_gateway.set_id()
-        #print('my new node id')
-        #print(self.node_id)
-        #print("registered as " + self.node_id)
+        print('my new node id')
+        print(self.node_id)
+        print("registered as " + self.node_id)
         
-    def m_send(self,msg_dict,port="stdio",reply_callback=None,dport=None,async=True):
+    def m_send(self,header,msg_dict,port="stdio",reply_callback=lambda h,a:None,async=True):
         print('sending',msg_dict)
-        self.ports[port].send(msg_dict,port,reply_callback=reply_callback,dport=dport)
-        if not async and not reply_callback is None: self.ports[port].recv()
+        mid = self.get_mid()
+        header['src_port'] = port
+        header['mid'] = mid
+        self.outstanding[mid] = reply_callback
+        self.ports[port].send(header,msg_dict)
+        if not async and not reply_callback is None:
+            self.ports[port].recv()
         print("outstanding",self.outstanding)
 
     # def m_error(self,error_msg,src,mid,dataflow):
@@ -101,6 +102,15 @@ class m_node:
         msg_dict["source"] = src
         dataflow.send(msg_dict,src,mid,dport)
 
+    def reg(self,header,args):
+        self.key = args["key"]
+        self.node_id = args["node_id"]
+        self.local_gateway.set_id(self.node_id)
+        #print('my new node id')
+        #print(self.node_id)
+        #print("registered as " + self.node_id)
+
+        
     def run(self,f=None):
         while True:
             socks = dict(self.poller.poll(1000*1000))

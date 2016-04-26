@@ -1,8 +1,10 @@
 class m_error(Exception):
     VERSION_MISMATCH = 0
     VALIDATION_ERROR = 1
+    SERIALISATION_ERROR = 1
     reprs = {VERSION_MISMATCH:"Version mismatch",
-             VALIDATION_ERROR:"Validation error"}
+             VALIDATION_ERROR:"Validation error",
+             SERIALISATION_ERROR:"Serialisation error"}
     
     def __init__(self,code,message):
         self.code = code

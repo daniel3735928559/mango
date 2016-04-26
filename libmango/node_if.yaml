@@ -1,0 +1,12 @@
+get_if:
+  type: dict
+  values:
+    if:
+      type: string
+reg:
+  type: dict
+  values:
+    node_id:
+      type: string
+    key:
+      type: string

@@ -1,4 +1,5 @@
 from lxml import etree
+import yaml
 
 class m_if:
     def __init__(self):
@@ -9,7 +10,7 @@ class m_if:
     def add_interface(self,if_file,handlers,if_type=None,namespace=None):
         if if_type is None:
             if_type = if_file.rsplit(".",1)[1]
-        iface = loaders[if_type].load(if_file)
+        iface = self.loaders[if_type].load(if_file)
         missing,extra = self.compare_dict_keys(iface,handlers)
         if len(missing) > 0:
             raise m_error(m_error.INVALID_INTERFACE, "Functions not implemented: " + ", ".join(missing))
@@ -21,7 +22,7 @@ class m_if:
             raise m_error(m_error.INVALID_INTERFACE, "Functions already defined: " + ", ".join(existing))
                     
         for f in iface:
-            if not namepsace is None:
+            if not namespace is None:
                 f = namespace + "." + f
             self.interface[f] = {'handler':handlers[f],'args':iface[f]}
         
@@ -37,11 +38,10 @@ class m_if:
         if(function_name in self.interface):
             args, messages = self.verify_helper("", args, {'type':'dict','values':self.interface[function_name]})
         
-            try:
-                if len(messages)>0:
-                    raise m_error(m_error.VALIDATION_ERROR,"\n".join([m['name']+': ' +m['message'] for m in messages]))
-                else:
-                    return args
+            if len(messages)>0:
+                raise m_error(m_error.VALIDATION_ERROR,"\n".join([m['name']+': ' +m['message'] for m in messages]))
+            else:
+                return args
         else:
             raise m_error(m_error.VALIDATION_ERROR,"Unknown function")
 
@@ -119,7 +119,7 @@ class m_if:
         return [k for k in d1 if not k in d2], [k for k in d2 if not k in d1]
 
 
-class m_XML_if(m_if):
+class m_XML_if():
     def load(self,if_file):
         with open(if_file,'r') as f:
             s = f.read()

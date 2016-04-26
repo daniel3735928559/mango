@@ -1,23 +1,7 @@
 import zmq, socket
 
-class m_transport:
-    def __init__(self,target):
-        self.target = target
-    
-    def tx(self,payload):
-        pass
-
-    def rx(self):
-        pass
-    
-    def die(self):
-        pass
-
-
-class m_ZMQ_transport(m_transport):
-    def __init__(self,owner,target,context,poller,server=False):
-        super().__init__(target)
-        self.owner = owner
+class m_ZMQ_transport():
+    def __init__(self,target,context,poller,server=False):
         self.target = target
         if server:
             self.socket = context.socket(zmq.ROUTER)
@@ -30,8 +14,7 @@ class m_ZMQ_transport(m_transport):
             self.socket.connect(target)
         
     def set_id(self,nid=None):
-        if nid is None: nid = bytes(self.owner.node_id,"UTF-8")
-        else: nid = bytes(nid,"UTF-8")
+        nid = bytes(nid,"UTF-8")
         print('Setting id: '+str(nid))
         self.socket.disconnect(self.target)
         self.socket.setsockopt(zmq.IDENTITY,nid)
@@ -42,6 +25,24 @@ class m_ZMQ_transport(m_transport):
 
     def tx(self,payload):
         # print(payload)
+        self.socket.send(payload)
+        return "sent"
+
+    def rx(self):
+        return self.socket.recv()
+
+class mc_ZMQ_transport():
+    def __init__(self,socket,route):
+        self.socket = socket
+        self.route = route
+
+    def die(self):
+        pass
+        #self.socket.disconnect(self.target)
+
+    def tx(self,payload):
+        # print(payload)
+        self.socket.send(self.route,zmq.SNDMORE)
         self.socket.send(payload)
         return "sent"
 
