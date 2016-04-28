@@ -1,6 +1,6 @@
 import io, re, socketserver, socket, zmq, subprocess
 from dataflow import m_dataflow
-from mangolib import m_node
+from libmango import m_node
 from serialiser import *
 from transport import *
 from obj import *
@@ -13,9 +13,9 @@ class mc_loopback_dataflow(m_dataflow):
 
     def send(self,header,msg,route):
         print("SS",header,msg)
-        self.interface.validate(header['function'],msg)
-        result = self.dispatch_cb(header,msg)
-        self.reply_df.send(header,result,route)
+        self.interface.validate(header['command'],msg)
+        result = self.dispatch_cb(header,msg,route)
+        #self.reply_df.send(header,result,route)
         
     def send_raw(msg,route):
         pass#self.owner.ports["stdio"].send_raw(msg)
@@ -33,6 +33,9 @@ class mc_router_dataflow():
         self.dispatch_cb(header,args,data,route,self)
 
     def send(self,header,msg,route):
+        print(type(route))
+        if(type(route) != bytes):
+            route = bytes(route,"ASCII")
         print("MC ROUTER SEND",header,msg,"route =",route)
         data = self.serialiser.serialise(header,msg)
         self.transport.socket.send(route,zmq.SNDMORE)

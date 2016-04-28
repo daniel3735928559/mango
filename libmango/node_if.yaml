@@ -11,4 +11,7 @@ reg:
       type: string
     key:
       type: string
-    
+
+reply:
+  args:
+    type: any

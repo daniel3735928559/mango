@@ -3,7 +3,7 @@ from route_parser import route_parser
 from mc_dataflows import *
 from dataflow import m_dataflow
 from transport import *
-from mangolib import m_node
+from libmango import m_node
 from lxml import etree
 from obj import *
 
@@ -42,10 +42,11 @@ class mc(m_node):
 
         self.local_gateway = m_ZMQ_transport("tcp://*:"+sys.argv[1],self.context,self.poller,True)
         s = self.local_gateway.socket
-        self.dataflows[s] = mc_router_dataflow(self.local_gateway,self.serialiser,self.mc_recv)
+        self.dataflow = mc_router_dataflow(self.local_gateway,self.serialiser,self.mc_recv)
+        self.dataflows[s] = self.dataflow
         self.poller.register(s,zmq.POLLIN)
         self.routes = {}
-        self.nodes = {"mc":Node("mc",0,mc_loopback_dataflow(self.interface,self.dispatch,self.local_gateway))}
+        self.nodes = {"mc":Node("mc",0,mc_loopback_dataflow(self.interface,self.mc_dispatch,self.dataflow))}
 
         #self.ports["stdio"] = self.dataflows[s]
 
@@ -58,6 +59,13 @@ class mc(m_node):
 
         self.run()
 
+    def mc_dispatch(self,header,args,route):
+        print("MC DISPATCH",header,args)
+        result = self.interface.interface[header['command']]['handler'](header,args)
+        if not result is None:
+            header = self.make_header(header['callback'],callback=None,mid=header['mid'],src_port=header['port'])
+            self.dataflow.send(header,result,route)
+        
     def excite(self,header,args):
         print(args['str'])
         return {'str':args['str']+'!'}
@@ -80,8 +88,7 @@ class mc(m_node):
             n = Node(new_id,self.gen_key(),self.local_gateway,master=self.nodes["mc"].ports["stdio"])
 
             # Send the "reg" message
-            header = self.make_header("stdio")
-            header['function'] = 'reg'
+            header = self.make_header("reg")
             dataflow.send(header,{"node_id":new_id,"key":n.key},route)
 
             # Add the Node object to our registery

@@ -1,4 +1,4 @@
-from mangolib import *
+from libmango import *
 
 class test(m_node):
     def __init__(self):

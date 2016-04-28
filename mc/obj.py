@@ -3,7 +3,7 @@ from route_parser import route_parser
 from mc_dataflows import *
 from dataflow import m_dataflow
 from transport import *
-from mangolib import m_node
+from libmango import m_node
 from lxml import etree
 
 class NodeType: 
@@ -89,7 +89,8 @@ class Route:
             print("ROUTE send",h,a,m,self.endpoint.get_id())
             src=h['src_node']
             #if not self.endpoint.owner.local: src = self.endpoint.owner.master.srv_addr
-            print("R SEND",self.endpoint.owner,self.endpoint.owner.dataflow)
+            h['port'] = self.endpoint.name
+            print("R SEND",self.endpoint.owner,self.endpoint.owner.dataflow,h,a)
             self.endpoint.owner.dataflow.send(h,a,self.endpoint.owner.node_id)
 
         else:

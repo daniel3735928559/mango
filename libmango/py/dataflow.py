@@ -1,13 +1,12 @@
 from error import *
 
 class m_dataflow:
-    def __init__(self,interface,transport,serialiser,dispatch_cb,reply_cb,error_cb):
+    def __init__(self,interface,transport,serialiser,dispatch_cb,error_cb):
         self.version = "0.1"
         self.transport = transport
         self.interface = interface
         self.serialiser = serialiser
         self.dispatch_cb = dispatch_cb
-        self.reply_cb = reply_cb
         self.error_cb = error_cb
 
     def send(self,header,msg):
@@ -24,12 +23,9 @@ class m_dataflow:
         try:
             header,args = self.serialiser.deserialise(data)
             print("M RECV",header,args)
-            if header['command'] == 'call':
-                args = self.interface.validate(header['function'],args)
-                self.dispatch_cb(header,args,self)
-                #result = self.interface.validate(self.interface.interface[header['function']]['returns'],result)
-            elif header['command'] == 'reply':
-                self.reply_cb(header,args,data,self)
+            args = self.interface.validate(header['command'],args)
+            result = self.dispatch_cb(header,args)
+            #result = self.interface.validate(self.interface.interface[header['function']]['returns'],result)
         except m_error as exc:
             self.error_cb(exc)
             return None
