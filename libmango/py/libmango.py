@@ -72,7 +72,7 @@ class m_node:
     def reg(self,header,args):
         self.key = args["key"]
         self.node_id = args["node_id"]
-        self.local_gateway.set_id(args["node_id"])
+        #self.local_gateway.set_id(args["node_id"])
         print('my new node id')
         print(self.node_id)
         print("registered as " + self.node_id)

@@ -13,7 +13,7 @@ class NodeType:
         self.runner = runner
 
 class Node: 
-    def __init__(self,node_id,key,dataflow,master=None,local=True):
+    def __init__(self,node_id,key,dataflow,route,master=None,local=True):
         # This is the socket (or whatever) that you can use to talk to
         # this node.  It will usually be set by mc to
         # self.connections[0], and to send on it you can just use
@@ -24,9 +24,15 @@ class Node:
         self.flags = 0
         self.ports = {"stdio":Port("stdio",self)}
         self.local = local
+        self.route = route
         if (not master is None) and local:
             self.ports["mc"] = Port("mc",self)
             self.ports["mc"].add_route(Route(self.ports["mc"],master))
+    def send(self, header, args, route=None):
+        if route is None:
+            route = self.route
+        print("SSS",self.node_id,route,header,args)
+        self.dataflow.send(header,args,route)
     def __repr__(self):
         return self.node_id
 
@@ -91,13 +97,13 @@ class Route:
             #if not self.endpoint.owner.local: src = self.endpoint.owner.master.srv_addr
             h['port'] = self.endpoint.name
             print("R SEND",self.endpoint.owner,self.endpoint.owner.dataflow,h,a)
-            route = self.endpoint.owner.node_id
 
             # Special case so that mc can reply directly
+            
             if str(self.endpoint.owner.node_id) == "mc":
-                route = self.source.owner.node_id
-                
-            self.endpoint.owner.dataflow.send(h,a,route)
+                self.endpoint.owner.send(h,a,self.source.owner.route)
+            else:
+                self.endpoint.owner.send(h,a)
 
         else:
             print("R SEND RAW",self.endpoint.owner,self.endpoint.owner.dataflow)

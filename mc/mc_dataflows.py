@@ -15,6 +15,7 @@ class mc_loopback_dataflow(m_dataflow):
         print("SS",header,msg)
         self.interface.validate(header['command'],msg)
         result = self.dispatch_cb(header,msg,route)
+        print(result)
         #self.reply_df.send(header,result,route)
         
     def send_raw(msg,route):
@@ -33,7 +34,7 @@ class mc_router_dataflow():
         self.dispatch_cb(header,args,data,route,self)
 
     def send(self,header,msg,route):
-        print(type(route))
+        print(type(route),route)
         if(type(route) != bytes):
             route = bytes(route,"ASCII")
         print("MC ROUTER SEND",header,msg,"route =",route)

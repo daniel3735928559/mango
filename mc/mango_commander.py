@@ -46,7 +46,7 @@ class mc(m_node):
         self.dataflows[s] = self.dataflow
         self.poller.register(s,zmq.POLLIN)
         self.routes = {}
-        self.nodes = {"mc":Node("mc",0,mc_loopback_dataflow(self.interface,self.mc_dispatch,self.dataflow))}
+        self.nodes = {"mc":Node("mc",0,mc_loopback_dataflow(self.interface,self.mc_dispatch,self.dataflow),bytes("mc","ASCII"))}
 
         #self.ports["stdio"] = self.dataflows[s]
 
@@ -74,9 +74,8 @@ class mc(m_node):
         print("MC got",h,c,raw,route)
         src_node = h['src_node']
         src_port = h['src_port']
-        print(h)
-        print(c)
-        if not src_node in self.nodes:
+        print(str(route),h,c)
+        if not route in self.routes:
             # If we don't have a Node for this already, make a Node
             # object for it and send it the "reg" message
 
@@ -85,7 +84,7 @@ class mc(m_node):
             print("New node: " + src_node + " id = " + new_id)
             
             # Make the Node object
-            n = Node(new_id,self.gen_key(),self.local_gateway,master=self.nodes["mc"].ports["stdio"])
+            n = Node(new_id,self.gen_key(),self.dataflow,route,master=self.nodes["mc"].ports["stdio"])
 
             # Send the "reg" message
             header = self.make_header("reg")
@@ -93,9 +92,10 @@ class mc(m_node):
 
             # Add the Node object to our registery
             self.nodes[n.node_id] = n
+            self.routes[route] = n
             time.sleep(1)
             
-        if not src_port in self.nodes[src_node].ports:
+        if not src_port in self.routes[route].ports:
             # If there is no matching Port object in the specified Node, fail
             print("Invalid port: " + src_node+"/"+src_port)
             return
@@ -103,7 +103,7 @@ class mc(m_node):
         # Now that we are guaranteed either way a matching Node/Port
         # combo for the incoming message, send it!,
         print("sending finally",h,c,raw,src_node,src_port)
-        self.nodes[src_node].ports[src_port].send(raw,h,c)
+        self.routes[route].ports[src_port].send(raw,h,c)
         
     def gen_id(self,ID_req):
         if(not (ID_req in self.nodes.keys())):

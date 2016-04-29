@@ -1,4 +1,5 @@
 from libmango import *
+import time
 
 class test(m_node):
     def __init__(self):
