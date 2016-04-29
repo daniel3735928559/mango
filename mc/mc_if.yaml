@@ -1,7 +1,11 @@
 excite:
   args:
-    str:
-      type: string
+    type: dict
+    values: 
+      str:
+        type: string
   rets:
-    str:
-      type: string
+    type: dict
+    values: 
+      str:
+        type: string

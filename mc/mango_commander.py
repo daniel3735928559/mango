@@ -93,6 +93,7 @@ class mc(m_node):
 
             # Add the Node object to our registery
             self.nodes[n.node_id] = n
+            time.sleep(1)
             
         if not src_port in self.nodes[src_node].ports:
             # If there is no matching Port object in the specified Node, fail

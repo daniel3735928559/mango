@@ -40,7 +40,7 @@ class m_if:
 
         if(function_name in self.interface):
             print("VALIDATING",function_name,"AGAINST",self.interface[function_name])
-            args, messages = self.verify_helper("", args, {'type':'dict','values':self.interface[function_name]['args']})
+            args, messages = self.verify_helper("", args, self.interface[function_name]['args'])
         
             if len(messages)>0:
                 raise m_error(m_error.VALIDATION_ERROR,"\n".join([m['name']+': ' +m['message'] for m in messages]))

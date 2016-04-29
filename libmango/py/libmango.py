@@ -31,7 +31,6 @@ class m_node:
             self.dataflow = m_dataflow(self.interface,self.local_gateway,self.serialiser,self.dispatch,self.handle_error)
             self.dataflows[s] = self.dataflow
             self.poller.register(s,zmq.POLLIN)
-            self.m_send('excite',{'str':'foo'},port="mc",reply_callback=print)
 
     def dispatch(self,header,args):
         print("DISPATCH",header,args)

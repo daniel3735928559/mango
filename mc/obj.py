@@ -91,7 +91,13 @@ class Route:
             #if not self.endpoint.owner.local: src = self.endpoint.owner.master.srv_addr
             h['port'] = self.endpoint.name
             print("R SEND",self.endpoint.owner,self.endpoint.owner.dataflow,h,a)
-            self.endpoint.owner.dataflow.send(h,a,self.endpoint.owner.node_id)
+            route = self.endpoint.owner.node_id
+
+            # Special case so that mc can reply directly
+            if str(self.endpoint.owner.node_id) == "mc":
+                route = self.source.owner.node_id
+                
+            self.endpoint.owner.dataflow.send(h,a,route)
 
         else:
             print("R SEND RAW",self.endpoint.owner,self.endpoint.owner.dataflow)
