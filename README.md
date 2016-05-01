@@ -1,8 +1,6 @@
 # Mango
 
-Mango is an IPC routing library designed with the intent that
-mango-based programs written in any language can all work together
-cleanly, and in a way that is easy for the user to control.
+Mango is an IPC routing library designed so that mango-based programs written in any language can all work together cleanly, and in a way that is easy for the user to control.
 
 For example, suppose we write a drawing program.  A mango-based
 drawing program will come as two separate programs--the backend, and
