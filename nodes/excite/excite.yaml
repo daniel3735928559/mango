@@ -1,11 +1,15 @@
 excite:
   args:
     type: dict
-    values: 
+    values:
       str:
         type: string
   rets:
     type: dict
-    values: 
-      str:
+    values:
+      excited:
         type: string
+
+print:
+  args:
+    type: any

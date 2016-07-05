@@ -116,6 +116,9 @@ class m_if:
                 else:
                     ans += [{"name":name, "message":"no argument provided for 'oneof' arg"}]
 
+        elif reference_dict['type'] == 'any':
+            pass
+
         return input_element,ans
 
     def compare_dict_keys(self, d1, d2):

@@ -20,7 +20,8 @@ class mc(m_node):
 
         self.interface.add_interface("mc_if.yaml",
                                      {
-                                         "excite":self.excite
+                                         "excite":self.excite,
+                                         "route":self.route_add
                                      })
                                  # {
                                  #     "rt_list":self.rt_list,
@@ -169,11 +170,11 @@ class mc(m_node):
         rs = [r for r in p.routes if re.match(dn,r.endpoint[0]) and re.match(dp,r.endpoint[1]) for p in sps]
         return {'routes':"\n".join([r.to_string() for r in rs])}
 
-    def rt_add(self,header,args):
-        print("BUILDING ROUTE",args)
-        rt = self.route_parser.parse(args['chain'])
+    def route_add(self,header,args):
+        print("BUILDING ROUTE",header,args)
+        rt = self.route_parser.parse(args['spec'])
         if(rt is None):
-            return {'result':'error parsing route'}
+            return {'success':False}
         chains = []
         print("RT",rt)
         for chain in rt:
@@ -184,16 +185,18 @@ class mc(m_node):
                     n,p = chain[i][1]
                     print('port',n,p)
                     if(n in self.nodes):
-                        if(i != start and p in self.nodes[n].ports):
-                            chains += [[r[1] for r in chain[start:i+1]]]
-                            start = i
-                        elif not self.nodes[n].local:
+                        print("NNN",i,start,p,p in self.nodes[n].ports,self.nodes[n].ports)
+                        if not self.nodes[n].local:
                             if not '.' in p:
                                 p = p+'.stdio'
                                 chain[i][1][1]+='.stdio'
                             print("Making a remote port",p,"in",n)
                             self.nodes[n].ports[p] = Port(p,self.nodes[n])
                             if(i != start):
+                                chains += [[r[1] for r in chain[start:i+1]]]
+                                start = i
+                        elif p in self.nodes[n].ports:
+                            if i != start:
                                 chains += [[r[1] for r in chain[start:i+1]]]
                                 start = i
                         else:
@@ -211,7 +214,7 @@ class mc(m_node):
             for t in c[1:-1]:
                 new_route.transmogrifiers += [t]
             self.nodes[sn].ports[sp].add_route(new_route)
-        return {'result':'success'}
+        return {'success':True}
             
     def rt_del(self,header,args):
         sn,sp = self.find_port(args['src'].decode())

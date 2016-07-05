@@ -1,6 +1,0 @@
-print:
-  args:
-    type: dict
-    values:
-      str:
-        type: string

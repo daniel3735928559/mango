@@ -23,6 +23,7 @@ class Node:
         self.node_id = node_id
         self.flags = 0
         self.ports = {"stdio":Port("stdio",self)}
+        print("PPP",self.ports)
         self.local = local
         self.route = route
         if (not master is None) and local:
@@ -33,8 +34,8 @@ class Node:
             route = self.route
         print("SSS",self.node_id,route,header,args)
         self.dataflow.send(header,args,route)
-    def __repr__(self):
-        return self.node_id
+    # def __repr__(self):
+    #     return self.node_id
 
 class Route:
     def __init__(self,source,endpoint):

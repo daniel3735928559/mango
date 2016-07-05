@@ -1,0 +1,23 @@
+excite:
+  args:
+    type: dict
+    values: 
+      str:
+        type: string
+  rets:
+    type: dict
+    values: 
+      str:
+        type: string
+
+route:
+  args:
+    type: dict
+    values:
+      spec:
+        type: string
+  rets:
+    type: dict
+    values:
+      success:
+        type: bool
