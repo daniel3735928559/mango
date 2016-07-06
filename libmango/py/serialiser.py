@@ -7,8 +7,7 @@ class m_serialiser:
     def __init__(self,version,method="json"):
         self.version = version
         self.method = method
-        self.serialisers = {"json":m_json_serialiser(),
-                            "std":m_std_serialiser()}
+        self.serialisers = {"json":m_json_serialiser()}
 
     def make_preamble(self):
         return bytes("MANGO{0} {1}\n".format(self.version,self.method),"ASCII")
@@ -42,61 +41,3 @@ class m_json_serialiser:
     def unpack(self,message):
         d = json.loads(message.decode())
         return d['header'],d['args']
-
-
-
-class m_std_serialiser:
-
-    def dict_pack(self,msg_dict):
-        msg = bytearray()
-        xref = []
-        pos = 0
-        for a in msg_dict:
-            entry = str(pos) + ":"
-            pos += len(a)
-            entry += str(pos) + ":"
-            pos += len(msg_dict[a])
-            entry += str(pos)
-            xref += [entry]
-            msg += bytearray(a+":","ASCII")
-            msg += bytearray(msg_dict[a])
-            msg += bytearray("\n","ASCII")
-            
-        return bytearray(" ".join(xref)+"\n","ASCII") + msg
-
-    def dict_unpack(self,msg,binary=True):
-        nl1 = msg.find(ord('\n'))
-        xref = msg[:nl1].decode().split(" ")
-        msg = msg[nl1+1:]
-        result = {}
-        for x in xref:
-            s,t,e = [int(i) for i in x.split(":")]
-            result[msg[s:t].decode("ASCII")] = msg[t+1:e] if binary else msg[t+1:e].decode("ASCII")
-        return result
-            
-    def pack(self,msg_dict,source,mid,dport=None):
-        h = {"source":source,"mid":mid}
-        header = self.dict_pack(h)
-        body = self.dict_pack(msg_dict)
-        line0 = "{0} {1}\n".format(len(header), len(body))
-        result = bytearray(line0,"ASCII")+header+body
-        return result
-
-    def unpack(self,msg):
-        nl1 = msg.find(ord('\n'))
-        if(nl1 == -1): return;
-        m = re.search("^([0-9]*) ([0-9]*)$",msg[:nl1].decode("ASCII"))
-        if(len(m.groups())!=2): 
-            print("invalid syntax")
-            return(NULL)
-        header_length = int(m.group(1))
-        message_length = int(m.group(2))
-        
-        header = msg[nl1+1:nl1+1+header_length]
-        message = msg[nl1+1+header_length:nl1+1+header_length+message_length]
-        if(len(header) != header_length or len(message) != message_length):
-            print(len(message))
-            print(len(header))
-            print("invalid syntax")
-            return
-        return dict_unpack(header),dict_unpack(message)

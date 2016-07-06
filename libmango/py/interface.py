@@ -5,8 +5,7 @@ from error import *
 class m_if:
     def __init__(self):
         self.interface = {}
-        self.loaders = {"xml":m_XML_if(),
-                        "yaml":m_YAML_if()}
+        self.loaders = {"yaml":m_YAML_if()}
         
     def add_interface(self,if_file,handlers,if_type=None,namespace=None):
         if if_type is None:
@@ -126,38 +125,6 @@ class m_if:
         Returns [things in d1 not in d2, things in d2 not in d1]
         """
         return [k for k in d1 if not k in d2], [k for k in d2 if not k in d1]
-
-
-class m_XML_if():
-    def load(self,if_file):
-        with open(if_file,'r') as f:
-            s = f.read()
-        root = etree.fromstring(s);
-        doc = s;
-        iface = {}
-        for c in [child for child in root if child.tag == "cmd"]:
-            cname = c.get("name")
-
-            args = {}
-            rets = {}
-
-            for a in [child for child in c if child.tag == "arg"]:
-                args[a.get("name")] = load_helper(a)
-            
-            for r in [child for child in c if child.tag == "return"]:
-                rets[r.get("name")] = load_helper(r)
-            
-            iface[cname] = {"args":args,"returns":rets}
-        return iface
-
-    def load_helper(n):
-        ans = {"type":a.get("type"),
-               "doc":a.get("desc","")}
-        s = a.get("set")
-        if not s is None:
-            ans['set'] = s
-        ans['val'] = [load_helper(v) for v in n if v.tag == "val"]
-        return ans
             
 class m_YAML_if():
     def load(self,if_file):
