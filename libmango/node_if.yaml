@@ -1,23 +1,15 @@
 get_if:
   args:
-    type: dict
-    values:
-      if:
-        type: string
+    if:
+      type: string
   rets:
-    type: dict
-    values:
-      doc:
-        type: string
+    doc:
+      type: string
 reg:
   args:
-    type: dict
-    values:
-      node_id:
-        type: string
-      key:
-        type: string
+    node_id:
+      type: string
+    key:
+      type: string
 
 reply:
-  args:
-    type: any
