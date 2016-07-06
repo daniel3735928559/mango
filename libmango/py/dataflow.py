@@ -27,6 +27,6 @@ class m_dataflow:
             result = self.dispatch_cb(header,args)
             #result = self.interface.validate(self.interface.interface[header['function']]['returns'],result)
         except m_error as exc:
-            self.error_cb(exc)
+            self.error_cb(header['src_node'],str(exc))
             return None
 

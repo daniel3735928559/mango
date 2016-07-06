@@ -10,6 +10,6 @@ reg:
     node_id:
       type: string
     key:
-      type: string
+      type: num
 
 reply:

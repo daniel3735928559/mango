@@ -14,4 +14,4 @@ class m_error(Exception):
         Exception.__init__(self,message)
 
     def __repr__(self):
-        return reprs[self.code]+': '+self.message
+        return m_error.reprs[self.code]+': '+self.message

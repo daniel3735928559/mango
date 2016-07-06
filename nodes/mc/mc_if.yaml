@@ -13,3 +13,12 @@ route:
   rets:
     success:
       type: bool
+
+error:
+  args:
+    source:
+      type: string
+    message:
+      type: string
+
+hello:

@@ -9,6 +9,7 @@ class test(m_node):
             'print':self.output
         })
         self.m_send('route',{'spec':'{} > excite > +{{"a":"{}"}} > {}'.format(name, name, name)},callback="print",port="mc")
+        self.m_send('excite',{'thestring':'foo'},callback="print")
         self.m_send('excite',{'str':'foo'},callback="print")
         self.run()
     def output(self,header,args):

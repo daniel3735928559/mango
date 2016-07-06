@@ -32,6 +32,9 @@ class m_node:
             self.dataflows[s] = self.dataflow
             self.poller.register(s,zmq.POLLIN)
 
+    def ready():
+        self.m_send('hello',{},callback="print",port="mc")
+            
     def dispatch(self,header,args):
         print("DISPATCH",header,args)
         result = self.interface.interface[header['command']]['handler'](header,args)
@@ -61,8 +64,9 @@ class m_node:
         del self.outstanding[mid]
         return None
 
-    def handle_error(self,err):
+    def handle_error(self,src,err):
         print(err)
+        self.m_send('error',{'source':src,'message':err},port="mc")
         return None
 
     def get_mid(self):

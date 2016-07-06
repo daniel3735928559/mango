@@ -22,7 +22,9 @@ class mc(m_node):
         self.interface.add_interface("mc_if.yaml",
                                      {
                                          "excite":self.excite,
-                                         "route":self.route_add
+                                         "route":self.route_add,
+                                         "hello":self.hello,
+                                         "error":self.mc_error
                                      })
                                  # {
                                  #     "rt_list":self.rt_list,
@@ -60,6 +62,12 @@ class mc(m_node):
         # self.poller.register(f,zmq.POLLIN)
 
         self.run()
+
+    def hello(self,header,args):
+        print("HELLO",header,args)
+        
+    def mc_error(self,header,args):
+        print("ERR",header,args)
 
     def mc_dispatch(self,header,args,route):
         print("MC DISPATCH",header,args)

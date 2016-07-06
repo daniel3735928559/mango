@@ -102,7 +102,7 @@ def verify_helper(name, input_element, reference_dict):
             ans += [{"name":name, "message":"invalid boolean"}]
 
     elif reference_dict['type'] in {'num','number'}:
-        if not isinstance(input_element, (int, long, float)):
+        if not isinstance(input_element, (int, float)):
             ans += [{"name":name, "message":"invalid number"}]
 
     elif reference_dict['type'] in {'str','string','multiline'}:
