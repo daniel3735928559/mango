@@ -1,0 +1,43 @@
+#!/usr/bin/python
+ 
+
+# How should mx work?  Send mx_agent stuff to do, for instance
+# mx 1 commandname -argname1 argval ...
+# to send a command on connection 1
+# mx l commandname presethandlerchoice -presetargname presetargval
+# to listen for commandname with presethandlerchoice (print, forward) handler function 
+# 
+
+# mx send port [-r "reply handler spec"] -arg1 val1 -arg2 val2 ...
+# mx handle command "handler spec"
+
+import os,sys,zmq,json
+
+context = zmq.Context()
+sock = context.socket(zmq.REQ)
+sock.connect("tcp://localhost:"+os.environ["MX_PORT"])
+mx_cmd = sys.argv[1]
+if(mx_cmd == "send"):
+    argns = ["mx_cmd","port","command"]+[x[1:] for x in sys.argv[1:] if x[0] == '-']
+    argvs = [x for x in sys.argv[1:] if x[0] != '-']
+elif(mx_cmd == "handle"):
+    argns = ["mx_cmd","command","handler"]
+    argvs = sys.argv[1:]
+elif(mx_cmd == "load_if"):
+    argns = ["mx_cmd","if"]
+    argvs = sys.argv[1:]
+else:
+    print("Bad command")
+    sys.exit(1)
+
+print(argns,argvs)
+
+if(len(argns) != len(argvs)):
+    print("Argument mismatch")
+    sys.exit(2)
+
+args = {argns[i]:argvs[i] for i in range(min(len(argns),len(argvs)))}
+
+print(sock.send_unicode(json.dumps(args)))
+print(args,zmq.zmq_version())
+print(sock.recv().decode("UTF-8"))

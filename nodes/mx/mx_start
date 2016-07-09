@@ -1,0 +1,7 @@
+PYTHONPATH='/home/zoom/suit/mango/libmango/py' python mx_agent.py $2 tcp://localhost:$1 $3 &
+export MX_PID=$!
+echo $MX_PID
+while [[ ! -f .run/$MX_PID && ! -p .run/"$MX_PID"_out ]]; do [[ -f .run/"$MX_PID"_out ]] && echo hello; [[ ! -f .run/"$MX_PID"_out ]] && echo hello2; printf '.'; sleep 1; done
+# PS1="m $PS1" bash --init-file .run/$MX_PID
+screen -c screenrc
+

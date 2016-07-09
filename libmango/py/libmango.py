@@ -6,8 +6,9 @@ from interface import *
 from error import *
 
 class m_node: 
-    def __init__(self,node_id,server=None):
+    def __init__(self,node_id,server=None,debug=False):
         self.version = "0.1"
+        self.debug = debug
         self.context = zmq.Context()
         self.poller = zmq.Poller()
         self.serialiser = m_serialiser(self.version)
@@ -36,13 +37,13 @@ class m_node:
         self.m_send('hello',{},callback="print",port="mc")
             
     def dispatch(self,header,args):
-        print("DISPATCH",header,args)
+        self.debug_print("DISPATCH",header,args)
         result = self.interface.interface[header['command']]['handler'](header,args)
         if not result is None:
             self.m_send(header['callback'],result,port=header['port'],mid=header['mid'])
         
     def get_if(self,header,args):
-        print("GET IF")
+        self.debug_print("GET IF")
         i = args['if']
         if i in self.interfaces.keys():
             return {'result':'success','if':self.interfaces[i]}
@@ -51,10 +52,10 @@ class m_node:
 
     def reply(self,header,args):
         mid = header["mid"]
-        print("REPLY HANDELR")
-        print(mid,self.outstanding)
+        self.debug_print("REPLY HANDELR")
+        self.debug_print(mid,self.outstanding)
         if not int(mid) in self.outstanding.keys():
-            print("Fake reply",mid,self.outstanding)
+            self.debug_print("Fake reply",mid,self.outstanding)
             return None
     
         del args["source"]
@@ -65,7 +66,7 @@ class m_node:
         return None
 
     def handle_error(self,src,err):
-        print(err)
+        self.debug_print(err)
         self.m_send('error',{'source':src,'message':err},port="mc")
         return None
 
@@ -77,9 +78,9 @@ class m_node:
         self.key = args["key"]
         self.node_id = args["node_id"]
         #self.local_gateway.set_id(args["node_id"])
-        print('my new node id')
-        print(self.node_id)
-        print("registered as " + self.node_id)
+        self.debug_print('my new node id')
+        self.debug_print(self.node_id)
+        self.debug_print("registered as " + self.node_id)
 
     def make_header(self,command,callback=None,mid=None,src_port='stdio'):
         header = {'src_node':self.node_id,
@@ -90,29 +91,33 @@ class m_node:
             header['callback'] = 'reply'
         elif not callback is None:
             header['callback'] = callback
-        print("H",header)
+        self.debug_print("H",header)
         return header
     
     def m_send(self,command,msg,callback=None,mid=None,port='stdio',reply_callback=None,async=True):
-        print('sending',msg)
+        self.debug_print('sending',msg)
         header = self.make_header(command,callback,mid,port)
         self.dataflow.send(header,msg)
         if not async and not callback is None:
             self.dataflow.recv()
-        print("outstanding",self.outstanding)
+        self.debug_print("outstanding",self.outstanding)
         return header['mid']
-        
+
+    def debug_print(self,*args):
+        if self.debug: print("[DEBUG] ",*args)
+    
     def run(self,f=None):
         while True:
             socks = dict(self.poller.poll(1000*1000))
             #self.local_gateway.socket.send()
             for s in socks:
-                #print(s,socks[s])
+                #self.debug_print(s,socks[s])
                 if socks[s] == zmq.POLLIN:
+                    self.debug_print("RX",s,self.dataflows[s])
                     self.dataflows[s].recv()
 
                 elif(socks[s] & zmq.POLLERR != 0):
-                    print('socket error',s,socks[s])
+                    self.debug_print('socket error',s,socks[s])
                     self.dataflows[s].die()
             if not f is None: 
                 f()

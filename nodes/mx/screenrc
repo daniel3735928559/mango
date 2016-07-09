@@ -1,0 +1,20 @@
+attrcolor b ".I"
+termcapinfo xterm 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm'
+termcapinfo xterm|xterms|xs|rxvt ti@:te@
+
+defbce "on"
+
+term xterm-256color
+
+defscrollback 30000
+
+hardstatus alwayslastline 
+hardstatus string '%{= Kd} %{= Kd}%-w%{= Kr}[%{= KW}%n %t%{= Kr}]%{= Kd}%+w %-= %{KG} %H%{KW}|%{KY}%101`%{KW}|%Y%m%d%{= Kc} %0c%{-}'
+
+screen -t window0 bash --init-file .run/"$MX_PID"
+screen -t window1 tail -f .run/"$MX_PID"_out
+select window0
+split -v
+focus right
+select window1
+focus left
