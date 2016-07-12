@@ -22,3 +22,14 @@ error:
       type: string
 
 hello:
+  args:
+    id:
+      type: string
+      description: The requested ID
+    if:
+      type: any
+      description: The program's interface
+  rets:
+    id:
+      type: string
+      description: The requested ID, or, if that was unavailable, [id].[n] for the minimum positive integer n that makes it unique

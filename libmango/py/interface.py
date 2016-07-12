@@ -48,8 +48,10 @@ class m_if:
             args, messages = pijemont.verifier.verify_helper("", args, {'type':'dict','values':self.interface[function_name]['args']})
         
             if len(messages)>0:
+                print("NOPE",args,messages)
                 raise m_error(m_error.VALIDATION_ERROR,"\n".join(['{}: {}'.format(m['name'], m['message']) for m in messages]))
             else:
+                print("YEP")
                 return args
         else:
             raise m_error(m_error.VALIDATION_ERROR,"Unknown function")

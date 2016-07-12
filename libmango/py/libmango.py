@@ -33,14 +33,20 @@ class m_node:
             self.dataflows[s] = self.dataflow
             self.poller.register(s,zmq.POLLIN)
 
-    def ready():
-        self.m_send('hello',{},callback="print",port="mc")
+    def ready(self):
+        iface = {f:{c:self.interface.interface[f][c] for c in self.interface.interface[f] if c != 'handler'} for f in self.interface.interface}
+        print("IF",iface)
+        self.m_send('hello',{'id':self.node_id,'if':iface},callback="reg",port="mc")
             
     def dispatch(self,header,args):
         self.debug_print("DISPATCH",header,args)
-        result = self.interface.interface[header['command']]['handler'](header,args)
-        if not result is None:
-            self.m_send(header['callback'],result,port=header['port'],mid=header['mid'])
+        try:
+            result = self.interface.interface[header['command']]['handler'](header,args)
+            if not result is None:
+                self.m_send(header['callback'],result,port=header['port'],mid=header['mid'])
+        except Exception as exc:
+            self.m_send('error',{'message':str(exc),'source':header['src_node']},port="mc")
+            
         
     def get_if(self,header,args):
         self.debug_print("GET IF")
@@ -76,7 +82,7 @@ class m_node:
 
     def reg(self,header,args):
         self.key = args["key"]
-        self.node_id = args["node_id"]
+        self.node_id = args["id"]
         #self.local_gateway.set_id(args["node_id"])
         self.debug_print('my new node id')
         self.debug_print(self.node_id)

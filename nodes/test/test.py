@@ -8,6 +8,7 @@ class test(m_node):
         self.interface.add_interface('/home/zoom/suit/mango/nodes/test/test.yaml',{
             'print':self.output
         })
+        self.ready()
         self.m_send('route',{'spec':'{} > excite > +{{"a":"{}"}} > {}'.format(name, name, name)},callback="print",port="mc")
         self.m_send('excite',{'thestring':'foo'},callback="print")
         self.m_send('excite',{'str':'foo'},callback="print")

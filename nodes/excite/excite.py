@@ -8,7 +8,7 @@ class excite(m_node):
             'excite':self.excite,
             'print':self.output
         })
-        self.m_send('excite',{'str':'foo'},callback="print",port="mc")
+        self.ready()
         self.run()
     def output(self,header,args):
         print("PRINTING",header,args)

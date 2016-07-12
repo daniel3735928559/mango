@@ -7,9 +7,10 @@ get_if:
       type: string
 reg:
   args:
-    node_id:
+    id:
       type: string
     key:
       type: num
+      optional: true
 
 reply:

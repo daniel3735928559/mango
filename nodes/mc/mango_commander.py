@@ -65,6 +65,7 @@ class mc(m_node):
 
     def hello(self,header,args):
         print("HELLO",header,args)
+        return {'id':args['id']}
         
     def mc_error(self,header,args):
         print("ERR",header,args)
@@ -86,34 +87,40 @@ class mc(m_node):
         src_port = h['src_port']
         print(str(route),h,c)
         if not route in self.routes:
-            # If we don't have a Node for this already, make a Node
-            # object for it and send it the "reg" message
+            # If we don't have a Node for this already, we expect the
+            # first message to be "hello".  Otherwise we ignore it.
+            # If it is, make a Node object for it and send it the
 
-            # Make the ID for the node object
-            new_id = self.gen_id(src_node)
-            print("New node: " + src_node + " id = " + new_id)
+            if h['command'] == 'hello' and h['src_port'] == 'mc':
+                # Make the ID for the node object
+                new_id = self.gen_id(src_node)
+                print("New node: " + src_node + " id = " + new_id)
+                c['id'] = new_id
+                # Make the Node object
+                n = Node(new_id,self.gen_key(),self.dataflow,route,master=self.nodes["mc"].ports["stdio"])
+                
+                # Send the "reg" message
+                header = self.make_header("reg")
+                #dataflow.send(header,{"id":new_id,"key":n.key},route)
+                
+                # Add the Node object to our registery
+                self.nodes[n.node_id] = n
+                self.routes[route] = n
+                print("passing along init msg finally",h,c,raw,src_node,src_port)
+                self.routes[route].ports[src_port].send(raw,h,c)
+            else:
+                print("Non-hello init message: \n\n{}\n\n{}\n\nIgnoring".format(h,c))
             
-            # Make the Node object
-            n = Node(new_id,self.gen_key(),self.dataflow,route,master=self.nodes["mc"].ports["stdio"])
+        else:
+            if not src_port in self.routes[route].ports:
+                # If there is no matching Port object in the specified Node, fail
+                print("Invalid port: " + src_node+"/"+src_port)
+                return
 
-            # Send the "reg" message
-            header = self.make_header("reg")
-            dataflow.send(header,{"node_id":new_id,"key":n.key},route)
-
-            # Add the Node object to our registery
-            self.nodes[n.node_id] = n
-            self.routes[route] = n
-            time.sleep(1)
-            
-        if not src_port in self.routes[route].ports:
-            # If there is no matching Port object in the specified Node, fail
-            print("Invalid port: " + src_node+"/"+src_port)
-            return
-
-        # Now that we are guaranteed either way a matching Node/Port
-        # combo for the incoming message, send it!,
-        print("sending finally",h,c,raw,src_node,src_port)
-        self.routes[route].ports[src_port].send(raw,h,c)
+            # Now that we are guaranteed either way a matching Node/Port
+            # combo for the incoming message, send it!,
+            print("passing along",h,c,raw,src_node,src_port)
+            self.routes[route].ports[src_port].send(raw,h,c)
         
     def gen_id(self,ID_req):
         if(not (ID_req in self.nodes.keys())):
