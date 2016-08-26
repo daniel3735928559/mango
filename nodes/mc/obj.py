@@ -13,7 +13,7 @@ class NodeType:
         self.runner = runner
 
 class Node: 
-    def __init__(self,node_id,key,dataflow,route,master=None,local=True):
+    def __init__(self,node_id,key,dataflow,route,iface,master=None,local=True):
         # This is the socket (or whatever) that you can use to talk to
         # this node.  It will usually be set by mc to
         # self.connections[0], and to send on it you can just use
@@ -22,6 +22,7 @@ class Node:
         self.key = key
         self.node_id = node_id
         self.flags = 0
+        self.interface = iface
         self.ports = {"stdio":Port("stdio",self)}
         print("PPP",self.ports)
         self.local = local
@@ -32,8 +33,12 @@ class Node:
     def send(self, header, args, route=None):
         if route is None:
             route = self.route
-        print("SSS",self.node_id,route,header,args)
-        self.dataflow.send(header,args,route)
+        try:
+            args = self.interface.validate(header['command'],args)
+            print("SSS",self.node_id,route,header,args)
+            self.dataflow.send(header,args,route)
+        except Exception as exc:
+            print('OOPS',exc)
     # def __repr__(self):
     #     return self.node_id
 

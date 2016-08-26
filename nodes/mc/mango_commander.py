@@ -2,6 +2,7 @@ import io, re, socket, time, signal, os, sys, random, zmq, subprocess, shlex, js
 from route_parser import route_parser
 from mc_dataflows import *
 from mc_transport import *
+from mc_interface import *
 from dataflow import m_dataflow
 from transport import *
 from libmango import m_node
@@ -50,7 +51,7 @@ class mc(m_node):
         self.dataflows[s] = self.dataflow
         self.poller.register(s,zmq.POLLIN)
         self.routes = {}
-        self.nodes = {"mc":Node("mc",0,mc_loopback_dataflow(self.interface,self.mc_dispatch,self.dataflow),bytes("mc","ASCII"))}
+        self.nodes = {"mc":Node("mc",0,mc_loopback_dataflow(self.interface,self.mc_dispatch,self.dataflow),bytes("mc","ASCII"),mc_if(self.interface.interface))}
 
         #self.ports["stdio"] = self.dataflows[s]
 
@@ -64,7 +65,8 @@ class mc(m_node):
         self.run()
 
     def hello(self,header,args):
-        print("HELLO",header,args)
+        print("HELLO",header
+              ,args)
         return {'id':args['id']}
         
     def mc_error(self,header,args):
@@ -97,7 +99,7 @@ class mc(m_node):
                 print("New node: " + src_node + " id = " + new_id)
                 c['id'] = new_id
                 # Make the Node object
-                n = Node(new_id,self.gen_key(),self.dataflow,route,master=self.nodes["mc"].ports["stdio"])
+                n = Node(new_id,self.gen_key(),self.dataflow,route, mc_if(c["if"]), master=self.nodes["mc"].ports["stdio"])
                 
                 # Send the "reg" message
                 header = self.make_header("reg")
