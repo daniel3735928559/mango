@@ -32,17 +32,7 @@ class m_if:
                     self.interface[f]['rets'] = iface[f]['rets']
         
     def validate(self, function_name, args):
-        """
-        Returns: modified_input, list_of_errors
-        where:
-        - modified_input is the input populated with default values where applicable
-        - success is a boolean true if there were no problems and false otherwise
-        - list_of_errors is as in verify_helper
-        """
-
-        if(function_name in self.interface):
-            return args
-        else:
+        if(not function_name in self.interface):
             raise m_error(m_error.VALIDATION_ERROR,"Unknown function")
 
     def compare_dict_keys(self, d1, d2):
