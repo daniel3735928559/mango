@@ -35,17 +35,19 @@ class m_node:
 
     def ready(self):
         iface = {f:{c:self.interface.interface[f][c] for c in self.interface.interface[f] if c != 'handler'} for f in self.interface.interface}
-        print("IF",iface)
+        self.debug_print("IF",iface)
         self.m_send('hello',{'id':self.node_id,'if':iface},callback="reg",port="mc")
             
     def dispatch(self,header,args):
         self.debug_print("DISPATCH",header,args)
         try:
-            result = self.interface.interface[header['command']]['handler'](header,args)
-            if not result is None:
-                self.m_send(header['callback'],result,port=header['port'],mid=header['mid'])
+           self.debug_print("IF",self.interface.interface)
+           result = self.interface.interface[header['command']]['handler'](header,args)
+           if (not result is None) and 'callback' in header:
+               self.m_send(header['callback'],result,port=header['port'],mid=header['mid'])
         except Exception as exc:
-            self.m_send('error',{'message':str(exc),'source':header['src_node']},port="mc")
+           self.debug_print('OOPS',exc)
+           self.m_send('error',{'message':str(exc),'source':header['src_node']},port="mc")
             
         
     def get_if(self,header,args):
@@ -81,7 +83,7 @@ class m_node:
         return self.mid
 
     def reg(self,header,args):
-        self.key = args["key"]
+        #self.key = args["key"]
         self.node_id = args["id"]
         #self.local_gateway.set_id(args["node_id"])
         self.debug_print('my new node id')

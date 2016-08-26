@@ -57,7 +57,7 @@ class mx_agent(m_node):
             self.handler_arg_defaults = {'file':{'filename':'/dev/stdout'},'print':{'format':None},'nop':{}}
             #os.mkfifo('.run/'+str(self.pid)+'_out')
             self.sh_init = open('.run/'+str(self.pid),'w')
-            self.sh_init.write("export MX_PID={0}\nexport MX_PORT={1}\ntrap 'kill {0}; rm .run/{0}; exit' TERM EXIT\nfunction load_if {{ ./mx load_if $1; source .run/{0}; }}\n".format(os.getpid(),self.fc.transport.port))
+            self.sh_init.write("source ~/.bashrc\nexport MX_PID={0}\nexport MX_PORT={1}\ntrap 'kill {0}; rm .run/{0}; exit' TERM EXIT\nfunction load_if {{ ./mx load_if $1; source .run/{0}; }}\n".format(os.getpid(),self.fc.transport.port))
             if len(sys.argv) >= 4:
                   f = open(sys.argv[3],"r")
                   self.sh_init.write("\n"+f.read())

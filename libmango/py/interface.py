@@ -42,16 +42,16 @@ class m_if:
         """
 
         if(function_name in self.interface):
-            print("VALIDATING",function_name,"AGAINST",self.interface[function_name])
+            #print("VALIDATING",function_name,"AGAINST",self.interface[function_name])
             if not 'args' in self.interface[function_name]:
                 return args
             args, messages = pijemont.verifier.verify_helper("", args, {'type':'dict','values':self.interface[function_name]['args']})
         
             if len(messages)>0:
-                print("NOPE",args,messages)
+                #print("NOPE",args,messages)
                 raise m_error(m_error.VALIDATION_ERROR,"\n".join(['{}: {}'.format(m['name'], m['message']) for m in messages]))
             else:
-                print("YEP")
+                #print("YEP",args)
                 return args
         else:
             raise m_error(m_error.VALIDATION_ERROR,"Unknown function")

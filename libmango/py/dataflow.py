@@ -10,7 +10,7 @@ class m_dataflow:
         self.error_cb = error_cb
 
     def send(self,header,msg):
-        print("ML SENDING",header,msg)
+        #print("ML SENDING",header,msg)
         try:
             data = self.serialiser.serialise(header, msg)
             self.transport.tx(data)
@@ -22,11 +22,13 @@ class m_dataflow:
         data = self.transport.rx()
         try:
             header,args = self.serialiser.deserialise(data)
-            print("M RECV",header,args)
+            #print("M RECV",header,args)
             args = self.interface.validate(header['command'],args)
+            #print("M DIS",header,args)
             result = self.dispatch_cb(header,args)
             #result = self.interface.validate(self.interface.interface[header['function']]['returns'],result)
         except m_error as exc:
+            #print('OOPS',exc)
             self.error_cb(header['src_node'],str(exc))
             return None
 
