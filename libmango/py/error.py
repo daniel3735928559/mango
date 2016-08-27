@@ -3,10 +3,12 @@ class m_error(Exception):
     VALIDATION_ERROR = 1
     SERIALISATION_ERROR = 2
     INVALID_INTERFACE = 3
+    BAD_ARGUMENT = 4
     reprs = {VERSION_MISMATCH:"Version mismatch",
              VALIDATION_ERROR:"Validation error",
              SERIALISATION_ERROR:"Serialisation error",
-             INVALID_INTERFACE:"Invalid interface"}
+             INVALID_INTERFACE:"Invalid interface",
+             BAD_ARGUMENT:"Bad argument"}
     
     def __init__(self,code,message):
         self.code = code

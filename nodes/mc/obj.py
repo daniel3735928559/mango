@@ -14,8 +14,8 @@ class NodeType:
 
 class Node: 
     def __init__(self,node_id,key,dataflow,route,iface,master=None,local=True):
-        # This is the socket (or whatever) that you can use to talk to
-        # this node.  It will usually be set by mc to
+        # self.dataflow is the socket (or whatever) that you can use
+        # to talk to this node.  It will usually be set by mc to
         # self.connections[0], and to send on it you can just use
         # route=bytearray(self.node_id,'utf-8')
         self.dataflow = dataflow
@@ -30,12 +30,15 @@ class Node:
         if (not master is None) and local:
             self.ports["mc"] = Port("mc",self)
             self.ports["mc"].add_route(Route(self.ports["mc"],master))
+        else:
+            self.ports["stderr"] = Port("stderr",self)
+            
     def send(self, header, args, route=None):
         if route is None:
             route = self.route
         try:
             args = self.interface.validate(header['command'],args)
-            print("SSS",self.node_id,route,header,args)
+            print("Sending",self.node_id,route,header,args)
             self.dataflow.send(header,args,route)
         except Exception as exc:
             print('OOPS',exc)

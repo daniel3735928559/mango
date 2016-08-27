@@ -20,9 +20,7 @@ class m_node:
         self.invalid_handler = lambda h,c: print("message not understood: "+ str(h))
         self.default_handler = lambda h,c: print("type not understood: "+ h['type'])
         self.default_cmd = lambda h,c: print("\n".join([x+": "+c[x] for x in c.keys() if x != 'command']))
-        self.interfaces = {}
         self.interface.add_interface('/home/zoom/suit/mango/libmango/node_if.yaml',{
-            'get_if':self.get_if,
             'reg':self.reg,
             'reply':self.reply
         })
@@ -49,28 +47,8 @@ class m_node:
            self.debug_print('OOPS',exc)
            self.m_send('error',{'message':str(exc),'source':header['src_node']},port="mc")
             
-        
-    def get_if(self,header,args):
-        self.debug_print("GET IF")
-        i = args['if']
-        if i in self.interfaces.keys():
-            return {'result':'success','if':self.interfaces[i]}
-        else:
-            return {'result':'failure'}
-
     def reply(self,header,args):
-        mid = header["mid"]
-        self.debug_print("REPLY HANDELR")
-        self.debug_print(mid,self.outstanding)
-        if not int(mid) in self.outstanding.keys():
-            self.debug_print("Fake reply",mid,self.outstanding)
-            return None
-    
-        del args["source"]
-        del args["mid"]
-
-        self.outstanding[mid](header,args) # Maybe build in here some checks that the reply contains what we expected?
-        del self.outstanding[mid]
+        print("REPLY",header,args)
         return None
 
     def handle_error(self,src,err):

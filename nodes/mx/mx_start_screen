@@ -7,6 +7,6 @@ while [[ ! -f .run/$MX_PID && ! -p .run/"$MX_PID"_out ]]; do
   printf '.';
   sleep 1;
   done
-bash --init-file .run/$MX_PID
-#screen -c screenrc
+# PS1="m $PS1" bash --init-file .run/$MX_PID
+screen -c screenrc
 

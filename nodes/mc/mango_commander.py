@@ -22,9 +22,10 @@ class mc(m_node):
 
         self.interface.add_interface("mc_if.yaml",
                                      {
-                                         "excite":self.excite,
                                          "route":self.route_add,
                                          "hello":self.hello,
+                                         "doc":self.doc,
+                                         "nodes":self.node_list,
                                          "error":self.mc_error
                                      })
                                  # {
@@ -64,6 +65,30 @@ class mc(m_node):
 
         self.run()
 
+    def doc(self,header,args):
+        n = args['node']
+        if n in self.nodes:
+            to_doc = self.nodes[n].interface
+        else:
+            raise m_error(m_error.BAD_ARGUMENT,"Node not found: {}".format(n))
+
+        if 'function' in args:
+            f = args['function']
+            if f in to_doc:
+                to_doc = to_doc[f]
+            else:
+                raise m_error(m_error.BAD_ARGUMENT,"Function not found: {}".format(f))
+            
+        if 'element' in args:
+            e = args['element']
+            for ei in e.split("."):
+                if ei in to_doc:
+                    to_doc = to_doc[ei]
+                else:
+                    raise m_error(m_error.BAD_ARGUMENT,"Function not found: {}".format(ei))
+                
+        return {"doc":str(to_doc)}
+        
     def hello(self,header,args):
         print("HELLO",header
               ,args)
@@ -78,10 +103,6 @@ class mc(m_node):
         if not result is None:
             header = self.make_header(header['callback'],callback=None,mid=header['mid'],src_port=header['port'])
             self.dataflow.send(header,result,route)
-        
-    def excite(self,header,args):
-        print(args['str'])
-        return {'str':args['str']+'!'}
         
     def mc_recv(self,h,c,raw,route,dataflow):
         print("MC got",h,c,raw,route)
@@ -113,7 +134,6 @@ class mc(m_node):
                 self.routes[route].ports[src_port].send(raw,h,c)
             else:
                 print("Non-hello init message: \n\n{}\n\n{}\n\nIgnoring".format(h,c))
-            
         else:
             if not src_port in self.routes[route].ports:
                 # If there is no matching Port object in the specified Node, fail
@@ -172,7 +192,7 @@ class mc(m_node):
     def node_list(self,header,args):
         print("NODES")
         print(",".join(self.nodes.keys()))
-        return {"list":", ".join([x for x in self.nodes.keys() if args['pattern'].decode() in x])}
+        return {"list":", ".join([x for x in self.nodes.keys() if (not 'pattern' in args or args['pattern'] in x)])}
 
     def node_flags(self,header,args):
         nid = args["ID"];

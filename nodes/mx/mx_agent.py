@@ -61,7 +61,7 @@ class mx_agent(m_node):
             self.handler_arg_defaults = {'file':{'filename':'/dev/stdout'},'print':{'format':None},'nop':{}}
             #os.mkfifo('.run/'+str(self.pid)+'_out')
             self.sh_init = open('.run/'+str(self.pid),'w')
-            self.sh_init.write("source ~/.bashrc\nexport MX_PID={0}\nexport MX_PORT={1}\ntrap 'kill {0}; rm .run/{0}; exit' TERM EXIT\nfunction load_if {{ ./mx load_if $1; source .run/{0}; }}\n".format(os.getpid(),self.fc.transport.port))
+            self.sh_init.write("source ~/.bashrc\nexport PS1=\"(mx) $PS1\"; export MX_PID={0}\nexport MX_PORT={1}\ntrap 'kill {0}; rm .run/{0}; exit' TERM EXIT\nfunction load_if {{ ./mx load_if $1; source .run/{0}; }}\n".format(os.getpid(),self.fc.transport.port))
             if len(sys.argv) >= 4:
                   f = open(sys.argv[3],"r")
                   self.sh_init.write("\n"+f.read())
@@ -69,7 +69,7 @@ class mx_agent(m_node):
             self.sh_init.flush()
             #print("asd")
             self.output = open('.run/'+str(self.pid)+'_out','w')#os.open('.run/'+str(self.pid)+'_out',os.O_WRONLY)
-            self.output.write("asd2")
+            self.output.write("asd2\n")
             self.output.flush()
             #print("asd3")
             self.ready()
@@ -77,7 +77,7 @@ class mx_agent(m_node):
 
 
       def mx_handle_reply(self,header,args):
-            print("AAAAAAA",header,args)
+            #print("AAAAAAA",header,args)
             self.output.write("H "+str(header))
             self.output.write("A "+str(args))
             self.output.flush()
@@ -164,9 +164,6 @@ class mx_agent(m_node):
             return ha,rcb
 
       def handler(self,msg):
-            #print('received!',msg)
-            self.output.write("asd2")
-            
             self.fc.send("ack")
             #print(self.outstanding)
             #print(msg)
@@ -177,16 +174,27 @@ class mx_agent(m_node):
             if(cmd == 'send'):
                   rcb = self.reply_cb
                   ha = {}
-                  port = args['port']
-                  del args['port']
+                  if 'p' in args:
+                        port = args['p']
+                        del args['p']
+                  else:
+                        port = "stdio"
                   if "r" in args:
                         new_cb = self.parse_callback(args["r"])
                         if(not new_cb is None):
                               ha,rcb = new_cb
                         del args["r"]
-                  #print("conn: "+str(conn))
-                  #print(cmd_name)
-                  #print(args)
+                  c = args.pop('command')
+                  self.m_send(c,args,reply_callback=lambda header,reply: rcb(header,reply,ha),port=port)
+            if(cmd == 'mc'):
+                  rcb = self.reply_cb
+                  ha = {}
+                  port = "mc"
+                  if "r" in args:
+                        new_cb = self.parse_callback(args["r"])
+                        if(not new_cb is None):
+                              ha,rcb = new_cb
+                        del args["r"]
                   c = args.pop('command')
                   self.m_send(c,args,reply_callback=lambda header,reply: rcb(header,reply,ha),port=port)
             elif cmd == 'handle':

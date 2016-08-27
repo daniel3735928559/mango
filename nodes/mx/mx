@@ -18,7 +18,10 @@ sock = context.socket(zmq.REQ)
 sock.connect("tcp://localhost:"+os.environ["MX_PORT"])
 mx_cmd = sys.argv[1]
 if(mx_cmd == "send"):
-    argns = ["mx_cmd","port","command"]+[x[1:] for x in sys.argv[1:] if x[0] == '-']
+    argns = ["mx_cmd","command"]+[x[1:] for x in sys.argv[1:] if x[0] == '-']
+    argvs = [x for x in sys.argv[1:] if x[0] != '-']
+elif(mx_cmd == "mc"):
+    argns = ["mx_cmd","command"]+[x[1:] for x in sys.argv[1:] if x[0] == '-']
     argvs = [x for x in sys.argv[1:] if x[0] != '-']
 elif(mx_cmd == "handle"):
     argns = ["mx_cmd","command","handler"]
