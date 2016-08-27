@@ -99,7 +99,8 @@ class mc(m_node):
                 print("New node: " + src_node + " id = " + new_id)
                 c['id'] = new_id
                 # Make the Node object
-                n = Node(new_id,self.gen_key(),self.dataflow,route, mc_if(c["if"]), master=self.nodes["mc"].ports["stdio"])
+                iface = mc_if(c["if"] if "if" in c else {})
+                n = Node(new_id,self.gen_key(),self.dataflow,route, iface, master=self.nodes["mc"].ports["stdio"])
                 
                 # Send the "reg" message
                 header = self.make_header("reg")

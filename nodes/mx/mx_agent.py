@@ -46,13 +46,17 @@ class zmq_rep_transport():
 
 class mx_agent(m_node):
       def __init__(self):  
-            super().__init__(sys.argv[1],sys.argv[2])
+            super().__init__(sys.argv[1],sys.argv[2],debug=False)
             self.fc = mx_dataflow(self.handler,zmq_rep_transport(self,self.context,self.poller))
             self.dataflows[self.fc.transport.socket] = self.fc
             time.sleep(1)
             #self.load_if("mc")
             self.pid = os.getpid()
             self.command_cbs = {}
+            self.interface.add_interface('/home/zoom/suit/mango/nodes/mx/mx_if.yaml',{
+                  'answer':self.mx_handle_reply
+            })
+
             self.handlers = {'print':self.print_handler,'file':self.file_handler,'forward':self.forward_handler,'nop':self.nop_handler}
             self.handler_arg_defaults = {'file':{'filename':'/dev/stdout'},'print':{'format':None},'nop':{}}
             #os.mkfifo('.run/'+str(self.pid)+'_out')
@@ -68,9 +72,16 @@ class mx_agent(m_node):
             self.output.write("asd2")
             self.output.flush()
             #print("asd3")
-            self.m_send('hello',{'str':'foo'},port="mc",callback="print")
+            self.ready()
             self.run()
-          
+
+
+      def mx_handle_reply(self,header,args):
+            print("AAAAAAA",header,args)
+            self.output.write("H "+str(header))
+            self.output.write("A "+str(args))
+            self.output.flush()
+            
       def setup_if(self,h,a):
             src_node,src_port = self.parse_port(h['source'])
             self.output.write("HEAD",h,"SOURCE",src_node,"PORT",src_port)
@@ -82,6 +93,7 @@ class mx_agent(m_node):
                   self.output.write("Got it")
             else:
                   self.output.write("Fail")
+            self.output.flush()
             
 
       def load_if(self,if_name):
@@ -113,16 +125,18 @@ class mx_agent(m_node):
             with open(filename) as f: 
                   f.write("\n".join([x+':'+args[x].decode('utf-8') for x in args.keys()]))
             self.output.write("Done")
+            self.output.flush()
 
       def nop_handler(self,header,args,handler_args):
             self.output.write("")
 
       def print_handler(self,header,args,handler_args):
-            #print(handler_args)
+            print(header,args,handler_args)
             if(handler_args is None):
                   self.output.write("\n".join([x+':'+args[x].decode('utf-8') for x in args.keys()]))
             else:
                   self.output.write(re.sub(r'([^\\]*)\{([a-zA-Z0-9_]+)\}',lambda m: m.group(1) + (args[m.group(2)].decode() if m.group(2) in args.keys() else ""),handler_args['format']))
+            self.output.flush()
           
       def forward_handler(self,header,message,conns):
             for c in conns:
