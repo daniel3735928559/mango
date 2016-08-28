@@ -5,8 +5,8 @@ language needs an instance of this library in order that mango
 programs can be written in that language.
 
 This should not be a terribly onerous request, as the library should
-be relatively simple (the current Python implementation is under 300
-lines of code) and we intend that this document should describe the
+be relatively simple (the current Python implementation is 257 lines
+of code) and we intend that this document should describe the
 requirements fully so that anyone with the requisite knowledge should
 be able to implement libmango in a currently unsupported language.
 

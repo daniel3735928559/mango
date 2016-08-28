@@ -36,9 +36,7 @@ class m_if:
             raise m_error(m_error.VALIDATION_ERROR,"Unknown function")
 
     def compare_dict_keys(self, d1, d2):
-        """
-        Returns [things in d1 not in d2, things in d2 not in d1]
-        """
+        """Returns [things in d1 not in d2, things in d2 not in d1]"""
         return [k for k in d1 if not k in d2], [k for k in d2 if not k in d1]
             
 class m_YAML_if():

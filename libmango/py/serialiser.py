@@ -14,12 +14,10 @@ class m_serialiser:
 
     def parse_preamble(self,msg):
         nl1 = msg.find(b'\n')
-        preamble = msg[:nl1]
-        msg = msg[nl1+1:]
-        m = re.match("^MANGO([0-9.]*) ([^ ]*)$",preamble.decode("ASCII"))
+        m = re.match("^MANGO([0-9.]*) ([^ ]*)$",msg[:nl1].decode("ASCII"))
         if(m is None):
             raise m_error(m_error.SERIALISATION_ERROR,"Preamble failed to parse")
-        return m.group(1),m.group(2),msg
+        return m.group(1),m.group(2),msg[nl1+1:]
 
     def serialise(self,header,msg):
         return self.make_preamble()+self.serialisers[self.method].pack(header,msg)
@@ -31,8 +29,6 @@ class m_serialiser:
         h,a = self.serialisers[method].unpack(msg)
         return h,a
 
-
-    
 class m_json_serialiser:
     def pack(self,header,msg):
         d = {"header":header,"args":msg}
