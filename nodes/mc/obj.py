@@ -82,7 +82,10 @@ class Route:
                 for k in o:
                     new_args[k] = o[k] if o[k][0] != '$' else (args[o[k][1:]] if o[k][1] != '_' else message.decode('ASCII'))
             elif(t == "filter"):
-                return None
+                if header['command'] != o:
+                    print("FILTER BLOCK",header['command'],'is not',o)
+                    return None,None,None
+                print("FILTER PASS",header['command'],o)
 
             # Syntax for a bash transmogrifier is: 
             # ...> sh $key [cmd] > ...
@@ -91,7 +94,7 @@ class Route:
                 k,cmd = o.split(' ',1)
                 if(not k in new_args):
                     print("Bad key",k)
-                    return None
+                    return None,None,None
                 args[k] = subprocess.check_output('printf {} | {}'.format(args[k],cmd),shell=True).decode()
 
         #new_header['port'] = self.endpoint.name
@@ -99,6 +102,9 @@ class Route:
 
     def send(self,message,header,args):
         h,a,m = self.apply(message,header,args)
+        if h is None:
+            print("BLOCKED",message,header,args)
+            return
         if m is None:
             #self.endpoint.owner.conn.send(a,self.source.name,dest=self.endpoint.get_id(),route=bytearray(self.endpoint.owner.node_id,'utf-8'))
             print("ROUTE send",h,a,m,self.endpoint.get_id())

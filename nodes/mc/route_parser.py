@@ -31,7 +31,7 @@ class route_lexer:
       t_RAW = r"%[a-z]+"
 
       def t_PORT(self,t):
-            r"[A-Za-z0-9.:/]+"
+            r"[_A-Za-z0-9.:/]+"
             if '/' in t.value:
                   t.value = list(t.value.rsplit('/',1))
             else:
@@ -44,13 +44,13 @@ class route_lexer:
             return t
 
       def t_JSON_LIST(self,t):
-            r'\["(?:[^"\\]|\\.)*"\]'
+            r'\["(?:[^"\\]|\\.)*"(,"(?:[^"\\]|\\.)*")*\]'
             t.value = json.loads(t.value)
             return t
 
       def t_TEST(self,t):
-            r'-e ([a-zA-Z]+)'
-            t.value = 'exists \1'
+            r'"([a-zA-Z_][a-zA-Z0-9_]*)"'
+            t.value = t.value[1:-1]
             return t
 
       t_ignore = " \t\n"
