@@ -16,10 +16,6 @@ class m_node:
         self.dataflows = {}
         self.node_id = node_id
         self.mid = 0
-        self.outstanding = {}
-        self.invalid_handler = lambda h,c: print("message not understood: "+ str(h))
-        self.default_handler = lambda h,c: print("type not understood: "+ h['type'])
-        self.default_cmd = lambda h,c: print("\n".join([x+": "+c[x] for x in c.keys() if x != 'command']))
         self.interface.add_interface('/home/zoom/suit/mango/libmango/node_if.yaml',{
             'reg':self.reg,
             'reply':self.reply
@@ -39,31 +35,25 @@ class m_node:
     def dispatch(self,header,args):
         self.debug_print("DISPATCH",header,args)
         try:
-           self.debug_print("IF",self.interface.interface)
            result = self.interface.interface[header['command']]['handler'](header,args)
            if (not result is None) and 'callback' in header:
                self.m_send(header['callback'],result,port=header['port'],mid=header['mid'])
         except Exception as exc:
-           self.debug_print('OOPS',exc)
-           self.m_send('error',{'message':str(exc),'source':header['src_node']},port="mc")
+           self.handle_error(header['src_node'],str(exc))
             
     def reply(self,header,args):
         print("REPLY",header,args)
-        return None
 
     def handle_error(self,src,err):
-        self.debug_print(err)
+        self.debug_print('OOPS',err)
         self.m_send('error',{'source':src,'message':err},port="mc")
-        return None
 
     def get_mid(self):
         self.mid = (self.mid + 1)%(2**63)
         return self.mid
 
     def reg(self,header,args):
-        #self.key = args["key"]
         self.node_id = args["id"]
-        #self.local_gateway.set_id(args["node_id"])
         self.debug_print('my new node id')
         self.debug_print(self.node_id)
         self.debug_print("registered as " + self.node_id)
@@ -86,7 +76,6 @@ class m_node:
         self.dataflow.send(header,msg)
         if not async and not callback is None:
             self.dataflow.recv()
-        self.debug_print("outstanding",self.outstanding)
         return header['mid']
 
     def debug_print(self,*args):
@@ -101,7 +90,6 @@ class m_node:
                 if socks[s] == zmq.POLLIN:
                     self.debug_print("RX",s,self.dataflows[s])
                     self.dataflows[s].recv()
-
                 elif(socks[s] & zmq.POLLERR != 0):
                     self.debug_print('socket error',s,socks[s])
                     self.dataflows[s].die()
