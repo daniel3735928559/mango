@@ -17,10 +17,52 @@ be able to implement libmango in a currently unsupported language.
 * Clojure: Tentatively planned
 * C++: Tentatively planned
 
-## Specification
+## Outline of the task
+
+At a high level, a mango program runs the following steps:
+
+1. Store a mapping of function names to actual functions
+
+2. Connect to a central hub (currently via ZMQ dealer socket)
+
+3. Send the central hub a "hello" message, which looks like:
+
+```
+MANGO [version number]
+{"header":{"command":"hello",...},"args":{"id":[id requested],"if":[dictionary describing functions and their arguments]}
+```
+
+4. The response will be a registration message, which will look like: 
+
+```
+MANGO [version number]
+{"header":{"command":"reg",...},"args":{"id":[id given]}
+```
+
+This should be handled, and all future communications should use the
+given ID as the "src" field in the header.
+
+5. Then, after any further program-specific initialisation, the socket
+connecting the node to the hub should be polled for any incoming data,
+which should be deserialised into the header dictionary and the
+arguments dictionary.  The header dictionary will contain a "command"
+field, which will specify the function being called.  This should
+exist in the mapping stored in step 1.  This function should be
+called, with the header and arguments dictionaries passed in as the
+two arguments.  The function should return a dictionary, which should
+be sent out as the arguments dictionary to a "reply" command.  The
+"mid" in the header of the reply command should be the same as the
+"mid" in the header of the command being replied to.
+
+6. To facilitate all this sending of messages, there should be a "send
+message" function (often called `m_send`) which serialises and sends a
+message given: a command, a source port (which should default to
+"stdio"), and an arguments dictionary.  
+
+## Components
 
 A libmango implementation generally consists of code that handles the
-following tasks:
+following tasks (whether as separate files or as :
 
 * Transport: Sending and receiving actual data (currently, via
   ZeroMQ).
