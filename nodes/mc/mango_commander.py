@@ -49,6 +49,7 @@ class mc(m_node):
         self.uuid = str(self.gen_key())
 
         self.mc_addr = "tcp://*:"+sys.argv[1]
+        self.mc_target = "tcp://localhost:"+sys.argv[1]
         self.local_gateway = m_ZMQ_transport(self.mc_addr,self.context,self.poller,True)
         s = self.local_gateway.socket
         self.dataflow = mc_router_dataflow(self.local_gateway,self.serialiser,self.mc_recv)
@@ -295,13 +296,14 @@ class mc(m_node):
         base_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../')
         lib_base_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../../libmango')
         if n in self.node_types:
+            lang = self.node_types[n]['lang']
             node_base = os.path.join(base_path,n)
-            lib_path = os.path.join(base_path,self.node_types[n].lang)
-            nenv = {'MC_ADDR':self.mc_addr,'MANGO_ID':nid}
+            lib_path = os.path.join(lib_base_path,lang)
+            nenv = {'MC_ADDR':self.mc_target,'MANGO_ID':nid}
             if 'pathvar' in self.langs[lang]:
                 nenv[self.langs[lang]['pathvar']] = lib_path
             print("E",nenv,"B",node_base)
-            subprocess.Popen(shlex.split(self.node_types[n].runner), cwd=node_base, env=nenv)
+            subprocess.Popen(shlex.split(self.node_types[n]['run']), cwd=node_base, env=nenv)
             return {'result':'success'}
         return {'result':'fail'}
 

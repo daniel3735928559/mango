@@ -1,4 +1,7 @@
-MC_ADDR='tcp://localhost:'"$1" PYTHONPATH='/home/zoom/suit/mango/libmango/py' python mx_agent.py $2 tcp://localhost:$1 $3 &
+export MC_ADDR='tcp://localhost:'"$1"
+export PYTHONPATH='/home/zoom/suit/mango/libmango/py'
+export MANGO_ID=$2
+python mx_agent.py &
 export MX_PID=$!
 echo $MX_PID
 while [[ ! -f .run/$MX_PID && ! -p .run/"$MX_PID"_out ]]; do

@@ -43,7 +43,7 @@ nodes:
 launch:
   description: launch a new node with the specified ID
   args:
-    type:
+    node:
       type: string
     id:
       type: string

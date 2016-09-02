@@ -1,5 +1,6 @@
-from libmango import *
 import time, os
+print(os.environ,os.getcwd())
+from libmango import *
 
 class excite(m_node):
     def __init__(self):

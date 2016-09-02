@@ -20,7 +20,7 @@ class m_node:
             'reg':self.reg,
             'reply':self.reply
         })
-        server = os.getenv('NC_ADDR',None)
+        server = os.getenv('MC_ADDR',None)
         print(server,os.environ)
         if not server is None:
             self.local_gateway = m_ZMQ_transport(server,self.context,self.poller)

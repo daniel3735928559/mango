@@ -4,11 +4,11 @@
     },
     "nodes":{
 	"mx":{
-	    "runner":"mx_start",
+	    "run":"mx_start",
 	    "lang":"py"
 	},
 	"excite":{
-	    "runner":"python excite.py",
+	    "run":"python excite.py",
 	    "lang":"py"
 	}
     }
