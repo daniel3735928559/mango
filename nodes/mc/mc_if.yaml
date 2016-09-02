@@ -39,3 +39,11 @@ doc:
       optional: true
 
 nodes:
+
+launch:
+  description: launch a new node with the specified ID
+  args:
+    type:
+      type: string
+    id:
+      type: string

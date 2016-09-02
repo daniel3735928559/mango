@@ -46,7 +46,7 @@ class zmq_rep_transport():
 
 class mx_agent(m_node):
       def __init__(self):  
-            super().__init__(sys.argv[1],sys.argv[2],debug=False)
+            super().__init__(debug=False)
             self.fc = mx_dataflow(self.handler,zmq_rep_transport(self,self.context,self.poller))
             self.dataflows[self.fc.transport.socket] = self.fc
             time.sleep(1)

@@ -1,0 +1,15 @@
+{
+    "langs":{
+	"py":{"pathvar":"PYTHONPATH"}
+    },
+    "nodes":{
+	"mx":{
+	    "runner":"mx_start",
+	    "lang":"py"
+	},
+	"excite":{
+	    "runner":"python excite.py",
+	    "lang":"py"
+	}
+    }
+}

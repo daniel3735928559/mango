@@ -12,8 +12,9 @@ from obj import *
 class mc(m_node):
     
     def __init__(self,ID):
-        super().__init__(ID,server=None)
+        super().__init__(ID)
         self.node_types = {}
+        self.collect_nodes()
         self.route_parser = route_parser()
         
         # Now read xml file to get list of nodes and shell commands to spin them up.  
@@ -26,7 +27,8 @@ class mc(m_node):
                                          "hello":self.hello,
                                          "doc":self.doc,
                                          "nodes":self.node_list,
-                                         "error":self.mc_error
+                                         "error":self.mc_error,
+                                         "launch":self.launch
                                      })
                                  # {
                                  #     "rt_list":self.rt_list,
@@ -46,7 +48,8 @@ class mc(m_node):
         print(self.interface.interface);
         self.uuid = str(self.gen_key())
 
-        self.local_gateway = m_ZMQ_transport("tcp://*:"+sys.argv[1],self.context,self.poller,True)
+        self.mc_addr = "tcp://*:"+sys.argv[1]
+        self.local_gateway = m_ZMQ_transport(self.mc_addr,self.context,self.poller,True)
         s = self.local_gateway.socket
         self.dataflow = mc_router_dataflow(self.local_gateway,self.serialiser,self.mc_recv)
         self.dataflows[s] = self.dataflow
@@ -65,10 +68,17 @@ class mc(m_node):
 
         self.run()
 
+    def collect_nodes(self):
+        manifest_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../manifest.json')
+        with open(manifest_path) as f:
+            manifest = json.loads(f.read())
+        self.node_types = manifest['nodes']
+        self.langs = manifest['langs']
+        
     def doc(self,header,args):
         n = args['node']
         if n in self.nodes:
-            to_doc = self.nodes[n].interface
+            to_doc = self.nodes[n].interface.interface
         else:
             raise m_error(m_error.BAD_ARGUMENT,"Node not found: {}".format(n))
 
@@ -279,11 +289,19 @@ class mc(m_node):
         del self.nodes[node].ports[port]
         return {'result':'success'}
 
-    def go(self,header,args):
-        n = args['node'].decode()
-        nid = args['id'].decode()
-        if n in self.avail_nodes:
-            subprocess.Popen(shlex.split(self.node_types[n].runner.replace("$ID",nid)))
+    def launch(self,header,args):
+        n = args['node']
+        nid = args['id']
+        base_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../')
+        lib_base_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../../libmango')
+        if n in self.node_types:
+            node_base = os.path.join(base_path,n)
+            lib_path = os.path.join(base_path,self.node_types[n].lang)
+            nenv = {'MC_ADDR':self.mc_addr,'MANGO_ID':nid}
+            if 'pathvar' in self.langs[lang]:
+                nenv[self.langs[lang]['pathvar']] = lib_path
+            print("E",nenv,"B",node_base)
+            subprocess.Popen(shlex.split(self.node_types[n].runner), cwd=node_base, env=nenv)
             return {'result':'success'}
         return {'result':'fail'}
 

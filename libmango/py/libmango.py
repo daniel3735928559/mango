@@ -6,7 +6,7 @@ from interface import *
 from error import *
 
 class m_node: 
-    def __init__(self,node_id,server=None,debug=False):
+    def __init__(self,debug=False):
         self.version = "0.1"
         self.debug = debug
         self.context = zmq.Context()
@@ -14,12 +14,14 @@ class m_node:
         self.serialiser = m_serialiser(self.version)
         self.interface = m_if()
         self.dataflows = {}
-        self.node_id = node_id
+        self.node_id = os.getenv('MANGO_ID')
         self.mid = 0
         self.interface.add_interface('/home/zoom/suit/mango/libmango/node_if.yaml',{
             'reg':self.reg,
             'reply':self.reply
         })
+        server = os.getenv('NC_ADDR',None)
+        print(server,os.environ)
         if not server is None:
             self.local_gateway = m_ZMQ_transport(server,self.context,self.poller)
             s = self.local_gateway.socket

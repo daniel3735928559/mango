@@ -1,9 +1,9 @@
 from libmango import *
-import time
+import time, os
 
 class excite(m_node):
     def __init__(self):
-        super().__init__("excite","tcp://localhost:61453",debug=True)
+        super().__init__(debug=True)
         self.interface.add_interface('/home/zoom/suit/mango/nodes/excite/excite.yaml',{
             'excite':self.excite,
             'print':self.output
