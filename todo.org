@@ -1,0 +1,32 @@
+* libmango (library)
+** languages
+*** DONE Python
+*** TODO Javascript
+*** TODO Clojure
+*** TODO C++
+** TODO Documentation
+** TODO Heartbeat functionality
+* mc (server)
+** TODO Functions
+*** TODO doc
+**** TODO Return pretty docstrings
+**** TODO Do not return default interface docs
+*** TODO nodes
+**** TODO Do not return mc
+*** TODO route
+**** TODO Change argument name from spec to something else
+*** TODO Add/delete/list routes
+*** TODO Add/delete ports
+*** TODO Launch/list node types
+*** TODO Remote connect/disconnect
+** TODO Your parent node is the node that launched you
+** TODO Add disconnection detection by heartbeating
+** TODO Add notion of capabilities: A node gets a random key, which enables it to modify routes pertaining to itself
+* mx (shell client)
+** TODO aliases
+** TODO tab completion
+* mu (HTTP server/mango client)
+** TODO Port from old mango
+* demo
+** t3 (super tic-tac-toe)
+** curt (encryption/decryption)
