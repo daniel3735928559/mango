@@ -62,7 +62,11 @@ message given: a command, a source port (which should default to
 ## Components
 
 A libmango implementation generally consists of code that handles the
-following tasks (whether as separate files or as :
+following tasks (whether as separate files, functions, or just pieces
+of one large blob of code, but in principle it should be easy to swap
+out methods of transporting data, serialising, or whatever; if someone
+wants to do all of their transport by carrier pigeon and serialise
+messages as XML RPC calls, then that should be made easy):
 
 * Transport: Sending and receiving actual data (currently, via
   ZeroMQ).
@@ -84,4 +88,3 @@ following tasks (whether as separate files or as :
 
 * Error: Something to codify and translate the various mango error
   codes.
-
