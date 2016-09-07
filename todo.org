@@ -26,7 +26,11 @@
 ** TODO aliases
 ** TODO tab completion
 * mu (HTTP server/mango client)
-** TODO Port from old mango
+** DONE websocket transport
+   CLOSED: [2016-09-07 Wed 17:27]
+** DONE spin up with specified ws port
+   CLOSED: [2016-09-07 Wed 17:42]
+** TODO have mu spin up http file server with specified root dir
 * demo
 ** t3 (super tic-tac-toe)
 ** curt (encryption/decryption)

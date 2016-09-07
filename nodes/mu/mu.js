@@ -30,12 +30,9 @@ function poll(){
 
 window.onload = poll;
 
-function m_send(dict,cb){
+function m_send(command,dict,cb){
     console.log(JSON.stringify(dict));
-    dict['mid'] = mid+'';
-    outstanding[mid] = cb;
-    mid++;
-    var msg = "MANGO0.1 json\n"+JSON.stringify({"header":{"source/stdio":"mu","mid":mid+""},"args":dict});
+    var msg = "MANGO0.1 json\n"+JSON.stringify({"header":{"source/stdio":"mu","mid":mid+"","command":command},"args":dict});
     console.log(dict);
     var xhr = new XMLHttpRequest();
     var tries = 0;
