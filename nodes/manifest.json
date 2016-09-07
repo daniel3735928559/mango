@@ -10,6 +10,10 @@
 	"excite":{
 	    "run":"python excite.py",
 	    "lang":"py"
+	},
+	"mu":{
+	    "run":"python mu.py",
+	    "lang":"py"
 	}
     }
 }

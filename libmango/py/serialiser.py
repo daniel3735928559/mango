@@ -1,5 +1,6 @@
 from hashlib import *
 import hmac, re, json
+from error import *
 
 HMAC_LENGTH = 32
 
@@ -23,6 +24,7 @@ class m_serialiser:
         return self.make_preamble()+self.serialisers[self.method].pack(header,msg)
 
     def deserialise(self,message):
+        print("DS",type(message))
         ver,method,msg = self.parse_preamble(message)
         if ver != self.version:
             raise m_error(m_error.VERSION_MISMATCH, ver + " given, " + self.version + " expected")

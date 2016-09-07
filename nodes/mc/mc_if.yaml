@@ -47,3 +47,7 @@ launch:
       type: string
     id:
       type: string
+    env:
+      type: string
+      optional: true
+      description: JSON string giving environment vars to add

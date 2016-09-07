@@ -1,4 +1,4 @@
-import io, re, socket, time, signal, os, sys, random, zmq, subprocess, shlex, json,traceback
+import io, re, socket, time, signal, os, sys, random, zmq, subprocess, shlex, json, traceback
 from route_parser import route_parser
 from mc_dataflows import *
 from mc_transport import *
@@ -101,8 +101,7 @@ class mc(m_node):
         return {"doc":str(to_doc)}
         
     def hello(self,header,args):
-        print("HELLO",header
-              ,args)
+        print("HELLO",header,args)
         return {'id':args['id']}
         
     def mc_error(self,header,args):
@@ -302,6 +301,8 @@ class mc(m_node):
             nenv = {'MC_ADDR':self.mc_target,'MANGO_ID':nid}
             if 'pathvar' in self.langs[lang]:
                 nenv[self.langs[lang]['pathvar']] = lib_path
+            if 'env' in args:
+                nenv.update(json.loads(args['env']))
             print("E",nenv,"B",node_base)
             subprocess.Popen(shlex.split(self.node_types[n]['run']), cwd=node_base, env=nenv)
             return {'result':'success'}
