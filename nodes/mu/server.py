@@ -14,4 +14,4 @@ def do_mangojs(path):
 def others(path):
     return send_from_directory(root_dir, path)
 
-app.run(port=int(os.getenv("MU_HTTP_PORT")),debug=True)
+app.run(port=int(os.getenv("MU_HTTP_PORT")))

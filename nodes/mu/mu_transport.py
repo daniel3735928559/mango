@@ -70,6 +70,7 @@ class mu_client_ws:
             b1 |= TEXT
             payload = s.encode('utf-8')
         else:
+            b1 |= BINARY
             payload = s
             
         # Append 'FIN' flag to the message

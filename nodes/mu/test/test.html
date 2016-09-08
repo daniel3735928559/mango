@@ -6,7 +6,8 @@
     <script type="text/javascript">
       var mango;
       window.onload = function(){
-        mango = new Mango("9090",{"dostuff":function(header,args){console.log("ASDA",header,args);}});
+        mango = new
+      Mango("9090",{"dostuff":function(header,args){console.log("DOING STUFF",header,args);}});
       };
       var test = function(){
         mango.m_send("excite",{"str":document.getElementById('tosend').value});

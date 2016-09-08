@@ -134,6 +134,7 @@ class mu_client_dataflow(m_dataflow):
 
     def recv(self):
         data = self.transport.rx()
+        print("MU DATA",data);
         if data is None:
             return None
         try:
