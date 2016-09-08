@@ -1,6 +1,6 @@
 route:
   args:
-    r:
+    map:
       type: string
   rets:
     success:
@@ -55,6 +55,26 @@ launch:
 types:
   rets:
     types:
+      type: list
+      values:
+        type: string
+
+routes:
+  args:
+    src_node:
+      type: string
+      optional: true
+    src_port:
+      type: string
+      optional: true
+    dest_node:
+      type: string
+      optional: true
+    dest_port:
+      type: string
+      optional: true
+  rets:
+    routes:
       type: list
       values:
         type: string

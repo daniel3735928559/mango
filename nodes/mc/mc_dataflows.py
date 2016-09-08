@@ -46,6 +46,33 @@ class mc_router_dataflow():
         print("MC ROUTER SEND",header,msg,"route =",route)
         self.transport.socket.send(route,zmq.SNDMORE)
         self.transport.tx(data)
+
+class mc_remote_dataflow:
+    def __init__(self,transport,serialiser,dispatch_cb):
+        self.transport = transport
+        self.serialiser = serialiser
+        self.dispatch_cb = dispatch_cb
+    
+    def recv(self):
+        route = self.transport.rx()
+        data = self.transport.rx()
+        header,args = self.serialiser.deserialise(data)
+        self.dispatch_cb(header,args,data,route,self)
+
+    def send(self,header,msg,route):
+        print(type(route),route)
+        if(type(route) != bytes):
+            route = bytes(route,"ASCII")
+        print("MC REMOTE SEND",header,msg,"route =",route)
+        data = self.serialiser.serialise(header,msg)
+        self.transport.socket.send(route,zmq.SNDMORE)
+        self.transport.tx(data)
+        
+    def send_raw(self,data,route):
+        print("MC ROUTER SEND",header,msg,"route =",route)
+        self.transport.socket.send(route,zmq.SNDMORE)
+        self.transport.tx(data)
+
     
 
 # class mc_dataflow(m_dataflow):

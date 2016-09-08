@@ -25,7 +25,7 @@
 *** TODO manage routing
 **** DONE route
 ***** DONE Change argument name from spec to something else
-**** TODO routes
+**** DONE routes
 **** TODO delroute
 *** TODO manage ports
 **** TODO ports

@@ -52,7 +52,9 @@ class Route:
         self.transmogrifiers = [] # a list of "modifier type",whatever pairs:
 
     def to_string(self):
-        return ""
+        if len(self.transmogrifiers) > 0:
+            return "{} > {} > {}".format(str(self.source), str(self.transmogrifiers), str(self.endpoint))
+        return "{} > {}".format(str(self.source), str(self.endpoint))
         
     def apply(self,message,header,args):
         new_header = header

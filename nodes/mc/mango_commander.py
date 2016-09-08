@@ -29,23 +29,16 @@ class mc(m_node):
                                          "nodes":self.node_list,
                                          "error":self.mc_error,
                                          "launch":self.launch,
-                                         "types":self.list_types
+                                         "types":self.list_types,
+                                         #"delnode":self.delnode,
+                                         #"ports":self.ports,
+                                         #"addport":self.addport,
+                                         #"delport":self.delport,
+                                         #"delroute":self.delroute,
+                                         #"remote":self.remote_connect,
+                                         #"delremote":self.remote_disconnect,
+                                         "routes":self.routes
                                      })
-                                 # {
-                                 #     "rt_list":self.rt_list,
-                                 #     "rt_add":self.rt_add,
-                                 #     "rt_del":self.rt_del,
-                                 #     "port_add":self.port_add,
-                                 #     "port_del":self.port_del,
-                                 #     "node_del":self.node_del,
-                                 #     "node_list":self.node_list,
-                                 #     "node_flags":self.node_flags,
-                                 #     "start":self.go,
-                                 #     "list":self.type_list,
-                                 #     "find_if":self.find_if,
-                                 #     "remote_connect":self.remote_connect,
-                                 #     "remote_disconnect":self.remote_disconnect
-                                 # })
         print(self.interface.interface);
         self.uuid = str(self.gen_key())
 
@@ -63,10 +56,11 @@ class mc(m_node):
 
         # Remote listening stuff: 
 
-        # self.remote_gateway = m_srv_sock(int(sys.argv[2]))
-        # f = self.remote_gateway.socket.fileno()
-        # self.dataflows[f] = mc_remote_srv_dataflow(self,self.remote_recv,self.remote_gateway)
-        # self.poller.register(f,zmq.POLLIN)
+        self.mc_remote_addr = "tcp://*:"+sys.argv[2]
+        self.remote_gateway = m_ZMQ_transport(self.mc_remote_addr,self.context,self.poller,True)
+        f = self.remote_gateway.socket
+        self.dataflows[f] = mc_remote_dataflow(self.remote_gateway,self.serialiser,self.remote_recv)
+        self.poller.register(f,zmq.POLLIN)
 
         self.run()
 
@@ -115,6 +109,9 @@ class mc(m_node):
             header = self.make_header(header['callback'],callback=None,mid=header['mid'],src_port=header['port'])
             self.dataflow.send(header,result,route)
         
+    def remote_recv(self,h,c,raw,route,dataflow):
+        pass
+    
     def mc_recv(self,h,c,raw,route,dataflow):
         print("MC got",h,c,raw,route)
         src_node = h['src_node']
@@ -211,18 +208,38 @@ class mc(m_node):
         self.nodes[nid].flags = f
         pass
 
-    def rt_list(self,header,args):
-        sn,sp = parse_port(args['src'])
-        dn,dp = parse_port(args['dest'])
-        
+    def routes(self,header,args):
+        everything = r".*"
+        if 'src_node' in args:
+            sn = args['src_node']
+            if 'src_port' in args:
+                sp = args['src_port']
+            else:
+                sp = everything
+        else:
+            sn = everything
+            sp = everything
+        if 'dest_node' in args:
+            dn = args['dest_node']
+            if 'dest_port' in args:
+                dp = args['dest_port']
+            else:
+                dp = everything
+        else:
+            dn = everything
+            dp = everything
         sns = [self.nodes[n] for n in self.nodes if re.match(sn,n)]
-        sps = [p for p in node.ports if re.match(sp,p) for node in sns]
-        rs = [r for r in p.routes if re.match(dn,r.endpoint[0]) and re.match(dp,r.endpoint[1]) for p in sps]
-        return {'routes':"\n".join([r.to_string() for r in rs])}
+        sps = []
+        for n in sns:
+            sps += [n.ports[p] for p in n.ports if re.match(sp,p)]
+        rs = []
+        for p in sps:
+            rs += [p.routes[r] for r in p.routes if re.match(dn,p.routes[r].endpoint.owner.node_id) and re.match(dp,p.routes[r].endpoint.name)]
+        return {'routes':[r.to_string() for r in rs]}
 
     def route_add(self,header,args):
         print("BUILDING ROUTE",header,args)
-        rt = self.route_parser.parse(args['r'])
+        rt = self.route_parser.parse(args['map'])
         if(rt is None):
             return {'success':False}
         chains = []
