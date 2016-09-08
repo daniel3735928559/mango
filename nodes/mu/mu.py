@@ -1,4 +1,4 @@
-import io, re, socketserver, socket, threading, time, signal, os, sys, random, zmq, json, traceback, yaml
+import io, re, socketserver, socket, threading, time, signal, os, sys, random, zmq, json, traceback, yaml, subprocess, shlex
 from libmango import *
 from mu_dataflows import *
 from mu_transport import *
@@ -12,20 +12,26 @@ class mu(m_node):
         # self.put_queue = Queue()
         # self.xhrpoller = None
         print("ASDA")
-        self.server_sock = mu_server_ws("0.0.0.0",int(os.getenv("MU_PORT",8045)))
+        self.server_sock = mu_server_ws("0.0.0.0",int(os.getenv("MU_WS_PORT")))
         self.server_dataflow = mu_server_dataflow(None,self.server_sock,self.serialiser,self.ui_to_world,self.handle_error,self)
         self.poller.register(self.server_sock.socket.fileno(),zmq.POLLIN)
         self.dataflows[self.server_sock.socket.fileno()] = self.server_dataflow
+        self.client_ws_dataflows = {}
         #self.default_cmd = self.world_to_ui
         mu_if_file = os.getenv("MU_IF",None)
         if not mu_if_file is None:
             try:
-                if_dict = {x:self.world_to_ui for x in yaml.load(mu_if_file)}
+                with open(mu_if_file,"r") as f:
+                    new_if = yaml.load(f)
+                if_dict = {x:self.world_to_ui for x in new_if}
+                print("ASDASDASD",if_dict,new_if)
                 self.interface.add_interface(mu_if_file,if_dict)
             except:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
                 traceback.print_exception(exc_type, exc_value, exc_traceback,file=sys.stdout)
+
+        #subprocess.Popen(shlex.split("python server.py"), env={"MU_HTTP_PORT":os.getenv("MU_HTTP_PORT"),"MU_ROOT_DIR":os.getenv("MU_ROOT_DIR")})
         self.ready()
         self.run()#self.main_loop)
 
@@ -71,15 +77,16 @@ class mu(m_node):
         
         return {"node_id":n.ID,"key":n.key}
 
-    def ui_to_world(self,port,header,args,raw,dataflow):
-        print("UI2W")
-        print(header,args)
-        self.m_send(args,reply_callback=lambda h,a: self.world_to_ui(h,a,args['mid']))
+    def ui_to_world(self, header, args):
+        print("UI2W",header,args)
+        self.m_send(header['command'], args)
 
-    def world_to_ui(self,header,args,msgid=None):
-        print("W2UI",header,args)
-        if not msgid is None:
-            args['reply'] = bytes(str(msgid),"ASCII")
+    def world_to_ui(self, header, args):
+        print("W2UI", header, args)
+        for x in self.client_ws_dataflows:
+            df = self.client_ws_dataflows[x]
+            if df.transport.alive:
+                df.send(header,args)
         #print(args)
         #for x in args:
         #    if(not isinstance(args[x],str)): args[x] = args[x].decode("UTF-8")

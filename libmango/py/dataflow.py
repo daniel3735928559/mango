@@ -1,4 +1,5 @@
 from error import *
+import traceback, sys
 
 class m_dataflow:
     def __init__(self,interface,transport,serialiser,dispatch_cb,error_cb):
@@ -14,6 +15,9 @@ class m_dataflow:
             data = self.serialiser.serialise(header, msg)
             self.transport.tx(data)
         except m_error as exc:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+            traceback.print_exception(exc_type, exc_value, exc_traceback,file=sys.stdout)
             self.error_cb(exc)
             return None
     

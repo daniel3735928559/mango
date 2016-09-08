@@ -1,6 +1,6 @@
 # Many thanks to https://gist.github.com/rich20bb/4190781
 
-import socket, hashlib, base64
+import socket, hashlib, base64, struct
 
 MAGICGUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 TEXT = 0x01
@@ -42,6 +42,7 @@ class mu_client_ws:
         )
         self.sock = sock
         self.handshaken = False
+        self.alive = True
         self.header = ""
 
     def rx(self):
@@ -63,18 +64,16 @@ class mu_client_ws:
             return None
         
     def tx(self, s):
-        message = ""
+        message = bytes([])
         b1 = 0x80
-        if type(s) == unicode:
+        if type(s) == str:
             b1 |= TEXT
-            payload = s.encode("UTF8")
-            
-        elif type(s) == str:
-            b1 |= TEXT
+            payload = s.encode('utf-8')
+        else:
             payload = s
-
+            
         # Append 'FIN' flag to the message
-        message += chr(b1)
+        message += bytes([b1])
 
         # never mask frames from the server to the client
         b2 = 0
@@ -83,25 +82,26 @@ class mu_client_ws:
         length = len(payload)
         if length < 126:
             b2 |= length
-            message += chr(b2)
+            message += bytes([b2])
         
         elif length < (2 ** 16) - 1:
             b2 |= 126
-            message += chr(b2)
+            message += bytes([b2])
             l = struct.pack(">H", length)
             message += l
         
         else:
             l = struct.pack(">Q", length)
             b2 |= 127
-            message += chr(b2)
+            message += bytes([b2])
             message += l
 
         # Append payload to message
         message += payload
 
         # Send to the client
-        self.sock.send(bytes(message,'utf-8'))
+        print("ASA",message)
+        self.sock.send(message)
 
 
     def decode_(self, byte_array):
@@ -158,4 +158,5 @@ class mu_client_ws:
         return True
 
     def close(self):
+        self.alive = False
         self.sock.close()

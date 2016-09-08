@@ -119,6 +119,7 @@ class mu_server_dataflow(m_dataflow):
         c,a = self.transport.rx()
         df = mu_client_dataflow(self.interface,mu_client_ws(c),self.serialiser,self.dispatch_cb,self.error_cb,a)
         self.owner.dataflows[c.fileno()] = df
+        self.owner.client_ws_dataflows[c.fileno()] = df
         self.owner.poller.register(c.fileno(),zmq.POLLIN)
         print("A",a)
 
