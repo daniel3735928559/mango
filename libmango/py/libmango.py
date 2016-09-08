@@ -20,6 +20,7 @@ class m_node:
             'reg':self.reg,
             'reply':self.reply
         })
+        self.ports = []
         server = os.getenv('MC_ADDR',None)
         print(server,os.environ)
         if not server is None:
@@ -32,7 +33,7 @@ class m_node:
     def ready(self):
         iface = {f:{c:self.interface.interface[f][c] for c in self.interface.interface[f] if c != 'handler'} for f in self.interface.interface}
         self.debug_print("IF",iface)
-        self.m_send('hello',{'id':self.node_id,'if':iface},callback="reg",port="mc")
+        self.m_send('hello',{'id':self.node_id,'if':iface,'ports':self.ports},callback="reg",port="mc")
             
     def dispatch(self,header,args):
         self.debug_print("DISPATCH",header,args)

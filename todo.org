@@ -29,8 +29,6 @@
 **** TODO delroute
 *** TODO manage ports
 **** TODO ports
-**** TODO addport
-**** TODO delport
 *** TODO manage remotes
 **** TODO remote
 **** TODO delremote

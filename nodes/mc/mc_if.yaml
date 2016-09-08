@@ -21,6 +21,10 @@ hello:
     if:
       type: any
       description: The program's interface
+    ports:
+      type: list
+      values:
+        type: string
   rets:
     id:
       type: string

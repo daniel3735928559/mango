@@ -32,8 +32,6 @@ class mc(m_node):
                                          "types":self.list_types,
                                          #"delnode":self.delnode,
                                          #"ports":self.ports,
-                                         #"addport":self.addport,
-                                         #"delport":self.delport,
                                          #"delroute":self.delroute,
                                          #"remote":self.remote_connect,
                                          #"delremote":self.remote_disconnect,
@@ -129,7 +127,8 @@ class mc(m_node):
                 c['id'] = new_id
                 # Make the Node object
                 iface = mc_if(c["if"] if "if" in c else {})
-                n = Node(new_id,self.gen_key(),self.dataflow,route, iface, master=self.nodes["mc"].ports["stdio"])
+                ports = c["ports"] if "ports" in c else []
+                n = Node(new_id,self.gen_key(),self.dataflow,route, iface, master=self.nodes["mc"].ports["stdio"],ports=ports)
                 
                 # Send the "reg" message
                 header = self.make_header("reg")

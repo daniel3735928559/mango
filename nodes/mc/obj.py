@@ -13,7 +13,7 @@ class NodeType:
         self.runner = runner
 
 class Node: 
-    def __init__(self,node_id,key,dataflow,route,iface,master=None,local=True):
+    def __init__(self,node_id,key,dataflow,route,iface,master=None,ports=[],local=True):
         # self.dataflow is the socket (or whatever) that you can use
         # to talk to this node.  It will usually be set by mc to
         # self.connections[0], and to send on it you can just use
@@ -32,6 +32,9 @@ class Node:
             self.ports["mc"].add_route(Route(self.ports["mc"],master))
         else:
             self.ports["stderr"] = Port("stderr",self)
+        for x in ports:
+            if x != "mc" and x != "stdio":
+                self.ports[x] = Port(x,self)
             
     def send(self, header, args, route=None):
         if route is None:
