@@ -28,7 +28,8 @@ class mc(m_node):
                                          "doc":self.doc,
                                          "nodes":self.node_list,
                                          "error":self.mc_error,
-                                         "launch":self.launch
+                                         "launch":self.launch,
+                                         "types":self.list_types
                                      })
                                  # {
                                  #     "rt_list":self.rt_list,
@@ -221,7 +222,7 @@ class mc(m_node):
 
     def route_add(self,header,args):
         print("BUILDING ROUTE",header,args)
-        rt = self.route_parser.parse(args['spec'])
+        rt = self.route_parser.parse(args['r'])
         if(rt is None):
             return {'success':False}
         chains = []
@@ -308,6 +309,9 @@ class mc(m_node):
             return {'result':'success'}
         return {'result':'fail'}
 
+    def list_types(self,header,args):
+        return {'types':[x for x in self.node_types]}
+    
     def find_if(self,header,args):
         #idf = m_send_sync("stdio",{'command':'get_if'})
         #return {'if':idf}

@@ -1,6 +1,6 @@
 route:
   args:
-    spec:
+    r:
       type: string
   rets:
     success:
@@ -51,3 +51,10 @@ launch:
       type: string
       optional: true
       description: JSON string giving environment vars to add
+
+types:
+  rets:
+    types:
+      type: list
+      values:
+        type: string

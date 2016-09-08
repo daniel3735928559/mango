@@ -1,5 +1,5 @@
 * libmango (library)
-** languages
+** TODO languages
 *** DONE Python
 *** TODO Javascript
 *** TODO Clojure
@@ -8,17 +8,32 @@
 ** TODO Heartbeat functionality
 * mc (server)
 ** TODO Functions
-*** TODO doc
-**** TODO Return pretty docstrings
-**** TODO Do not return default interface docs
-*** TODO nodes
-**** TODO Do not return mc
-*** TODO route
-**** TODO Change argument name from spec to something else
-*** TODO Add/delete/list routes
-*** TODO Add/delete ports
-*** TODO Launch/list node types
-*** TODO Remote connect/disconnect
+*** DONE generic node functions
+**** DONE error
+**** DONE hello
+*** DONE manage node types
+**** DONE types
+***** TODO Show node types
+**** DONE launch
+*** TODO manage nodes
+**** DONE nodes
+***** TODO Do not return mc
+**** TODO doc
+***** TODO Return pretty docstrings
+***** TODO Do not return default interface docs
+**** TODO delnode
+*** TODO manage routing
+**** DONE route
+***** DONE Change argument name from spec to something else
+**** TODO routes
+**** TODO delroute
+*** TODO manage ports
+**** TODO ports
+**** TODO addport
+**** TODO delport
+*** TODO manage remotes
+**** TODO remote
+**** TODO delremote
 ** TODO Your parent node is the node that launched you
 ** TODO Add disconnection detection by heartbeating
 ** TODO Add notion of capabilities: A node gets a random key, which enables it to modify routes pertaining to itself
@@ -27,10 +42,8 @@
 ** TODO tab completion
 * mu (HTTP server/mango client)
 ** DONE websocket transport
-   CLOSED: [2016-09-07 Wed 17:27]
 ** DONE spin up with specified ws port
-   CLOSED: [2016-09-07 Wed 17:42]
-** TODO have mu spin up http file server with specified root dir
+** DONE have mu spin up http file server with specified root dir
 * demo
-** t3 (super tic-tac-toe)
-** curt (encryption/decryption)
+** TODO t3 (super tic-tac-toe)
+** TODO curt (encryption/decryption)

@@ -32,5 +32,3 @@ Mango.prototype.m_recv = function(header,args){
 	console.log('Bad command',JSON.stringify(header,args));
     }
 }
-
-console.log('asd');
