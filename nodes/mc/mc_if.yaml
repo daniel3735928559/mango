@@ -51,6 +51,7 @@ launch:
       type: string
     id:
       type: string
+      optional: true
     env:
       type: string
       optional: true

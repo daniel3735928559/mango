@@ -209,24 +209,10 @@ class mc(m_node):
 
     def routes(self,header,args):
         everything = r".*"
-        if 'src_node' in args:
-            sn = args['src_node']
-            if 'src_port' in args:
-                sp = args['src_port']
-            else:
-                sp = everything
-        else:
-            sn = everything
-            sp = everything
-        if 'dest_node' in args:
-            dn = args['dest_node']
-            if 'dest_port' in args:
-                dp = args['dest_port']
-            else:
-                dp = everything
-        else:
-            dn = everything
-            dp = everything
+        sn = args.get('src_node',everything)
+        sp = args.get('src_port',everything)
+        dn = args.get('dest_node',everything)
+        dp = args.get('dest_port',everything)
         sns = [self.nodes[n] for n in self.nodes if re.match(sn,n)]
         sps = []
         for n in sns:
@@ -308,7 +294,7 @@ class mc(m_node):
 
     def launch(self,header,args):
         n = args['node']
-        nid = args['id']
+        nid = args.get('id',n)
         base_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../')
         lib_base_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../../libmango')
         if n in self.node_types:
