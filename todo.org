@@ -15,6 +15,13 @@
 **** DONE types
 ***** TODO Show node types
 **** DONE launch
+*** DONE manage ports
+**** DONE ports
+*** TODO manage routing
+**** DONE route
+***** DONE Change argument name from spec to something else
+**** DONE routes
+**** TODO delroute
 *** TODO manage nodes
 **** DONE nodes
 ***** TODO Do not return mc
@@ -22,13 +29,6 @@
 ***** TODO Return pretty docstrings
 ***** TODO Do not return default interface docs
 **** TODO delnode
-*** TODO manage routing
-**** DONE route
-***** DONE Change argument name from spec to something else
-**** DONE routes
-**** TODO delroute
-*** TODO manage ports
-**** TODO ports
 *** TODO manage remotes
 **** TODO remote
 **** TODO delremote
@@ -38,6 +38,7 @@
 * mx (shell client)
 ** TODO aliases
 ** TODO tab completion
+** TODO Have recv queue and alias mq to pull elements off the queue
 * mu (HTTP server/mango client)
 ** DONE websocket transport
 ** DONE spin up with specified ws port

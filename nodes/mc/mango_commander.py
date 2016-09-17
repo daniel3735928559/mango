@@ -31,11 +31,11 @@ class mc(m_node):
                                          "launch":self.launch,
                                          "types":self.list_types,
                                          #"delnode":self.delnode,
-                                         #"ports":self.ports,
-                                         #"delroute":self.delroute,
+                                         "ports":self.port_list,
+                                         "delroute":self.delroute,
                                          #"remote":self.remote_connect,
                                          #"delremote":self.remote_disconnect,
-                                         "routes":self.routes
+                                         "routes":self.route_list
                                      })
         print(self.interface.interface);
         self.uuid = str(self.gen_key())
@@ -207,7 +207,33 @@ class mc(m_node):
         self.nodes[nid].flags = f
         pass
 
-    def routes(self,header,args):
+    def port_list(self,header,args):
+        if not args['node'] in self.nodes:
+            return {}
+        n = self.nodes[args['node']]
+        return {'ports':[p for p in n.ports]}
+
+    def delroute(self,header,args):
+        if not args['src_node'] in self.nodes:
+            print(1)
+            return {'success':False}
+        sn = self.nodes[args['src_node']]
+        if not args['src_port'] in sn.ports:
+            print(2)
+            return {'success':False}
+        sp = sn.ports[args['src_port']]
+        if not args['dest_node'] in self.nodes:
+            print(3)
+            return {'success':False}
+        dn = self.nodes[args['dest_node']]
+        if not args['dest_port'] in dn.ports:
+            print(4)
+            return {'success':False}
+        dp = dn.ports[args['dest_port']]
+        print("A",sn.ports,sp,dn.ports,dp,sp.routes)
+        return {'success':sp.del_route_to(dp)}
+    
+    def route_list(self,header,args):
         everything = r".*"
         if 'src_node' in args:
             sn = args['src_node']

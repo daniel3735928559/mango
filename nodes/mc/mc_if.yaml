@@ -82,3 +82,28 @@ routes:
       type: list
       values:
         type: string
+
+ports:
+  args:
+    node:
+      type: string
+  rets:
+    ports:
+      type: list
+      values:
+        type: string
+
+
+delroute:
+  args:
+    src_node:
+      type: string
+    src_port:
+      type: string
+    dest_node:
+      type: string
+    dest_port:
+      type: string
+  rets:
+    success:
+      type: bool
