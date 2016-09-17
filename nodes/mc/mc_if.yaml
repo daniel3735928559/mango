@@ -38,9 +38,6 @@ doc:
     function:
       type: string
       optional: true
-    argument:
-      type: string
-      optional: true
 
 nodes:
 

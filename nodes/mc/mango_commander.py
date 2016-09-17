@@ -8,6 +8,7 @@ from transport import *
 from libmango import m_node
 from lxml import etree
 from obj import *
+import pijemont.doc
 
 class mc(m_node):
     
@@ -79,19 +80,18 @@ class mc(m_node):
         if 'function' in args:
             f = args['function']
             if f in to_doc:
-                to_doc = to_doc[f]
+                to_doc = {f:to_doc[f]}
             else:
                 raise m_error(m_error.BAD_ARGUMENT,"Function not found: {}".format(f))
             
-        if 'element' in args:
-            e = args['element']
-            for ei in e.split("."):
-                if ei in to_doc:
-                    to_doc = to_doc[ei]
-                else:
-                    raise m_error(m_error.BAD_ARGUMENT,"Function not found: {}".format(ei))
-                
-        return {"doc":str(to_doc)}
+        # if 'element' in args:
+        #     e = args['element']
+        #     for ei in e.split("."):
+        #         if ei in to_doc:
+        #             to_doc = to_doc[ei]
+        #         else:
+        #             raise m_error(m_error.BAD_ARGUMENT,"Function not found: {}".format(ei))
+        return {"doc":pijemont.doc.doc_gen(to_doc)}
         
     def hello(self,header,args):
         print("HELLO",header,args)
