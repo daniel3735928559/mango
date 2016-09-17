@@ -3,6 +3,7 @@ from route_parser import route_parser
 from mc_dataflows import *
 from mc_transport import *
 from mc_interface import *
+from mc_workers import *
 from dataflow import m_dataflow
 from transport import *
 from libmango import m_node
@@ -12,8 +13,8 @@ import pijemont.doc
 
 class mc(m_node):
     
-    def __init__(self,ID):
-        super().__init__(ID)
+    def __init__(self):
+        super().__init__(debug=True)
         self.node_types = {}
         self.collect_nodes()
         self.route_parser = route_parser()
@@ -26,6 +27,7 @@ class mc(m_node):
                                      {
                                          "route":self.route_add,
                                          "hello":self.hello,
+                                         "alive":self.alive,
                                          "doc":self.doc,
                                          "nodes":self.node_list,
                                          "error":self.mc_error,
@@ -61,8 +63,25 @@ class mc(m_node):
         self.dataflows[f] = mc_remote_dataflow(self.remote_gateway,self.serialiser,self.remote_recv)
         self.poller.register(f,zmq.POLLIN)
 
+        # Heartbeat listening stuff:
+
+        self.mc_hb_addr = "inproc://hb"
+        self.hb_time = 100
+        self.hb_gateway = m_ZMQ_transport(self.mc_hb_addr,self.context,self.poller,True)
+        h = self.hb_gateway.socket
+        self.dataflows[h] = mc_heartbeat_dataflow(self.hb_gateway,self.do_heartbeat)
+        self.poller.register(h,zmq.POLLIN)
+
         self.run()
 
+    def do_heartbeat(self,node_name):
+        print("HB",node_name)
+        header = self.make_header("heartbeat",src_port="mc")
+        self.dataflow.send(header,{},self.nodes[node_name.decode()].route)
+
+    def alive(self,header,args):
+        print("ALIVE",header,args)
+        
     def collect_nodes(self):
         manifest_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../manifest.json')
         with open(manifest_path) as f:
@@ -128,7 +147,11 @@ class mc(m_node):
                 # Make the Node object
                 iface = mc_if(c["if"] if "if" in c else {})
                 ports = c["ports"] if "ports" in c else []
-                n = Node(new_id,self.gen_key(),self.dataflow,route, iface, master=self.nodes["mc"].ports["stdio"],ports=ports)
+                n = Node(new_id,self.gen_key(), self.dataflow, route, iface, master=self.nodes["mc"].ports["stdio"], ports=ports)
+
+                # Start heartbeating thread
+                n.hb_thread = threading.Thread(target=mc_heartbeat_worker, args=(new_id,self.mc_hb_addr,self.hb_time,self.context))
+                n.hb_thread.start()
                 
                 # Send the "reg" message
                 header = self.make_header("reg")
@@ -348,4 +371,5 @@ class mc(m_node):
     def type_list(self,header,args):
         return {'types':",".join(self.node_types.keys())}
 
-m = mc("mc")
+os.environ["MANGO_ID"] = "mc"
+m = mc()

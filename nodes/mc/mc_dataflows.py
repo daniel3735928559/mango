@@ -73,8 +73,19 @@ class mc_remote_dataflow:
         self.transport.socket.send(route,zmq.SNDMORE)
         self.transport.tx(data)
 
+class mc_heartbeat_dataflow:
+    def __init__(self,transport,dispatch_cb):
+        self.transport = transport
+        self.dispatch_cb = dispatch_cb
     
+    def recv(self):
+        route = self.transport.rx()
+        node_name = self.transport.rx()
+        self.dispatch_cb(node_name)
 
+    def send(self,header,msg,route):
+        pass
+        
 # class mc_dataflow(m_dataflow):
 #     def __init__(self,owner,recv_cb,transport,serialiser,route):
 #         super().__init__(owner,recv_cb,transport,serialiser)

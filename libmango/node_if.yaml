@@ -7,3 +7,8 @@ reg:
       optional: true
 
 reply:
+
+heartbeat:
+  rets:
+    ack:
+      type: string

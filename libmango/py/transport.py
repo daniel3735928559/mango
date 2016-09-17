@@ -21,7 +21,6 @@ class m_ZMQ_transport():
 
     def tx(self,payload):
         self.socket.send(payload)
-        return "sent"
 
     def rx(self):
         return self.socket.recv()

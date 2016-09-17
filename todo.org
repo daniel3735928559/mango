@@ -5,29 +5,25 @@
 *** TODO Clojure
 *** TODO C++
 ** TODO Documentation
-** TODO Heartbeat functionality
+** DONE Heartbeat functionality
 * mc (server)
 ** TODO Functions
 *** DONE generic node functions
 **** DONE error
 **** DONE hello
+**** DONE alive
 *** DONE manage node types
 **** DONE types
-***** TODO Show node types
 **** DONE launch
 *** DONE manage ports
 **** DONE ports
 *** DONE manage routing
 **** DONE route
-***** DONE Change argument name from spec to something else
 **** DONE routes
 **** DONE delroute
 *** TODO manage nodes
 **** DONE nodes
-***** TODO Do not return mc
 **** DONE doc
-***** DONE Return pretty docstrings
-      CLOSED: [2016-09-16 Fri 23:58]
 **** TODO delnode
 *** TODO manage remotes
 **** TODO remote

@@ -30,6 +30,8 @@ hello:
       type: string
       description: The requested ID, or, if that was unavailable, [id].[n] for the minimum positive integer n that makes it unique
 
+alive:
+
 doc:
   description: Print out the documentation for a given node, a specific function, or a specific argument/return value for a function
   args:

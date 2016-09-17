@@ -18,7 +18,8 @@ class m_node:
         self.mid = 0
         self.interface.add_interface('/home/zoom/suit/mango/libmango/node_if.yaml',{
             'reg':self.reg,
-            'reply':self.reply
+            'reply':self.reply,
+            'heartbeat':self.heartbeat
         })
         self.ports = []
         server = os.getenv('MC_ADDR',None)
@@ -43,12 +44,15 @@ class m_node:
                self.m_send(header['callback'],result,port=header['port'],mid=header['mid'])
         except Exception as exc:
            self.handle_error(header['src_node'],str(exc))
+
+    def heartbeat(self,header,args):
+        self.m_send('alive',{},port="mc")
             
     def reply(self,header,args):
         print("REPLY",header,args)
 
     def handle_error(self,src,err):
-        self.debug_print('OOPS',err)
+        self.debug_print('OOPS',src,err)
         self.m_send('error',{'source':src,'message':err},port="mc")
 
     def get_mid(self):
