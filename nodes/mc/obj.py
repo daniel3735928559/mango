@@ -157,6 +157,12 @@ class Port:
             return True
         return False
 
+    def del_route_to(self,p):
+        if(p in self.routes): 
+            del self.routes[p]
+            return True
+        return False
+
     # pass the message through the transmogrifiers for each route and
     # return a list of target nodes/ports and corresponding
     # transmogrified messages
