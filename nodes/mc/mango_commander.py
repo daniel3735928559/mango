@@ -122,7 +122,7 @@ class mc(m_node):
     def mc_dispatch(self,header,args,route):
         print("MC DISPATCH",header,args)
         result = self.interface.interface[header['command']]['handler'](header,args)
-        if not result is None:
+        if not result is None and 'callback' in header:
             header = self.make_header(header['callback'],callback=None,mid=header['mid'],src_port=header['port'])
             self.dataflow.send(header,result,route)
         
