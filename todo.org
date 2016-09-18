@@ -1,11 +1,12 @@
 * libmango (library)
 ** TODO languages
 *** DONE Python
-*** TODO Javascript
+*** DONE Javascript
 *** TODO Clojure
 *** TODO C++
 ** TODO Documentation
 ** DONE Heartbeat functionality
+** TODO Have all imports relative to mango root dir, and assume all nodes will be in 
 * mc (server)
 ** TODO Functions
 *** DONE generic node functions
