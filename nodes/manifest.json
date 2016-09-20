@@ -1,19 +1,24 @@
 {
     "langs":{
-	"py":{"pathvar":"PYTHONPATH"}
+	"py":{"pathvar":"PYTHONPATH"},
+	"js":{"pathvar":"LIBMANGOJS"}
     },
     "nodes":{
 	"mx":{
 	    "run":"mx_start",
 	    "lang":"py"
 	},
+	"mu":{
+	    "run":"python mu.py",
+	    "lang":"py"
+	},
 	"excite":{
 	    "run":"python excite.py",
 	    "lang":"py"
 	},
-	"mu":{
-	    "run":"python mu.py",
-	    "lang":"py"
+	"category":{
+	    "run":"node cat_node.js",
+	    "lang":"js"
 	}
     }
 }
