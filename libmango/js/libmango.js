@@ -10,9 +10,6 @@ function MNode(debug){
     this.iface = new Interface();
     this.node_id = process.env['MANGO_ID'];
     this.mid = 0;
-    this.iface.add_interface('/home/zoom/suit/mango/libmango/node_if.yaml',{
-        'reg':self.reg, 'reply':self.reply, 'heartbeat':self.heartbeat
-    })
     this.ports = [];
     var server = process.env['MC_ADDR'];
     
@@ -27,7 +24,7 @@ function MNode(debug){
     }
     
     this.dispatch = function(header,args){
-	console.log("DISPATCH",header,args,self.iface.iface);
+	console.log("DISPATCH",header,args,self.iface.iface,self.iface.iface[header['command']]);
 	try{
             result = self.iface.iface[header['command']]['handler'](header,args);
             if(result && 'callback' in header){
@@ -74,6 +71,9 @@ function MNode(debug){
 	return header['mid']
     }
     
+    this.iface.add_interface('/home/zoom/suit/mango/libmango/node_if.yaml',{
+        'reg':self.reg, 'reply':self.reply, 'heartbeat':self.heartbeat
+    });
     this.local_gateway = new Transport(server);
     var s = this.local_gateway.socket;
     this.dataflow = new Dataflow(self.iface, self.local_gateway, self.serialiser, self.dispatch, self.handle_error);
