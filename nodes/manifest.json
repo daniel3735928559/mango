@@ -17,6 +17,11 @@
 	    "run":"python excite.py",
 	    "lang":"py"
 	},
+	"excitejs":{
+	    "dir":"examples/excite",
+	    "run":"node excite.js",
+	    "lang":"js"
+	},
 	"category":{
 	    "run":"node cat_node.js",
 	    "lang":"js"
