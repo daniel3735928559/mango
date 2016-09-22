@@ -5,7 +5,7 @@ class test(m_node):
     def __init__(self):
         name = sys.argv[1]
         super().__init__(name,"tcp://localhost:61453",debug=True)
-        self.interface.add_interface('/home/zoom/suit/mango/nodes/test/test.yaml',{
+        self.interface.add_interface('./test.yaml',{
             'print':self.output
         })
         self.ready()
