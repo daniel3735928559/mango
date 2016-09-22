@@ -1,7 +1,7 @@
 {
     "langs":{
 	"py":{"pathvar":"PYTHONPATH"},
-	"js":{"pathvar":"LIBMANGOJS"}
+	"js":{"pathvar":"NODE_PATH"}
     },
     "nodes":{
 	"mx":{

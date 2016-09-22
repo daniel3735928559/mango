@@ -1,9 +1,7 @@
-libmango = require('libmango')
+MNode = require('libmango')
 
 function Excite(){
-    process.env['MANGO_ID'] = 'exc';
-    process.env['MC_ADDR'] = 'tcp://localhost:61453';
-    this.node = new libmango.MNode();
+    this.node = new MNode();
     this.node.iface.add_interface('/home/zoom/suit/mango/nodes/examples/excite/excite.yaml',
 				  {'excite':this.excite,'print':this.print});
     this.node.ready();
