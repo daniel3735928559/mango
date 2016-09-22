@@ -2,7 +2,7 @@ MNode = require('libmango')
 
 function Excite(){
     this.node = new MNode();
-    this.node.iface.add_interface('/home/zoom/suit/mango/nodes/examples/excite/excite.yaml',
+    this.node.iface.add_interface('./excite.yaml',
 				  {'excite':this.excite,'print':this.print});
     this.node.ready();
 }
