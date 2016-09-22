@@ -348,7 +348,7 @@ class mc(m_node):
         lib_base_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../../libmango')
         if n in self.node_types:
             lang = self.node_types[n]['lang']
-            node_base = os.path.join(base_path,n)
+            node_base = os.path.join(base_path,n if not 'dir' in self.node_types[n] else self.node_types[n]['dir'])
             lib_path = os.path.join(lib_base_path,lang)
             nenv = {'MC_ADDR':self.mc_target,'MANGO_ID':nid}
             if 'pathvar' in self.langs[lang]:

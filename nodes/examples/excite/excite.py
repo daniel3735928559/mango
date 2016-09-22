@@ -5,7 +5,7 @@ from libmango import *
 class excite(m_node):
     def __init__(self):
         super().__init__(debug=True)
-        self.interface.add_interface('/home/zoom/suit/mango/nodes/excite/excite.yaml',{
+        self.interface.add_interface(os.path.join(os.path.abspath(os.path.dirname(os.path.abspath(__file__))),'excite.yaml'),{
             'excite':self.excite,
             'print':self.output
         })

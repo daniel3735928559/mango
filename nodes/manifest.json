@@ -13,6 +13,7 @@
 	    "lang":"py"
 	},
 	"excite":{
+	    "dir":"examples/excite",
 	    "run":"python excite.py",
 	    "lang":"py"
 	},
