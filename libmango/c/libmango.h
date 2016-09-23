@@ -7,6 +7,7 @@
 
 char *LIBMANGO_VERSION = "0.1";
 char *LIBMANGO_REPLY = "reply";
+char *LIBMANGO_HELLO = "hello";
 char *LIBMANGO_STDIO = "stdio";
 
 typedef struct m_node {

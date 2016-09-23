@@ -26,33 +26,34 @@ void m_node_new(char debug){
 }
 
 void m_node_dispatch(m_node_t *node, m_header_t *header, m_args_t *args){
-	/* console.log("DISPATCH",header,args,self.iface.iface,self.iface.iface[header['command']]); */
-	/* try{ */
-        /*     result = self.iface.iface[header['command']]['handler'](header,args); */
-        /*     if(result && 'callback' in header){ */
-	/* 	self.m_send(header['callback'],result,null,header['mid'],header['port']) */
-	/*     } */
-	/* } catch(e) { */
-	/*     console.log(e); */
-        /*     self.handle_error(header['src_node'],e+"") */
-	/* } */
+  m_args_t *result = m_interface_handle(node->interface, header->command, header, args);
+  if(result->error){
+    m_node_handle_error(header->src_node,result->error);
+    return;
+  }
+  if(result != NULL && header->callback != NULL){
+    m_node_send(header->callback,result,NULL,header->mid,header->port);
+  }
 }
 
 void m_node_handle_error(m_node_t *node, char *src, char *err){
-  /* console.log('OOPS',src,err); */
-  /* self.m_send('error',{'source':src,'message':err},null,null,"mc"); */
+  m_args_t *args = m_args_new();
+  m_args_set(args, 'source', src);
+  m_args_set(args, 'message', err);
+  m_node_send('error',args,NULL,NULL,"mc");
+  free(args);
 }
 
 void m_node_reg(m_node_t *node, m_header_t *header, m_args_t *args){
-  //self.node_id = args["id"];
+  node->node_id = strdup(args.get("id"));
 }
 
 void m_node_reply(m_node_t *node, m_header_t *header, m_args_t *args){
-  //console.log("REPLY",header,args);
+  printf("REPLY\n");
 }
 
 void m_node_heartbeat(m_node_t *node, m_header_t *header, m_args_t *args){
-  //self.m_send("alive",{},null,null,"mc");
+  m_node_send(node,"alive",NULL,NULL,NULL,"mc");
 }
 
 m_header_t *m_node_make_header(m_node_t *node, char *command, char *callback, int mid, char *src_port){
@@ -73,21 +74,20 @@ int m_node_get_mid(m_node_t *node){
 }
 
 void m_node_ready(m_node_t *node, m_header_t *header, m_args_t *args){
-  
-	/* var ifce = {}; */
-	/* for(var i in this.iface.iface){ */
-	/*     ifce[i] = JSON.parse(JSON.stringify(this.iface.iface[i])); */
-	/*     delete ifce[i]['handler']; */
-	/* } */
-	/* console.log("IF",ifce) */
-	/* self.m_send('hello',{'id':self.node_id,'if':ifce,'ports':self.ports},"reg",null,"mc") */
+  char *iface = m_interface_string(node->interface);
+  m_args_t *args = m_args_new();
+  m_args_set(args, 'id', node->node_id);
+  m_args_set(args, 'if', iface);
+  m_args_set(arts, 'ports', node->ports);
+  self.m_send(node,"hello",args,"reg",NULL,"mc");
+  free(args);
+  free(iface);
 }
 
 int m_node_send(m_node_t *node, char *command, m_args_t *msg, char *callback, int mid, char *port){
-  /* console.log('sending',command,msg,mid,port) */
-  /*   header = self.make_header(command,callback,mid,port) */
-  /*   self.dataflow.send(header,msg) */
-  /*   return header['mid'] */
+  m_header_t *header = m_make_header(node,command,callback,mid,port);
+  m_dataflow_send(node->dataflow,header,msg);
+  return header->mid;
 }
 
 void m_node_run(){
