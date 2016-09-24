@@ -12,12 +12,13 @@ class route_lexer:
                 'ADD',
                 'ADDN',
                 'DEL',
+                'COMM',
                 'FILTER',
                 'SH',
                 'PORT',
                 'JSON_DICT',
                 'JSON_LIST',
-                'TEST',
+                'JSON_STRING',
                 'RAW')
 
       t_FROM = r"<"
@@ -26,6 +27,7 @@ class route_lexer:
       t_ADD = r"\+|add"
       t_ADDN = r"\*|addn"
       t_DEL = r"-|del"
+      t_COMM = r"@|comm"
       t_FILTER = r"\?|filter"
       t_SH = r'sh "(?:[^"\\]|\\.)*"'
       t_RAW = r"%[a-z]+"
@@ -48,7 +50,7 @@ class route_lexer:
             t.value = json.loads(t.value)
             return t
 
-      def t_TEST(self,t):
+      def t_JSON_STRING(self,t):
             r'"([a-zA-Z_][a-zA-Z0-9_]*)"'
             t.value = t.value[1:-1]
             return t
@@ -133,8 +135,11 @@ class route_parser:
       def p_transmogrifier_del(self,p):
             ''' transmogrifier : DEL JSON_LIST '''
             p[0] = [['edit',('del',p[2])]]
+      def p_transmogrifier_comm(self,p):
+            ''' transmogrifier : COMM JSON_STRING '''
+            p[0] = [['edit',('comm',p[2])]]
       def p_transmogrifier_filter(self,p):
-            ''' transmogrifier : FILTER TEST '''
+            ''' transmogrifier : FILTER JSON_STRING '''
             p[0] = [['edit',('filter',p[2])]]
       def p_transmogrifier_raw(self,p):
             ''' transmogrifier : RAW '''

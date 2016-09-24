@@ -1,4 +1,4 @@
-import io, re, socketserver, socket, threading, time, signal, os, sys, random, zmq, subprocess, shlex, json
+import io, re, socketserver, socket, threading, time, signal, os, sys, random, zmq, subprocess, shlex, json, traceback
 from route_parser import route_parser
 from mc_dataflows import *
 from dataflow import m_dataflow
@@ -45,6 +45,10 @@ class Node:
             self.dataflow.send(header,args,route)
         except Exception as exc:
             print('OOPS',exc)
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+            traceback.print_exception(exc_type, exc_value, exc_traceback,file=sys.stdout)
+
     # def __repr__(self):
     #     return self.node_id
 
@@ -67,10 +71,11 @@ class Route:
         for t,o in self.transmogrifiers:
             if(t == "add"):
                 for k in o:
-                    if(k in header):
-                        new_header[k] = o[k] if o[k][0] != '$' else (args[o[k][1:]] if o[k][1] != '_' else message.decode('ASCII'))
-                    else:
-                        new_args[k] = o[k] if o[k][0] != '$' else (args[o[k][1:]] if o[k][1] != '_' else message.decode('ASCII'))
+                    #if(k in header):
+                    #    new_header[k] = o[k] if o[k][0] != '$' else (args[o[k][1:]] if o[k][1] != '_' else message.decode('ASCII'))
+                    #else:
+                    #    new_args[k] = o[k] if o[k][0] != '$' else (args[o[k][1:]] if o[k][1] != '_' else message.decode('ASCII'))
+                    new_args[k] = o[k] if o[k][0] != '$' else (args[o[k][1:]] if o[k][1] != '_' else message.decode('ASCII'))
             elif(t == "addn"):
                 for k in o:
                     if not k in args:
@@ -82,6 +87,8 @@ class Route:
                 for k in o:
                     if k in new_args:
                         del new_args[k]
+            elif(t == "comm"):
+                new_header['command'] = o
             elif(t == "sub"):
                 new_args = {}
                 for k in o:

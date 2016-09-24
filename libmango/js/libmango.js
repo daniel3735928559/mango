@@ -27,8 +27,8 @@ function MNode(debug){
 	console.log("DISPATCH",header,args,self.iface.iface,self.iface.iface[header['command']]);
 	try{
             result = self.iface.iface[header['command']]['handler'](header,args);
-            if(result && 'callback' in header){
-		self.m_send(header['callback'],result,null,header['mid'],header['port'])
+            if(result){
+		self.m_send('callback' in header ? header['callback'] : "reply", result, null, header['mid'], header['port'])
 	    }
 	} catch(e) {
 	    console.log(e);

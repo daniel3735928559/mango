@@ -1,34 +1,34 @@
+#include <stdlib.h>
+#include "dict.h"
 
-function Interface(){
-    var self = this;
-    this.iface = {};
-    
-    this.add_interface = function(if_file,handlers){
-	try {
-	    var spec = jsyaml.safeLoad(fs.readFileSync(if_file, 'utf8'));
-	    console.log(JSON.stringify(spec));
-	    var missing = [], extra = [], existing = [];
-	    for(var i in spec)
-		if(!(i in handlers)) missing.push(i);
-	    for(var i in handlers)
-		if(!(i in spec)) extra.push(i);
-	    for(var i in spec)
-		if(i in self.iface) existing.push(i);
-	    if(missing.length > 0) throw new MError("Functions not implemented: "+missing.join(", "));
-	    if(extra.length > 0) throw new MError("Functions not in interface: "+extra.join(", "));
-	    if(existing.length > 0) throw new MError("Functions already implemented: "+existing.join(", "));
+m_interface_t *m_interface_new(){
+  m_interface_t *i = malloc(sizeof(m_interface_t));
+  i->interface = m_dict_new(LIBMANGO_DEFAULT_INTERFACE_SIZE);
+  i->unimplemented = 0;
+  return i;
+}
 
-	    for(var i in handlers){
-		self.iface[i] = spec[i] ? spec[i] : {};
-		self.iface[i]['handler'] = handlers[i];
-	    }
-	} catch (e) {
-	    console.log(e);
-	    throw new MError("Failed to load interface");
-	}
-    }
+int m_interface_load(m_interface_t *i, char *filename){
+  // load YAML and set handlers to NULL
+}
 
-    this.validate = function(fn){
-	return fn in self.iface;
-    }
+int m_interface_handle(m_interface_t *i, char *fn_name, m_dict_t* handler(m_node_t *node, m_dict_t *header, m_dict_t *args)){
+  m_function_t *fn = m_dict_get(i->interface, fn_name);
+  if(!fn) return -1; // Function not in interface
+  if(fn->handler) return -2; // Already implemented
+  fn->handler = handler;
+  i->unimplemented--;
+  return 0;
+}
+
+int m_interface_validate(m_interface_t *i, char *fn_name){
+  return m_dict_get(i->interface, fn_name) == NULL ? 0 : 1;
+}
+
+int m_interface_handler(m_interface_t *i, char *fn_name){
+  return m_dict_get(i->interface, fn_name)->handler;
+}
+
+int m_interface_ready(m_interface_t *i){
+  return i->unimplemented == 0; // Check for functions not yet implemented
 }

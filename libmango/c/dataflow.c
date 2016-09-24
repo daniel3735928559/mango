@@ -24,13 +24,11 @@ void m_dataflow_send(m_dataflow_t *d, m_header_t *header, m_args_t *args){
     
 void m_dataflow_recv(m_dataflow_t *d){
   char *data = m_transport_rx(d->transport);
-  m_data_t m = m_serialiser_deserialise(d->serialiser,data);
-  if(!m_interface_validate(d->interface, m->header)){
+  m_dict_t *m = m_serialiser_deserialise(d->serialiser,data);
+  if(!m_interface_validate(d->interface, m_dict_get(m,"header"))){
     d->error(UNKNOWN_COMMAND);
     return;
   }
-  d->dispatch_cb(m->header,m->args);
-  free(m->header);
-  free(m->args);
-  free(m);
+  d->dispatch_cb(m_dict_get(m,"header"),m_dict_get(m,"args"));
+  m_dict_free(m);
 }

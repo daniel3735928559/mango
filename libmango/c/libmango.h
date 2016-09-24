@@ -24,6 +24,6 @@ typedef struct m_node {
 } m_node_t;
 
 void m_node_new(char debug);
-void m_node_ready(m_node_t *node, m_header_t *header, m_args_t *args);
-int m_node_send(m_node_t *node, char *command, m_args_t *msg, char *callback, int mid, char *port);
+int m_node_send(m_node_t *node, char *command, m_dict_t *msg, char *callback, int mid, char *port);
+void m_node_ready(m_node_t *node, m_header_t *header, m_dict_t *args);
 void m_node_run();
