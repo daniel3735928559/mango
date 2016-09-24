@@ -10,7 +10,8 @@ typedef struct m_function{
 
 typedef struct m_interface{
   m_dict_t *interface;
-  int unimplemented;
+  int implemented;
+  int size;
 } m_interface_t;
 
 m_interface_t *m_interface_new();
