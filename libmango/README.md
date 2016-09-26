@@ -10,6 +10,13 @@ of code) and we intend that this document should describe the
 requirements fully so that anyone with the requisite knowledge should
 be able to implement libmango in a currently unsupported language.
 
+A libmango implementation is more or less a simple RPC server with
+ZeroMQ as the transport and JSON for serialisation.  The protocol used
+differs from e.g. JSON-RPC and other standard RPC protocols in a few
+ways.  For example, there is no expectation of a request/reply flow,
+and there is a built-in addressing system of nodes and ports, rather
+than using the transport for addressing as is standard.
+
 ## Current language support
 
 * Python: Completed
