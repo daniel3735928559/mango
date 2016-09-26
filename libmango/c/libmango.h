@@ -21,9 +21,10 @@ typedef struct m_node {
   m_serialiser_t *serialiser;
   m_transport_t *local_gateway;
   m_dataflow_t *dataflow;
+  void *zmq_context;
 } m_node_t;
 
 void m_node_new(char debug);
 int m_node_send(m_node_t *node, char *command, m_dict_t *msg, char *callback, int mid, char *port);
 void m_node_ready(m_node_t *node, m_header_t *header, m_dict_t *args);
-void m_node_run();
+void m_node_run(m_node_t *node);

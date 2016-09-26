@@ -15,12 +15,14 @@ void m_node_new(char debug){
   n->interface = m_interface_new();
   n->ports = NULL;
   n->server_addr = getenv('MC_ADDR');
+  
+  n->zmq_context = zmq_ctx_new();
   m_interface_load(n->interface, '/home/zoom/suit/mango/libmango/node_if.yaml');
   m_interface_handle(n->interface, 'reg', m_node_reg);
   m_interface_handle(n->interface, 'reply', m_node_reply);
   m_interface_handle(n->interface, 'heartbeat', m_node_heartbeat);
   n->local_gateway = m_transport_new(n->server_addr);
-  socket s = n->local_gateway->socket;
+  socket s = n->local_gateway->socket;  
   n->dataflow = m_dataflow_new(n->interface, n->local_gateway, n->serialiser, m_node_dispatch, m_node_handle_error);
   printf("SOCK %d",zmq_fileno(s));
   return n;
@@ -91,6 +93,14 @@ int m_node_send(m_node_t *node, char *command, m_dict_t *msg, char *callback, in
   return m_dict_get(header,"mid");
 }
 
-void m_node_run(){
-  //RUN
+void m_node_run(m_node_t *node){
+  while(1){
+    zmq_pollitem_t items [] = {
+      {node->local_gateway->socket, 0, ZMQ_POLLIN, 0},
+    };
+    zmq_poll (items, 2, -1);
+    if(items[0].revents & ZMQ_POLLIN){
+      m_dataflow_recv(node->dataflow);
+    }
+  }
 }

@@ -30,5 +30,6 @@ void m_dataflow_recv(m_dataflow_t *d){
     return;
   }
   d->dispatch_cb(m_dict_get(m,"header"),m_dict_get(m,"args"));
+  free(data);
   m_dict_free(m);
 }
