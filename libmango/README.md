@@ -13,8 +13,9 @@ be able to implement libmango in a currently unsupported language.
 ## Current language support
 
 * Python: Completed
-* Javascript: Planned
-* Clojure: Tentatively planned
+* Javascript: Completed
+* C: In progress
+* Clojure: Planned
 * C++: Tentatively planned
 
 ## Outline of the task
