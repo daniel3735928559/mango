@@ -1,3 +1,4 @@
+#include "libmango.h"
 #include "dataflow.h"
 #include "transport.h"
 #include "serialiser.h"
@@ -5,19 +6,22 @@
 #include "cJSON/cJSON.h"
 
 struct m_dataflow {
+  m_node_t *node;
   m_interface_t *interface;
   m_transport_t *transport;
   m_serialiser_t *serialiser;
-  void (*dispatch)(cJSON *, cJSON *);
-  void (*error)(m_error_t *);
+  void (*dispatch)(m_node_t *, cJSON *, cJSON *);
+  void (*error)(m_node_t *, char *, char *);
 };
   
-m_dataflow_t *m_dataflow_new(m_interface_t *interface,
+m_dataflow_t *m_dataflow_new(m_node_t *node,
 			     m_transport_t *transport,
 			     m_serialiser_t *serialiser,
-			     void (*dispatch)(cJSON *, cJSON *),
-			     void (*error)(char *, char *)){
+			     m_interface_t *interface,
+			     void (*dispatch)(m_node_t *, cJSON *, cJSON *),
+			     void (*error)(m_node_t *, char *, char *)){
   m_dataflow_t *d = malloc(sizeof(m_dataflow_t));
+  d->node = node;
   d->interface = interface;
   d->transport = transport;
   d->serialiser = serialiser;
@@ -34,11 +38,14 @@ void m_dataflow_send(m_dataflow_t *d, cJSON *header, cJSON *args){
 void m_dataflow_recv(m_dataflow_t *d){
   char *data = m_transport_rx(d->transport);
   cJSON *m = m_serialiser_deserialise(d->serialiser,data);
-  if(!m_interface_validate(d->interface, cJSON_GetObjectItem(cJSON_GetObjectItem(m,"header"),"command")->valuestring)){
-    d->error(UNKNOWN_COMMAND);
+  cJSON *header = cJSON_GetObjectItem(m,"header");
+  cJSON *args = cJSON_GetObjectItem(m,"args");
+  
+  if(!m_interface_validate(d->interface, cJSON_GetObjectItem(header,"command")->valuestring)){
+    d->error(d->node, cJSON_GetObjectItem(header,"src_port")->valuestring, "Unkown command");
     return;
   }
-  d->dispatch(cJSON_GetObjectItem(m,"header"), cJSON_GetObjectItem(m,"args"));
+  d->dispatch(d->node, header, args);
   free(data);
   cJSON_Delete(m);
 }

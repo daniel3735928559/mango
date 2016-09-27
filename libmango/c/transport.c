@@ -12,7 +12,7 @@ m_transport_t *m_transport_new(char *addr, void *context){
 }
 
 void m_transport_tx(m_transport_t *t, char *data){
-  zmq_send(t->socket, data);
+  zmq_send(t->socket, data, strlen(data), ZMQ_DONTWAIT);
 }
 
 char *m_transport_rx(m_transport_t *t){

@@ -29,29 +29,29 @@ char *m_serialiser_parse_preamble(m_serialiser_t *s, char *data){
   m_serialiser_make_preamble(s, sample_preamble);
   char *ans = NULL;
   if(strncmp(sample_preamble, data, l) == 0){
-    ans data+l+1;
+    ans = data+l+1;
   }
   free(sample_preamble);
   return ans;
 }
 
 char *m_serialiser_serialise(m_serialiser_t *s, cJSON *header, cJSON *args){
-  cJSON *data_dict = cJSON_createObject();
-  cJSON_setObjectItem(data_dict, "header", header);
-  cJSON_setObjectItem(data_dict, "argsr", args);
+  cJSON *data_dict = cJSON_CreateObject();
+  cJSON_AddItemToObject(data_dict, "header", header);
+  cJSON_AddItemToObject(data_dict, "argsr", args);
 
   int l = m_serialiser_len_preamble(s);
   char *content = cJSON_Print(data_dict);
   char *data = malloc(strlen(content)+l+1);
   m_serialiser_make_preamble(s, data);
-  strcopy(data+l, content);
+  strcpy(data+l, content);
   free(content);
   cJSON_Delete(data_dict);
   return data;
 }
 
 cJSON *m_serialiser_deserialise(m_serialiser_t *s, char *data){
-  char *content = m_serialiser_validate_preamble(s, data);
+  char *content = m_serialiser_parse_preamble(s, data);
   if(!content) return NULL;
   return cJSON_Parse(content);
 }
