@@ -1,7 +1,8 @@
-#include <strlib.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "cJSON/cJSON.h"
+#include "serialiser.h"
 
 struct m_serialiser {
   char *version;

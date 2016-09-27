@@ -54,11 +54,11 @@ int m_dict_set(m_dict_t *dict, char *key, void *val){
   return 0;
 }
 
-int m_dict_next(m_dict_t *dict, int idx){
-  while(idx < dict->size && dict->data[idx] == NULL) idx++;
-  if(idx >= dict->size) return -1;
-  return idx;
-}
+/* int m_dict_next(m_dict_t *dict, int idx){ */
+/*   while(idx < dict->size && dict->data[idx] == NULL) idx++; */
+/*   if(idx >= dict->size) return -1; */
+/*   return idx; */
+/* } */
 
 void m_dict_expand(m_dict_t *dict){
   

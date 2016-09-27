@@ -1,3 +1,4 @@
+#include "zmq.h"
 #include "libmango.h"
 #include "transport.h"
 #include "serialiser.h"
@@ -10,7 +11,7 @@ struct m_node {
   char *version;
   char *node_id;
   int mid;
-  char **ports;
+  const char **ports;
   int num_ports;
   char debug;
   char *server_addr;
@@ -106,14 +107,14 @@ void m_node_ready(m_node_t *node, cJSON *header, cJSON *args){
   cJSON *ports = cJSON_CreateStringArray(node->ports, node->num_ports);
   cJSON_AddStringToObject(hello_args, "id", node->node_id);
   cJSON_AddStringToObject(hello_args, "if", iface);
-  cJSON_AddItemToObject(hello_args, "ports", node->ports);
-  m_node_send(node,"hello",args,"reg",NULL,"mc");
+  cJSON_AddItemToObject(hello_args, "ports", ports);
+  m_node_send(node,"hello",args,"reg",0,"mc");
   free(args);
   free(iface);
 }
 
 int m_node_send(m_node_t *node, char *command, cJSON *msg, char *callback, int mid, char *port){
-  cJSON *header = m_make_header(node,command,callback,mid,port);
+  cJSON *header = m_node_make_header(node,command,callback,mid,port);
   m_dataflow_send(node->dataflow,header,msg);
   return cJSON_GetObjectItem(header,"mid")->valueint;
 }

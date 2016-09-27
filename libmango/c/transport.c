@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include <string.h>
+#include "zmq.h"
 #include "transport.h"
 #include "string.h"
 
@@ -14,7 +17,6 @@ void m_transport_tx(m_transport_t *t, char *data){
 
 char *m_transport_rx(m_transport_t *t){
   int cur_max = 256;
-  int size = 0;
   char *msg = malloc(cur_max);
   int size = zmq_recv(t->socket, msg, cur_max-1, 0);
   int msg_size = size;
@@ -30,8 +32,8 @@ char *m_transport_rx(m_transport_t *t){
     }
     else{
       char *new_msg = malloc(2*cur_max);
-      memcopy(new_msg, msg, msg_size);
-      memcopy(new_msg+msg_size, msg2, size);
+      memcpy(new_msg, msg, msg_size);
+      memcpy(new_msg+msg_size, msg2, size);
       msg_size += size;
       cur_max *= 2;
       free(msg);
@@ -43,7 +45,7 @@ char *m_transport_rx(m_transport_t *t){
 }
 
 void m_transport_free(m_transport_t *t){
-  free(t->addr);
+  free(t->target);
   zmq_close(t->socket);
   free(t);
 }

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <yaml.h>
+#include "libmango.h"
 #include "dict.h"
 #include "cJSON/cJSON.h"
 
@@ -18,7 +19,7 @@ struct m_interface{
 
 m_interface_t *m_interface_new(){
   m_interface_t *i = malloc(sizeof(m_interface_t));
-  i->interface = cJSON_CreateObject;
+  i->interface = cJSON_CreateObject();
   i->handlers = m_dict_new(LIBMANGO_DEFAULT_INTERFACE_SIZE);
   i->implemented = 0;
   i->size = 0;
@@ -26,7 +27,7 @@ m_interface_t *m_interface_new(){
 }
 
 int m_interface_load(m_interface_t *i, char *filename){
-  cJSON *obj = cJSON_createObject();
+  cJSON *obj = cJSON_CreateObject();
   yaml_parser_t parser;
   FILE *source = fopen(filename, "rb");
   yaml_parser_initialize(&parser);
@@ -57,7 +58,7 @@ void m_interface_process_yaml(yaml_parser_t *parser, cJSON *node){
 
     // depth += 1
     else if (event.type == YAML_MAPPING_START_EVENT) {
-      process_layer(parser, last_leaf);
+      m_interface_process_yaml(parser, last_leaf);
       storage ^= VAL; // Flip VAR/VAL, w/o touching SEQ
     }
     
@@ -83,8 +84,8 @@ int m_interface_validate(m_interface_t *i, char *fn_name){
   return m_dict_get(i->handlers, fn_name) == NULL ? 0 : 1;
 }
 
-int m_interface_handler(m_interface_t *i, char *fn_name){
-  return m_dict_get(i->handlers, fn_name)->handler;
+cJSON *(*m_interface_handler(m_interface_t *i, char *fn_name))(struct m_node *, cJSON *, cJSON *){
+  return ((m_function_t *)(m_dict_get(i->handlers, fn_name)))->handler;
 }
 
 int m_interface_ready(m_interface_t *i){
