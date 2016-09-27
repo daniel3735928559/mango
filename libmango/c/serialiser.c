@@ -3,6 +3,11 @@
 #include <string.h>
 #include "cJSON/cJSON.h"
 
+struct m_serialiser {
+  char *version;
+  char *method;
+};
+
 m_serialiser_t *m_serialiser_new(char *version){
   m_serialiser_t *s = malloc(sizeof(m_serialiser_t));
   s->version = version;

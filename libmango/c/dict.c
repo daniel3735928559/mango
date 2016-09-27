@@ -3,6 +3,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct m_dict_entry {
+  char *key;
+  void *val;
+};
+
+struct m_dict {
+  m_dict_entry_t **data;
+  int size;
+};
+
 m_dict_t *m_dict_new(int size){
   m_dict_t *d = malloc(sizeof(m_dict_t));
   if(!d) return NULL;

@@ -4,6 +4,18 @@
 #include "dict.h"
 #include "cJSON/cJSON.h"
 
+struct m_function{
+  cJSON *args;
+  cJSON *(*handler)(m_node_t *node, cJSON *header, cJSON *args);
+};
+
+struct m_interface{
+  cJSON *interface;
+  m_dict_t *handlers;
+  int implemented;
+  int size;
+};
+
 m_interface_t *m_interface_new(){
   m_interface_t *i = malloc(sizeof(m_interface_t));
   i->interface = cJSON_CreateObject;
@@ -79,6 +91,6 @@ int m_interface_ready(m_interface_t *i){
   return i->implemented == i->size; // Check for functions not yet implemented
 }
 
-char *m_interface_str(m_interface_i *i){
+char *m_interface_string(m_interface_t *i){
   return cJSON_Print(i->interface);
 }

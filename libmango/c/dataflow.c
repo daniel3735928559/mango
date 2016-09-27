@@ -4,11 +4,19 @@
 #include "error.h"
 #include "cJSON/cJSON.h"
 
+struct m_dataflow {
+  m_interface_t *interface;
+  m_transport_t *transport;
+  m_serialiser_t *serialiser;
+  cJSON *dispatch(cJSON*, cJSON*);
+  void error(m_error_t *);
+};
+  
 m_dataflow_t *m_dataflow_new(m_interface_t *interface,
 			     m_transport_t *transport,
 			     m_serialiser_t *serialiser,
-			     m_args_t *dispatch(m_header_t *, m_args_t *),
-			     void error(m_error_t *)){
+			     void (*dispatch)(cJSON *, cJSON *),
+			     void (*error)(m_error_t *)){
   m_dataflow_t *d = malloc(sizeof(m_dataflow_t));
   d->interface = interface;
   d->transport = transport;

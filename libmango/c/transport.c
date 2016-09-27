@@ -1,7 +1,7 @@
 #include "transport.h"
 #include "string.h"
 
-void m_transport_new(char *addr, void *context){
+m_transport_t *m_transport_new(char *addr, void *context){
   m_transport_t *t = malloc(sizeof(m_transport_t));
   t->target = strdup(addr);
   t->socket = zmq_socket(context, ZMQ_DEALER);
