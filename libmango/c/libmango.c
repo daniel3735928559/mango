@@ -4,6 +4,7 @@
 #include "interface.h"
 #include "cJSON/cJSON.h"
 #include "error.h"
+#include "libmango.h"
 
 void m_node_new(char debug){
   m_node_t *n = malloc(sizeof(m_node_t));
@@ -85,10 +86,10 @@ void m_node_ready(m_node_t *node, cJSON *header, cJSON *args){
   char *iface = m_interface_string(node->interface);
   cJSON *args = cJSON_CreateObject();
   cJSON *ports = cJSON_CreateObject();
-  cJSON_AddStringToObject(args, 'id', node->node_id);
-  cJSON_AddStringToObject(args, 'if', iface);
-  cJSON_AddItemToObject(args, 'ports', node->ports);
-  self.m_send(node,"hello",args,"reg",NULL,"mc");
+  cJSON_AddStringToObject(args, "id", node->node_id);
+  cJSON_AddStringToObject(args, "if", iface);
+  cJSON_AddItemToObject(args, "ports", node->ports);
+  m_node_send(node,"hello",args,"reg",NULL,"mc");
   free(args);
   free(iface);
 }
@@ -104,7 +105,7 @@ void m_node_run(m_node_t *node){
     zmq_pollitem_t items [] = {
       {node->local_gateway->socket, 0, ZMQ_POLLIN, 0},
     };
-    zmq_poll (items, 2, -1);
+    zmq_poll(items, 2, -1);
     if(items[0].revents & ZMQ_POLLIN){
       m_dataflow_recv(node->dataflow);
     }

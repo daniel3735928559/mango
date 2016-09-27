@@ -1,0 +1,23 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "cJSON/cJSON.h"
+
+char *LIBMANGO_PREAMBLE = "MANGO";
+
+typedef struct m_serialiser {
+  char *version;
+  char *method;
+} m_serialiser_t;
+
+m_serialiser_t *m_serialiser_new(char *version);
+
+char *m_serialiser_make_preamble(m_serialiser_t *s, char *buf);
+
+int m_serialiser_len_preamble(m_serialiser_t *s);
+
+char *m_serialiser_parse_preamble(m_serialiser_t *s, char *data);
+
+char *m_serialiser_serialise(m_serialiser_t *s, cJSON *header, cJSON *args);
+
+cJSON *m_serialiser_deserialise(m_serialiser_t *s, char *data);

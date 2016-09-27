@@ -2,8 +2,9 @@
 #include "serialiser.h"
 #include "dataflow.h"
 #include "interface.h"
-#include "args.h"
 #include "error.h"
+#include "cJSON/cJSON.h"
+#include "zmq.h"
 
 char *LIBMANGO_VERSION = "0.1";
 char *LIBMANGO_REPLY = "reply";

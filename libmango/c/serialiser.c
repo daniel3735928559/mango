@@ -1,13 +1,7 @@
 #include <strlib.h>
 #include <stdio.h>
 #include <string.h>
-
-char *LIBMANGO_PREAMBLE = "MANGO";
-
-typedef struct m_serialiser {
-  char *version;
-  char *method;
-} m_serialiser_t;
+#include "cJSON/cJSON.h"
 
 m_serialiser_t *m_serialiser_new(char *version){
   m_serialiser_t *s = malloc(sizeof(m_serialiser_t));
@@ -35,34 +29,23 @@ char *m_serialiser_parse_preamble(m_serialiser_t *s, char *data){
   return ans;
 }
 
-char *m_serialiser_serialise(m_serialiser_t *s, m_dict_t *header, m_dict_t *args){
-  m_dict_t *data_dict = m_dict_new();
-  m_dict_set(data_dict, "header", header);
-  m_dict_set(data_dict, "args", args);
+char *m_serialiser_serialise(m_serialiser_t *s, cJSON *header, cJSON *args){
+  cJSON *data_dict = cJSON_createObject();
+  cJSON_setObjectItem(data_dict, "header", header);
+  cJSON_setObjectItem(data_dict, "argsr", args);
 
   int l = m_serialiser_len_preamble(s);
-  char *content = m_dict_str(data_dict);
+  char *content = cJSON_Print(data_dict);
   char *data = malloc(strlen(content)+l+1);
   m_serialiser_make_preamble(s, data);
   strcopy(data+l, content);
   free(content);
-  m_dict_free(data_dict);
+  cJSON_Delete(data_dict);
   return data;
 }
 
-m_dict_t *m_serialiser_deserialise(m_serialiser_t *s, char *data){
+cJSON *m_serialiser_deserialise(m_serialiser_t *s, char *data){
   char *content = m_serialiser_validate_preamble(s, data);
   if(!content) return NULL;
-  
-}
-
-    this.deserialise = function(data){
-	try{
-	    var d = JSON.parse(message);
-	    return [d['header'],d['args']]
-	} catch (e) {
-	    console.log(e);
-	    throw new MError("Failed to parse message");
-	}
-    }
+  return cJSON_Parse(content);
 }

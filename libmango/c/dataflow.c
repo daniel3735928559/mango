@@ -2,6 +2,7 @@
 #include "transport.h"
 #include "serialiser.h"
 #include "error.h"
+#include "cJSON/cJSON.h"
 
 m_dataflow_t *m_dataflow_new(m_interface_t *interface,
 			     m_transport_t *transport,
@@ -24,12 +25,12 @@ void m_dataflow_send(m_dataflow_t *d, m_header_t *header, m_args_t *args){
     
 void m_dataflow_recv(m_dataflow_t *d){
   char *data = m_transport_rx(d->transport);
-  m_dict_t *m = m_serialiser_deserialise(d->serialiser,data);
-  if(!m_interface_validate(d->interface, m_dict_get(m,"header"))){
+  cJSON *m = m_serialiser_deserialise(d->serialiser,data);
+  if(!m_interface_validate(d->interface, cJSON_getObjectItem(cJSON_getObjectItem(m,"header"),"command")->valuestring)){
     d->error(UNKNOWN_COMMAND);
     return;
   }
-  d->dispatch_cb(m_dict_get(m,"header"),m_dict_get(m,"args"));
+  d->dispatch_cb(cJSON_getObjectItem(m,"header"), cJSON_getObjectItem(m,"args"));
   free(data);
-  m_dict_free(m);
+  cJSON_Delete(m);
 }

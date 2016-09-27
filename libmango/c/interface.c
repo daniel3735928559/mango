@@ -1,20 +1,65 @@
+#include <stdio.h>
 #include <stdlib.h>
+#include <yaml.h>
 #include "dict.h"
+#include "cJSON/cJSON.h"
 
 m_interface_t *m_interface_new(){
   m_interface_t *i = malloc(sizeof(m_interface_t));
-  i->interface = m_dict_new(LIBMANGO_DEFAULT_INTERFACE_SIZE);
+  i->interface = cJSON_CreateObject;
+  i->handlers = m_dict_new(LIBMANGO_DEFAULT_INTERFACE_SIZE);
   i->implemented = 0;
   i->size = 0;
   return i;
 }
 
 int m_interface_load(m_interface_t *i, char *filename){
-  // load YAML and set handlers to NULL
+  cJSON *obj = cJSON_createObject();
+  yaml_parser_t parser;
+  FILE *source = fopen(filename, "rb");
+  yaml_parser_initialize(&parser);
+  yaml_parser_set_input_file(&parser, source);
+  m_interface_process_yaml(&parser, obj);
+  yaml_parser_delete(&parser);
+  fclose(source);
 }
 
-int m_interface_handle(m_interface_t *i, char *fn_name, m_dict_t* handler(m_node_t *node, m_dict_t *header, m_dict_t *args)){
-  m_function_t *fn = m_dict_get(i->interface, fn_name);
+void m_interface_process_yaml(yaml_parser_t *parser, cJSON *node){
+  cJSON *last_leaf;
+  yaml_event_t event;
+  int storage = VAR;
+  while(1) {
+    yaml_parser_parse(parser, &event);
+    
+    // Parse value either as a new leaf in the mapping
+    //  or as a leaf value (one of them, in case it's a sequence)
+    if (event.type == YAML_SCALAR_EVENT) {
+      if (storage) g_node_append_data(last_leaf, g_strdup((gchar*) event.data.scalar.value));
+      else last_leaf = g_node_append(data, g_node_new(g_strdup((gchar*) event.data.scalar.value)));
+      storage ^= VAL; // Flip VAR/VAL switch for the next event
+    }
+    
+    // Sequence - all the following scalars will be appended to the last_leaf
+    else if (event.type == YAML_SEQUENCE_START_EVENT) storage = SEQ;
+    else if (event.type == YAML_SEQUENCE_END_EVENT) storage = VAR;
+
+    // depth += 1
+    else if (event.type == YAML_MAPPING_START_EVENT) {
+      process_layer(parser, last_leaf);
+      storage ^= VAL; // Flip VAR/VAL, w/o touching SEQ
+    }
+    
+    // depth -= 1
+    else if(event.type == YAML_MAPPING_END_EVENT
+	    || event.type == YAML_STREAM_END_EVENT)
+      break;
+    
+    yaml_event_delete(&event);
+  }
+}
+
+int m_interface_handle(m_interface_t *i, char *fn_name, cJSON *handler(m_node_t *node, cJSON *header, cJSON *args)){
+  m_function_t *fn = m_dict_get(i->handlers, fn_name);
   if(!fn) return -1; // Function not in interface
   if(fn->handler) return -2; // Already implemented
   fn->handler = handler;
@@ -23,11 +68,11 @@ int m_interface_handle(m_interface_t *i, char *fn_name, m_dict_t* handler(m_node
 }
 
 int m_interface_validate(m_interface_t *i, char *fn_name){
-  return m_dict_get(i->interface, fn_name) == NULL ? 0 : 1;
+  return m_dict_get(i->handlers, fn_name) == NULL ? 0 : 1;
 }
 
 int m_interface_handler(m_interface_t *i, char *fn_name){
-  return m_dict_get(i->interface, fn_name)->handler;
+  return m_dict_get(i->handlers, fn_name)->handler;
 }
 
 int m_interface_ready(m_interface_t *i){
@@ -35,18 +80,5 @@ int m_interface_ready(m_interface_t *i){
 }
 
 char *m_interface_str(m_interface_i *i){
-  int len = 0;
-  int idx = 0;
-  int k = 0;
-  char **keys = malloc(sizeof(char *)*i->size);
-  char **vals = malloc(sizeof(char *)*i->size);
-  while(idx = m_dict_next(i->interface, idx) != -1){
-    m_dict_entry_t *e = interface->data[idx];
-    keys[k] = strdup(e->key);
-    vals[k] = strdup((char *)(e->val));
-    len += strlen(keys[k]) + strlen(vals[k]);
-    idx++;
-    k++;
-  }
-  char *ans = malloc(len+4*i->size/*size of quotes and curly brackets??*/);
+  return cJSON_Print(i->interface);
 }
