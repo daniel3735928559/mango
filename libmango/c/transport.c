@@ -9,6 +9,7 @@ m_transport_t *m_transport_new(char *addr, void *context){
   t->target = strdup(addr);
   t->socket = zmq_socket(context, ZMQ_DEALER);
   zmq_connect(t->socket, t->target);
+  return t;
 }
 
 void m_transport_tx(m_transport_t *t, char *data){

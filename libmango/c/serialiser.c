@@ -13,9 +13,10 @@ m_serialiser_t *m_serialiser_new(char *version){
   m_serialiser_t *s = malloc(sizeof(m_serialiser_t));
   s->version = version;
   s->method = "json";
+  return s;
 }
 
-char *m_serialiser_make_preamble(m_serialiser_t *s, char *buf){
+void m_serialiser_make_preamble(m_serialiser_t *s, char *buf){
   sprintf(buf, "MANGO%s %s\n", s->version, s->method);
 }
 

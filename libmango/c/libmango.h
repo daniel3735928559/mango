@@ -9,10 +9,10 @@
 #include "cJSON/cJSON.h"
 #include "zmq.h"
 
-char *LIBMANGO_VERSION = "0.1";
-char *LIBMANGO_REPLY = "reply";
-char *LIBMANGO_HELLO = "hello";
-char *LIBMANGO_STDIO = "stdio";
+#define LIBMANGO_VERSION "0.1"
+#define LIBMANGO_REPLY "reply"
+#define LIBMANGO_HELLO "hello"
+#define LIBMANGO_STDIO "stdio"
 
 typedef struct m_node m_node_t;
 

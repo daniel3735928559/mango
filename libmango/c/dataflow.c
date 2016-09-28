@@ -27,6 +27,7 @@ m_dataflow_t *m_dataflow_new(m_node_t *node,
   d->serialiser = serialiser;
   d->dispatch = dispatch;
   d->error = error;
+  return d;
 }
 
 void m_dataflow_send(m_dataflow_t *d, cJSON *header, cJSON *args){

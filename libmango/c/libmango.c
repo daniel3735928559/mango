@@ -40,7 +40,6 @@ m_node_t *m_node_new(char debug){
   m_interface_handle(n->interface, "reply", m_node_reply);
   m_interface_handle(n->interface, "heartbeat", m_node_heartbeat);
   n->local_gateway = m_transport_new(n->server_addr, n->zmq_context);
-  void *s = n->local_gateway->socket;  
   n->dataflow = m_dataflow_new(n, n->local_gateway, n->serialiser, n->interface, m_node_dispatch, m_node_handle_error);
   // printf("SOCK %d",zmq_fileno(s));
   return n;
@@ -74,14 +73,17 @@ void m_node_handle_error(m_node_t *node, char *src, char *err){
 
 cJSON *m_node_reg(m_node_t *node, cJSON *header, cJSON *args){
   node->node_id = strdup(cJSON_GetObjectItem(args,"id")->valuestring);
+  return NULL;
 }
 
 cJSON *m_node_reply(m_node_t *node, cJSON *header, cJSON *args){
   printf("REPLY\n");
+  return NULL;
 }
 
 cJSON *m_node_heartbeat(m_node_t *node, cJSON *header, cJSON *args){
   m_node_send(node,"alive",NULL,NULL,0,"mc");
+  return NULL;
 }
 
 cJSON *m_node_make_header(m_node_t *node, char *command, char *callback, int mid, char *src_port){
