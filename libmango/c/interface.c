@@ -26,49 +26,64 @@ m_interface_t *m_interface_new(){
   return i;
 }
 
-int m_interface_load(m_interface_t *i, char *filename){
-  cJSON *obj = cJSON_CreateObject();
-  yaml_parser_t parser;
-  FILE *source = fopen(filename, "rb");
-  yaml_parser_initialize(&parser);
-  yaml_parser_set_input_file(&parser, source);
-  m_interface_process_yaml(&parser, obj);
-  yaml_parser_delete(&parser);
-  fclose(source);
-}
-
-void m_interface_process_yaml(yaml_parser_t *parser, cJSON *node){
-  cJSON *last_leaf;
+cJSON *m_interface_process_yaml(yaml_parser_t *parser){
+  cJSON *current = cJSON_CreateObject();
+  char *current_key;
   yaml_event_t event;
   int storage = VAR;
   while(1) {
     yaml_parser_parse(parser, &event);
-    
-    // Parse value either as a new leaf in the mapping
-    //  or as a leaf value (one of them, in case it's a sequence)
-    if (event.type == YAML_SCALAR_EVENT) {
-      if (storage) g_node_append_data(last_leaf, g_strdup((gchar*) event.data.scalar.value));
-      else last_leaf = g_node_append(data, g_node_new(g_strdup((gchar*) event.data.scalar.value)));
-      storage ^= VAL; // Flip VAR/VAL switch for the next event
-    }
-    
-    // Sequence - all the following scalars will be appended to the last_leaf
-    else if (event.type == YAML_SEQUENCE_START_EVENT) storage = SEQ;
-    else if (event.type == YAML_SEQUENCE_END_EVENT) storage = VAR;
 
-    // depth += 1
-    else if (event.type == YAML_MAPPING_START_EVENT) {
-      m_interface_process_yaml(parser, last_leaf);
-      storage ^= VAL; // Flip VAR/VAL, w/o touching SEQ
+    if (event.type == YAML_SCALAR_EVENT) {
+      if(storage){
+	printf("STORE EV=%s key=%s, CUR=%s\n", event.data.scalar.value, current_key, cJSON_Print(current));
+	cJSON *o = cJSON_CreateString(event.data.scalar.value);
+	cJSON_AddItemToObject(current, current_key, o);
+      }
+      else{
+	printf("MAP EV=%s\n", event.data.scalar.value);
+	current_key = strdup(event.data.scalar.value);
+      }
+      storage ^= VAL;
     }
     
-    // depth -= 1
-    else if(event.type == YAML_MAPPING_END_EVENT
-	    || event.type == YAML_STREAM_END_EVENT)
-      break;
+    else if (event.type == YAML_SEQUENCE_START_EVENT){
+      cJSON *arr = cJSON_CreateArray();
+      cJSON_AddItemToObject(current, event.data.scalar.value, arr);
+      storage = SEQ;
+    }
+
+    else if (event.type == YAML_SEQUENCE_END_EVENT){
+      storage = VAR;
+    }
+
+    else if (event.type == YAML_MAPPING_START_EVENT) {
+      printf("START MAP\n");
+      if(strcmp(current_key,"") == 0)
+	return m_interface_process_yaml(parser);
+      else
+	cJSON_AddItemToObject(current, current_key, m_interface_process_yaml(parser));
+      storage ^= VAL;
+    }
+    
+    else if(event.type == YAML_MAPPING_END_EVENT || event.type == YAML_STREAM_END_EVENT){
+      printf("END MAP\n");
+      return current;
+    }
     
     yaml_event_delete(&event);
   }
+}
+
+cJSON *m_interface_load(m_interface_t *i, char *filename){
+  yaml_parser_t parser;
+  FILE *source = fopen(filename, "rb");
+  yaml_parser_initialize(&parser);
+  yaml_parser_set_input_file(&parser, source);
+  cJSON *obj = m_interface_process_yaml(&parser);
+  yaml_parser_delete(&parser);
+  fclose(source);
+  return obj;
 }
 
 int m_interface_handle(m_interface_t *i, char *fn_name, cJSON *handler(m_node_t *node, cJSON *header, cJSON *args)){
