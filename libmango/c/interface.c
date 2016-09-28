@@ -124,5 +124,5 @@ int m_interface_ready(m_interface_t *i){
 }
 
 char *m_interface_string(m_interface_t *i){
-  return cJSON_Print(i->interface);
+  return cJSON_PrintUnformatted(i->interface);
 }

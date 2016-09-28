@@ -42,7 +42,7 @@ char *m_serialiser_serialise(m_serialiser_t *s, cJSON *header, cJSON *args){
   cJSON_AddItemToObject(data_dict, "args", args);
 
   int l = m_serialiser_len_preamble(s);
-  char *content = cJSON_Print(data_dict);
+  char *content = cJSON_PrintUnformatted(data_dict);
   char *data = malloc(strlen(content)+l+1);
   m_serialiser_make_preamble(s, data);
   strcpy(data+l, content);

@@ -22,6 +22,7 @@ void m_transport_tx(m_transport_t *t, char *data){
 }
 
 char *m_transport_rx(m_transport_t *t){
+  printf("RX\n");
   int cur_max = 256;
   char *msg = malloc(cur_max);
   int size = zmq_recv(t->socket, msg, cur_max-1, 0);
