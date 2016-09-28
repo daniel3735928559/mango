@@ -39,7 +39,7 @@ char *m_serialiser_parse_preamble(m_serialiser_t *s, char *data){
 char *m_serialiser_serialise(m_serialiser_t *s, cJSON *header, cJSON *args){
   cJSON *data_dict = cJSON_CreateObject();
   cJSON_AddItemToObject(data_dict, "header", header);
-  cJSON_AddItemToObject(data_dict, "argsr", args);
+  cJSON_AddItemToObject(data_dict, "args", args);
 
   int l = m_serialiser_len_preamble(s);
   char *content = cJSON_Print(data_dict);
