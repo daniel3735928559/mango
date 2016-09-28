@@ -24,8 +24,10 @@ cJSON *m_node_reply(m_node_t *node, cJSON *header, cJSON *args);
 cJSON *m_node_heartbeat(m_node_t *node, cJSON *header, cJSON *args);
 cJSON *m_node_make_header(m_node_t *node, char *command, char *callback, int mid, char *src_port);
 int m_node_get_mid(m_node_t *node);
-void m_node_ready(m_node_t *node, cJSON *header, cJSON *args);
 int m_node_send(m_node_t *node, char *command, cJSON *msg, char *callback, int mid, char *port);
+void m_node_add_interface(m_node_t *node, char *filename);
+int m_node_handle(m_node_t *node, char *fn_name, cJSON *(*handler)(m_node_t *, cJSON *, cJSON *));
+void m_node_ready(m_node_t *node);
 void m_node_run(m_node_t *node);
 
 #endif

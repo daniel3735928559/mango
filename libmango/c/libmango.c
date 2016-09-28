@@ -45,6 +45,14 @@ m_node_t *m_node_new(char debug){
   return n;
 }
 
+void m_node_add_interface(m_node_t *node, char *filename){
+  m_interface_load(node->interface, filename);
+}
+
+int m_node_handle(m_node_t *node, char *fn_name, cJSON *(*handler)(m_node_t *, cJSON *, cJSON *)){
+  return m_interface_handle(node->interface, fn_name, handler);
+}
+
 void m_node_dispatch(m_node_t *node, cJSON *header, cJSON *args){
   cJSON *result = m_interface_handler(node->interface, cJSON_GetObjectItem(header,"command")->valuestring)(node, header, args);
   if(cJSON_HasObjectItem(result,"error")){
@@ -103,15 +111,14 @@ int m_node_get_mid(m_node_t *node){
   return node->mid++;
 }
 
-void m_node_ready(m_node_t *node, cJSON *header, cJSON *args){
+void m_node_ready(m_node_t *node){
   char *iface = m_interface_string(node->interface);
   cJSON *hello_args = cJSON_CreateObject();
   cJSON *ports = cJSON_CreateStringArray(node->ports, node->num_ports);
   cJSON_AddStringToObject(hello_args, "id", node->node_id);
   cJSON_AddStringToObject(hello_args, "if", iface);
   cJSON_AddItemToObject(hello_args, "ports", ports);
-  m_node_send(node,"hello",args,"reg",0,"mc");
-  free(args);
+  m_node_send(node,"hello",hello_args,"reg",0,"mc");
   free(iface);
 }
 

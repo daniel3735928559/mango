@@ -16,7 +16,7 @@ typedef struct m_interface m_interface_t;
 struct m_node;
 
 m_interface_t *m_interface_new();
-cJSON *m_interface_load(m_interface_t *i, char *filename);
+void m_interface_load(m_interface_t *i, char *filename);
 int m_interface_handle(m_interface_t *i, char *fn_name, cJSON* handler(struct m_node *node, cJSON *header, cJSON *args));
 cJSON *m_interface_process_yaml(yaml_parser_t *parser);
 int m_interface_validate(m_interface_t *i, char *fn_name);

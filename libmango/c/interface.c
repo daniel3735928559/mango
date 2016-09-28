@@ -75,7 +75,7 @@ cJSON *m_interface_process_yaml(yaml_parser_t *parser){
   }
 }
 
-cJSON *m_interface_load(m_interface_t *i, char *filename){
+void m_interface_load(m_interface_t *i, char *filename){
   yaml_parser_t parser;
   FILE *source = fopen(filename, "rb");
   yaml_parser_initialize(&parser);
@@ -83,7 +83,17 @@ cJSON *m_interface_load(m_interface_t *i, char *filename){
   cJSON *obj = m_interface_process_yaml(&parser);
   yaml_parser_delete(&parser);
   fclose(source);
-  return obj;
+  cJSON *o = obj->child;
+  while(o){
+    if(cJSON_HasObjectItem(i->interface, o->string)) return; // already implemented
+    o = o->next;
+  }
+  o = obj->child;
+  while(o){
+    cJSON_AddItemToObject(i->interface, o->string, o);
+    o = o->next;
+  }
+  printf("LOADED: %s\n", cJSON_Print(i->interface));
 }
 
 int m_interface_handle(m_interface_t *i, char *fn_name, cJSON *handler(m_node_t *node, cJSON *header, cJSON *args)){
