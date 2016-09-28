@@ -1,1 +1,1 @@
-gcc -L ../../../libmango/c/ -I ../../../libmango/c excite.c -lzmq -lyaml -lm -lmango 
+gcc -g -L ../../../libmango/c/ -I ../../../libmango/c excite.c -lzmq -lyaml -lm -lmango 

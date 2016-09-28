@@ -27,8 +27,9 @@ m_interface_t *m_interface_new(){
 }
 
 cJSON *m_interface_process_yaml(yaml_parser_t *parser){
+  printf("PROCESSING\n");
   cJSON *current = cJSON_CreateObject();
-  char *current_key;
+  char *current_key = NULL;
   yaml_event_t event;
   int storage = VAR;
   while(1) {
@@ -59,7 +60,7 @@ cJSON *m_interface_process_yaml(yaml_parser_t *parser){
 
     else if (event.type == YAML_MAPPING_START_EVENT) {
       printf("START MAP\n");
-      if(strcmp(current_key,"") == 0)
+      if(current_key == NULL || strcmp(current_key,"") == 0)
 	return m_interface_process_yaml(parser);
       else
 	cJSON_AddItemToObject(current, current_key, m_interface_process_yaml(parser));
@@ -81,19 +82,24 @@ void m_interface_load(m_interface_t *i, char *filename){
   yaml_parser_initialize(&parser);
   yaml_parser_set_input_file(&parser, source);
   cJSON *obj = m_interface_process_yaml(&parser);
+  printf("LAODED %s",cJSON_Print(obj));
   yaml_parser_delete(&parser);
   fclose(source);
   cJSON *o = obj->child;
   while(o){
     if(cJSON_HasObjectItem(i->interface, o->string)) return; // already implemented
+    printf("A %s\n",o->string);
     o = o->next;
   }
   o = obj->child;
   while(o){
-    cJSON_AddItemToObject(i->interface, o->string, o);
+    printf("A %s %s\n",o->string,cJSON_Print(o));
+    cJSON_AddItemToObject(i->interface, o->string, cJSON_Duplicate(o,1));
+    printf("hi\n\n");
     o = o->next;
   }
   printf("LOADED: %s\n", cJSON_Print(i->interface));
+  printf("A\n");
 }
 
 int m_interface_handle(m_interface_t *i, char *fn_name, cJSON *handler(m_node_t *node, cJSON *header, cJSON *args)){

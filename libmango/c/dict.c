@@ -16,9 +16,10 @@ struct m_dict {
 m_dict_t *m_dict_new(int size){
   m_dict_t *d = malloc(sizeof(m_dict_t));
   if(!d) return NULL;
-  d->data = malloc(sizeof(char *)*(size ? size : DICT_INIT_SIZE));
+  d->size = size ? size : DICT_INIT_SIZE;
+  d->data = malloc(sizeof(char *)*(d->size));
   if(!d->data) return NULL;
-  d->size = DICT_INIT_SIZE;
+  memset(d->data,0,sizeof(char *)*(d->size));
   return d;
 }
 
@@ -31,7 +32,6 @@ int m_dict_hash(m_dict_t *dict, char *key){
 
 void *m_dict_get(m_dict_t *dict, char *key){
   long h = m_dict_hash(dict, key);
-  //printf("h=%d\n",h);
   int i = 0;
   while(i++ < dict->size && dict->data[h] && strcmp(dict->data[h]->key, key))
     h = (h+1)%(dict->size);
@@ -42,7 +42,7 @@ void *m_dict_get(m_dict_t *dict, char *key){
 
 int m_dict_set(m_dict_t *dict, char *key, void *val){
   long h = m_dict_hash(dict, key);
-  //printf("h=%d\n",h);
+  printf("h=%d,s=%d\n",h,dict->size);
   int i = 0;
   while(i++ < dict->size && dict->data[h] && strcmp(dict->data[h]->key, key)){
     h = (h+1)%(dict->size);

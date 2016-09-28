@@ -32,6 +32,7 @@ m_dataflow_t *m_dataflow_new(m_node_t *node,
 
 void m_dataflow_send(m_dataflow_t *d, cJSON *header, cJSON *args){
   char *data = m_serialiser_serialise(d->serialiser, header, args);
+  printf("SENDING %s\n",data);
   m_transport_tx(d->transport, data);
   free(data);
 }
