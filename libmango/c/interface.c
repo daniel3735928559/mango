@@ -25,6 +25,10 @@ m_interface_t *m_interface_new(){
   return i;
 }
 
+cJSON *m_interface_spec(m_interface_t *i){
+  return i->interface;
+}
+
 cJSON *m_interface_process_yaml(yaml_parser_t *parser){
   printf("PROCESSING\n");
   cJSON *current = cJSON_CreateObject();

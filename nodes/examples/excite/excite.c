@@ -13,13 +13,15 @@ int main(int argc, char **argv){
 }
 
 cJSON *excite(m_node_t *node, cJSON *header, cJSON *args){
+  printf("EXCITING\n%s\n%s\n",cJSON_Print(header),cJSON_Print(args));
   cJSON *ans = cJSON_CreateObject();
   char *s = cJSON_GetObjectItem(args,"str")->valuestring;
   int l = strlen(s);
   char *excited = malloc(l+2);
+  memcpy(excited,s,l);
   excited[l]='!';
   excited[l+1] = '\0';
-  cJSON_AddStringToObject(ans,"str",excited);
+  cJSON_AddStringToObject(ans,"excited",excited);
   return ans;
 }
 

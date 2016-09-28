@@ -121,7 +121,7 @@ void m_node_ready(m_node_t *node){
   cJSON *hello_args = cJSON_CreateObject();
   cJSON *ports = cJSON_CreateStringArray(node->ports, node->num_ports);
   cJSON_AddStringToObject(hello_args, "id", node->node_id);
-  cJSON_AddStringToObject(hello_args, "if", iface);
+  cJSON_AddItemToObject(hello_args, "if", cJSON_Duplicate(m_interface_spec(node->interface),1));
   cJSON_AddItemToObject(hello_args, "ports", ports);
   m_node_send(node,"hello",hello_args,"reg",0,"mc");
   free(iface);

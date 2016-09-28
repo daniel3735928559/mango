@@ -40,6 +40,7 @@ class Node:
         if route is None:
             route = self.route
         try:
+            print("HH",header,self.interface.interface,type(self.interface.interface))
             args = self.interface.validate(header['command'],args)
             print("Sending",self.node_id,route,header,args)
             self.dataflow.send(header,args,route)
