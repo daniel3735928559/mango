@@ -36,9 +36,13 @@ m_node_t *m_node_new(char debug){
   
   n->zmq_context = zmq_ctx_new();
   m_interface_load(n->interface, "/home/zoom/suit/mango/libmango/node_if.yaml");
-  m_interface_handle(n->interface, "reg", m_node_reg);
-  m_interface_handle(n->interface, "reply", m_node_reply);
-  m_interface_handle(n->interface, "heartbeat", m_node_heartbeat);
+  int x;
+  x = m_interface_handle(n->interface, "reg", m_node_reg);
+  printf("X %d\n",x);
+  x = m_interface_handle(n->interface, "reply", m_node_reply);
+  printf("X %d\n",x);
+  x = m_interface_handle(n->interface, "heartbeat", m_node_heartbeat);
+  printf("X %d\n",x);
   n->local_gateway = m_transport_new(n->server_addr, n->zmq_context);
   n->dataflow = m_dataflow_new(n, n->local_gateway, n->serialiser, n->interface, m_node_dispatch, m_node_handle_error);
   return n;
@@ -53,6 +57,7 @@ int m_node_handle(m_node_t *node, char *fn_name, cJSON *(*handler)(m_node_t *, c
 }
 
 void m_node_dispatch(m_node_t *node, cJSON *header, cJSON *args){
+  printf("DISPATCH %s\n",cJSON_GetObjectItem(header,"command")->valuestring);
   cJSON *result = m_interface_handler(node->interface, cJSON_GetObjectItem(header,"command")->valuestring)(node, header, args);
   if(cJSON_HasObjectItem(result,"error")){
     m_node_handle_error(node,
@@ -80,6 +85,7 @@ void m_node_handle_error(m_node_t *node, char *src, char *err){
 
 cJSON *m_node_reg(m_node_t *node, cJSON *header, cJSON *args){
   node->node_id = strdup(cJSON_GetObjectItem(args,"id")->valuestring);
+  printf("SET ID %s\n",node->node_id);
   return NULL;
 }
 
@@ -132,11 +138,10 @@ int m_node_send(m_node_t *node, char *command, cJSON *msg, char *callback, int m
 
 void m_node_run(m_node_t *node){
   while(1){
-    zmq_pollitem_t items [] = {
-      {node->local_gateway->socket, 0, ZMQ_POLLIN, 0},
-    };
-    zmq_poll(items, 2, -1);
+    zmq_pollitem_t items [] = {{node->local_gateway->socket, 0, ZMQ_POLLIN, 0}};
+    zmq_poll(items, 1, 10);
     if(items[0].revents & ZMQ_POLLIN){
+      printf("GOT\n");
       m_dataflow_recv(node->dataflow);
     }
   }

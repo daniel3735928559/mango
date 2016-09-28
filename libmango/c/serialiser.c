@@ -30,7 +30,7 @@ char *m_serialiser_parse_preamble(m_serialiser_t *s, char *data){
   m_serialiser_make_preamble(s, sample_preamble);
   char *ans = NULL;
   if(strncmp(sample_preamble, data, l) == 0){
-    ans = data+l+1;
+    ans = data+l;
   }
   free(sample_preamble);
   return ans;
@@ -53,6 +53,7 @@ char *m_serialiser_serialise(m_serialiser_t *s, cJSON *header, cJSON *args){
 
 cJSON *m_serialiser_deserialise(m_serialiser_t *s, char *data){
   char *content = m_serialiser_parse_preamble(s, data);
+  printf("DES %s\n",content);
   if(!content) return NULL;
   return cJSON_Parse(content);
 }

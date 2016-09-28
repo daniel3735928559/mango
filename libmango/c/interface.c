@@ -6,7 +6,6 @@
 #include "cJSON/cJSON.h"
 
 struct m_function{
-  cJSON *args;
   cJSON *(*handler)(m_node_t *node, cJSON *header, cJSON *args);
 };
 
@@ -103,20 +102,23 @@ void m_interface_load(m_interface_t *i, char *filename){
 }
 
 int m_interface_handle(m_interface_t *i, char *fn_name, cJSON *handler(m_node_t *node, cJSON *header, cJSON *args)){
-  m_function_t *fn = m_dict_get(i->handlers, fn_name);
-  if(!fn) return -1; // Function not in interface
-  if(fn->handler) return -2; // Already implemented
-  fn->handler = handler;
+  int present = cJSON_HasObjectItem(i->interface, fn_name);
+  printf("P=%d\n",present);
+  void *fn = m_dict_get(i->handlers, fn_name);
+  if(!present) return -1; // Function not in interface
+  if(fn) return -2; // Already implemented
+  m_dict_set(i->handlers, fn_name, handler);
   i->implemented++;
   return 0;
 }
 
 int m_interface_validate(m_interface_t *i, char *fn_name){
+  printf("VAL %s %08x\n",fn_name, m_dict_get(i->handlers, fn_name));
   return m_dict_get(i->handlers, fn_name) == NULL ? 0 : 1;
 }
 
 cJSON *(*m_interface_handler(m_interface_t *i, char *fn_name))(struct m_node *, cJSON *, cJSON *){
-  return ((m_function_t *)(m_dict_get(i->handlers, fn_name)))->handler;
+  return m_dict_get(i->handlers, fn_name);
 }
 
 int m_interface_ready(m_interface_t *i){
