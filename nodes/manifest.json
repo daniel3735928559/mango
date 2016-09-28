@@ -1,5 +1,6 @@
 {
     "langs":{
+	"c":{"pathvar":"LD_LIBRARY_PATH"},
 	"py":{"pathvar":"PYTHONPATH"},
 	"js":{"pathvar":"NODE_PATH"}
     },
@@ -21,6 +22,11 @@
 	    "dir":"examples/excite",
 	    "run":"node excite.js",
 	    "lang":"js"
+	},
+	"excite_c":{
+	    "dir":"examples/excite",
+	    "run":"a.out",
+	    "lang":"c"
 	},
 	"category":{
 	    "run":"node cat_node.js",
