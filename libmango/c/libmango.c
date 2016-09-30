@@ -80,6 +80,10 @@ void m_node_handle_error(m_node_t *node, char *src, char *err){
 }
 
 cJSON *m_node_reg(m_node_t *node, cJSON *header, cJSON *args){
+  if(strcmp(cJSON_GetObjectItem(header,"src_node")->valuestring,"mc")){
+    printf("Only accept reg from mc\n");
+    return NULL;
+  }
   node->node_id = strdup(cJSON_GetObjectItem(args,"id")->valuestring);
   printf("SET ID %s\n",node->node_id);
   return NULL;
@@ -98,7 +102,6 @@ cJSON *m_node_heartbeat(m_node_t *node, cJSON *header, cJSON *args){
 cJSON *m_node_make_header(m_node_t *node, char *command, char *src_port){
   if(!src_port) src_port = LIBMANGO_STDIO;
   cJSON *header = cJSON_CreateObject();
-  cJSON_AddStringToObject(header,"src_node", node->node_id);
   cJSON_AddStringToObject(header,"src_port", src_port);
   cJSON_AddStringToObject(header,"command", command);
   return header;

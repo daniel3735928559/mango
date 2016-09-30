@@ -29,9 +29,9 @@ than using the transport for addressing as is standard.
 
 To describe what a Mango program should look like, we shall work with
 an example: An `excite` program, which has one function called
-`excite` that takes in a string argument (called `str`) and returns a
-string argument `excited`, which is the input string with an '!'
-appended to it.
+`excite` that takes in a string argument `str` and returns a string
+argument `excited`, which is the input string with an '!'  appended to
+it.
 
 This program consists of two files:
 `[excite.yaml](../nodes/example/excite/excite.yaml)`, which describes
@@ -110,7 +110,7 @@ So the task in writing a libmango implementation, broadly, is to write
 the library that enables this code to work.  Here, "work" means the
 following:
 
-* The program creates a ZeroMQ dealer socket and connects it to a
+* The program creates node object (here, on line ) a ZeroMQ dealer socket and connects it to a
   ZeroMQ router socket whose address is specified in the `MC_ADDR`
   environment variable.  Concretely, if the program is run with
   `MC_ADDR=tcp://localhost:61453`, then the program needs to have code
@@ -156,7 +156,53 @@ MANGO0.1 json
 
 ## Mango RPC specification
 
-...
+### Architecture
+
+Every RPC endpoint is called a "node", which may have one or more
+"ports".  Every node has a unique ID, every port of a given node has a
+string name.  Messages are always marked with their source node/port
+and their destination port, as well as the function they are calling.
+
+### Message format
+
+Every message is formatted thus:
+
+  ```
+MANGO[version nunber] [serialisation method]
+[dictionary with "header" and "args" keys, serialised with the specified serialisation method]
+  ```
+
+Most current implementations simply use JSON to serialise the message
+content.  Since Mango is currently on version 0.1, these messages look like: 
+
+  ```
+MANGO0.1 json
+{"header":..., "args":...}
+  ```
+
+The header dictionary, when sent out, contains the following keys:
+
+* `command`: The name of the function to call
+* `src_port`: The port from which we are sending the call
+
+When a program receives a command, the header dictionary will have the
+following keys:
+
+* `command`: The name of the function to call
+
+* `src_node`: The node from which the call is being made
+
+* `src_port`: The port from which the call is being made
+
+* `port`: The port on our node on which the function call is being
+  made.
+
+This is because when you send a command, your identity and the
+destination of your command is controlled by the central router, so
+rather than specify where you want your command to do, you simply send
+a command and an indication of which of your ports is emitting the
+command, and then the router will attach all the information about
+which node sent it and which node and port it gets routed to.
 
 ## Components
 

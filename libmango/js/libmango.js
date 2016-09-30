@@ -41,7 +41,7 @@ function MNode(debug){
     }
 
     this.reg = function(header,args){
-	self.node_id = args["id"];
+	if(header.src_node == "mc") self.node_id = args["id"];
     }
 
     this.reply = function(header,args){
@@ -54,7 +54,7 @@ function MNode(debug){
 
     this.make_header = function(command,src_port){
 	if(!src_port) src_port = "stdio";
-	return {'src_node':self.node_id, 'src_port':src_port, 'command':command};
+	return {'src_port':src_port, 'command':command};
     }
 
     this.m_send = function(command,msg,port){

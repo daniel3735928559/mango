@@ -55,14 +55,15 @@ class m_node:
         self.m_send('error',{'source':src,'message':err},port="mc")
 
     def reg(self,header,args):
+        if header['src_node'] == 'mc':
+            return
         self.node_id = args["id"]
         self.debug_print('my new node id')
         self.debug_print(self.node_id)
         self.debug_print("registered as " + self.node_id)
 
     def make_header(self,command,src_port='stdio'):
-        header = {'src_node':self.node_id,
-                  'src_port':src_port,
+        header = {'src_port':src_port,
                   'command':command}
         self.debug_print("H",header)
         return header

@@ -124,6 +124,8 @@ class mc(m_node):
         result = self.interface.interface[header['command']]['handler'](header,args)
         if not result is None:
             header = self.make_header("reg" if header["command"] == "hello" else "reply",src_port=header['port'])
+            header['src_node'] = 'mc'
+            header['port'] = 'mc'
             self.dataflow.send(header,result,route)
         
     def remote_recv(self,h,c,raw,route,dataflow):
@@ -131,7 +133,6 @@ class mc(m_node):
     
     def mc_recv(self,h,c,raw,route,dataflow):
         print("MC got",h,c,raw,route)
-        src_node = h['src_node']
         src_port = h['src_port']
         print(str(route),h,c)
         if not route in self.routes:
@@ -139,11 +140,12 @@ class mc(m_node):
             # first message to be "hello".  Otherwise we ignore it.
             # If it is, make a Node object for it and send it the
 
-            if h['command'] == 'hello' and h['src_port'] == 'mc':
+            if h['command'] == 'hello' and h['src_port'] == 'mc' and 'id' in c:
                 # Make the ID for the node object
-                new_id = self.gen_id(src_node)
-                print("New node: " + src_node + " id = " + new_id)
+                new_id = self.gen_id(c['id'])
+                print("New node: " + c['id'] + " id = " + new_id)
                 c['id'] = new_id
+                h['src_node'] = new_id
                 # Make the Node object
                 iface = mc_if(c["if"] if "if" in c else {})
                 ports = c["ports"] if "ports" in c else []
@@ -160,17 +162,16 @@ class mc(m_node):
                 # Add the Node object to our registery
                 self.nodes[n.node_id] = n
                 self.routes[route] = n
-                print("passing along init msg finally",h,c,raw,src_node,src_port)
+                print("passing along init msg finally",h,c,raw,c['id'],src_port)
                 self.routes[route].ports[src_port].send(raw,h,c)
             else:
                 print("Non-hello init message: \n\n{}\n{}\n\nIgnoring".format(h,c))
         else:
+            src_node = self.routes[route].node_id
+            h['src_node'] = src_node
             if not src_port in self.routes[route].ports:
                 # If there is no matching Port object in the specified Node, fail
                 print("Invalid port: " + src_node+"/"+src_port)
-                return
-            elif src_node != self.routes[route].node_id:
-                print("Attempted impersonation: " + src_node+" != "+self.routes[route].node_id)
                 return
             # Now that we are guaranteed either way a matching Node/Port
             # combo for the incoming message, send it!,
