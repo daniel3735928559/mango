@@ -27,46 +27,136 @@ than using the transport for addressing as is standard.
 
 ## Outline of the task
 
-At a high level, a mango program runs the following steps:
+To describe what a Mango program should look like, we shall work with
+an example: An `excite` program, which has one function called
+`excite` that takes in a string argument (called `str`) and returns a
+string argument `excited`, which is the input string with an '!'
+appended to it.
 
-1. Store a mapping of function names to actual functions
+This program consists of two files:
+`[excite.yaml](../nodes/example/excite/excite.yaml)`, which describes
+the functions of the program and their inputs and outputs:
 
-2. Connect to a central hub (currently via ZMQ dealer socket)
+```
+excite:
+  args:
+    str:
+      type: string
+  rets:
+    excited:
+      type: string
+```
 
-3. Send the central hub a "hello" message, which looks like:
+This uses the interface descriptor language from
+[Pijemont](https://github.com/daniel3735928559/pijemont), and
+documnetation for the format can be found there.
 
-   ```
-   MANGO[version number] json
-   {"header":{"command":"hello",...},"args":{"id":[id requested],"if":[dictionary describing functions and their arguments]}
-   ```
+Then, the program that implements this function and allows it to be
+called through Mango RPC looks simply like: 
 
-4. The response will be a registration message, which will look like:
+```
+from libmango import *
 
-   ```
-   MANGO[version number] json
-   {"header":{"command":"reg",...},"args":{"id":[id given]}
-   ```
+class excite(m_node):
+    def __init__(self):
+        super().__init__()
+        self.interface.add_interface('excite.yaml', {'excite':self.excite})
+        self.ready()
+        self.run()
+    def excite(self,header,args):
+        return {'excited':args['str']+'!'}
+t = excite()
+```
 
-   This should be handled, and all future communications should use
-   the given ID as the "src" field in the header.
+Let us walk through this a little bit:
 
-5. Then, after any further program-specific initialisation, the socket
-   connecting the node to the hub should be polled for any incoming
-   data, which should be deserialised into the header dictionary and
-   the arguments dictionary.  The header dictionary will contain a
-   "command" field, which will specify the function being called.
-   This should exist in the mapping stored in step 1.  This function
-   should be called, with the header and arguments dictionaries passed
-   in as the two arguments.  The function should return a dictionary,
-   which should be sent out as the arguments dictionary to a "reply"
-   command.  The "mid" in the header of the reply command should be
-   the same as the "mid" in the header of the command being replied
-   to.
+```
+# import libmango
+from libmango import *
 
-6. To facilitate all this sending of messages, there should be a "send
-   message" function (often called `m_send`) which serialises and
-   sends a message given: a command, a source port (which should
-   default to "stdio"), and an arguments dictionary.
+# the program is a mango node, and so should extend the m_node class
+class excite(m_node):
+    def __init__(self):
+    
+        # instantiate the node
+        super().__init__()
+
+	# register that we are implementing the functions from
+        # excite.yaml, and specifically that the 'excite' function is
+        # implemented by self.excite
+        self.interface.add_interface('excite.yaml', {'excite':self.excite})
+
+	# register that we are done adding other interfaces and
+	# otherwise configuring the node
+	self.ready()
+
+        # start the main loop of the program
+	self.run()
+
+    # this is the function that implements the 'excite' function from
+    # the interface descriptor.  
+    def excite(self,header,args):
+    
+        # all this needs to do is return a dictionary with 'excited' as 
+	# its only key.  In this case, the corresponding value is the
+	# 'excited' version of the input value 'str'.
+        return {'excited':args['str']+'!'}
+
+# actually create an instance of the node
+t = excite()
+```
+
+So the task in writing a libmango implementation, broadly, is to write
+the library that enables this code to work.  Here, "work" means the
+following:
+
+* The program creates a ZeroMQ dealer socket and connects it to a
+  ZeroMQ router socket whose address is specified in the `MC_ADDR`
+  environment variable.  Concretely, if the program is run with
+  `MC_ADDR=tcp://localhost:61453`, then the program needs to have code
+  to connect to this.
+
+* The program sends a serialised Mango RPC 'hello' message (specified
+  below) on this socket and receives and handles a serialised Mango
+  RPC 'reg' message (also specified below) in response.  Concretely,
+  this will look like sending a message such as:
+
+  ```
+MANGO0.1 json
+{"header":{"command":"hello","src_node":"excite","src_port","mc"},"args":{"id":"ex","if":{"excite":{"args":{"str":{"type":"string"}},"rets":{"excited":{"type":"string"}}}}}}
+  ```
+
+  and will receive a response like:
+
+  ```
+MANGO0.1 json
+{"header":{"command":"reg","src_node":"mc","src_port","mc"},"args":{"id":"ex.0"}}
+  ```
+
+  at which point the node's ID should be set to "ex.0" with this being
+  used as the "src_node" parameter in all future communications.
+
+* The program can then receive serialised Mango RPC messages calling
+  the `excite` function with various parameters and turn these into
+  actual calls to the `excite` function defined above, and will send
+  back Mango RPC 'reply' messages with the return value of this
+  function as the body.  Concretely, it might receive messages like:
+
+  ```
+MANGO0.1 json
+{"header":{"command":"excite","src_node":"some_node","src_port","stdio","port":"stdio"},"args":{"str":"Hello World"}}
+  ```
+
+  and will respond like: 
+
+  ```
+MANGO0.1 json
+{"header":{"command":"reply","src_node":"ex.0","src_port","stdio"},"args":{"excited":"Hello World!"}}
+  ```
+
+## Mango RPC specification
+
+...
 
 ## Components
 
@@ -97,19 +187,3 @@ messages as XML RPC calls, then that should be made easy):
 
 * Error: Something to codify and translate the various mango error
   codes.
-
-## Message format:
-
-All messages look like:
-
-```
-MANGO[version number] [serialisation method]
-[Serialised dictionary with two keys: "header" and "args"]
-```
-
-The `header` dictionary contians the following keys:
-
-* `command`: The command to run
-* `src_node`: The node sending the message
-* `src_port`: The port from which the message is being sent
-* `callback`: The command to be used in the reply, if any.
