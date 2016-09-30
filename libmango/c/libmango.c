@@ -10,7 +10,6 @@
 struct m_node {
   char *version;
   char *node_id;
-  int mid;
   const char **ports;
   int num_ports;
   char debug;
@@ -27,7 +26,6 @@ m_node_t *m_node_new(char debug){
   n->version = LIBMANGO_VERSION;
   n->debug = debug;
   n->node_id = getenv("MANGO_ID");
-  n->mid = 0;
   n->serialiser = m_serialiser_new(n->version);
   n->interface = m_interface_new();
   n->ports = NULL;
@@ -65,12 +63,10 @@ void m_node_dispatch(m_node_t *node, cJSON *header, cJSON *args){
 			cJSON_GetObjectItem(result,"error")->valuestring);
     return;
   }
-  if(result != NULL && cJSON_GetObjectItem(header,"callback") != NULL){
+  if(result != NULL){
     m_node_send(node,
-		cJSON_GetObjectItem(header,"callback")->valuestring,
+		"reply",
 		result,
-		NULL,
-		cJSON_GetObjectItem(header,"mid")->valueint,
 		cJSON_GetObjectItem(header,"port")->valuestring);
   }
 }
@@ -79,7 +75,7 @@ void m_node_handle_error(m_node_t *node, char *src, char *err){
   cJSON *args = cJSON_CreateObject();
   cJSON_AddStringToObject(args, "source", src);
   cJSON_AddStringToObject(args, "message", err);
-  m_node_send(node, "error", args, NULL, 0, "mc");
+  m_node_send(node, "error", args, "mc");
   free(args);
 }
 
@@ -95,27 +91,19 @@ cJSON *m_node_reply(m_node_t *node, cJSON *header, cJSON *args){
 }
 
 cJSON *m_node_heartbeat(m_node_t *node, cJSON *header, cJSON *args){
-  m_node_send(node,"alive",NULL,NULL,0,"mc");
+  m_node_send(node,"alive",cJSON_CreateObject(),"mc");
   return NULL;
 }
 
-cJSON *m_node_make_header(m_node_t *node, char *command, char *callback, int mid, char *src_port){
-  if(!callback) callback = LIBMANGO_REPLY;
-  if(!mid) mid = m_node_get_mid(node);
+cJSON *m_node_make_header(m_node_t *node, char *command, char *src_port){
   if(!src_port) src_port = LIBMANGO_STDIO;
   cJSON *header = cJSON_CreateObject();
   cJSON_AddStringToObject(header,"src_node", node->node_id);
   cJSON_AddStringToObject(header,"src_port", src_port);
-  cJSON_AddNumberToObject(header,"mid", mid);
   cJSON_AddStringToObject(header,"command", command);
-  cJSON_AddStringToObject(header,"callback", callback);
   return header;
 }
     
-int m_node_get_mid(m_node_t *node){
-  return node->mid++;
-}
-
 void m_node_ready(m_node_t *node){
   char *iface = m_interface_string(node->interface);
   cJSON *hello_args = cJSON_CreateObject();
@@ -123,17 +111,16 @@ void m_node_ready(m_node_t *node){
   cJSON_AddStringToObject(hello_args, "id", node->node_id);
   cJSON_AddItemToObject(hello_args, "if", cJSON_Duplicate(m_interface_spec(node->interface),1));
   cJSON_AddItemToObject(hello_args, "ports", ports);
-  m_node_send(node,"hello",hello_args,"reg",0,"mc");
+  m_node_send(node,"hello",hello_args,"mc");
   free(iface);
 }
 
-int m_node_send(m_node_t *node, char *command, cJSON *msg, char *callback, int mid, char *port){
+void m_node_send(m_node_t *node, char *command, cJSON *msg, char *port){
   printf("SENDING\n");
-  cJSON *header = m_node_make_header(node,command,callback,mid,port);
+  cJSON *header = m_node_make_header(node,command,port);
   printf("1\n");
   m_dataflow_send(node->dataflow,header,msg);
   printf("2\n");
-  return 0;//cJSON_GetObjectItem(header,"mid")->valueint;
 }
 
 void m_node_run(m_node_t *node){

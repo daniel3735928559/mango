@@ -187,7 +187,7 @@ class mx_agent(m_node):
                               ha,rcb = new_cb
                         del args["r"]
                   c = args.pop('command')
-                  self.m_send(c,args,reply_callback=lambda header,reply: rcb(header,reply,ha),port=port)
+                  self.m_send(c,args,port=port)
             if(cmd == 'mc'):
                   rcb = self.reply_cb
                   ha = {}
@@ -198,7 +198,7 @@ class mx_agent(m_node):
                               ha,rcb = new_cb
                         del args["r"]
                   c = args.pop('command')
-                  self.m_send(c,args,reply_callback=lambda header,reply: rcb(header,reply,ha),port=port)
+                  self.m_send(c,args,port=port)
             elif cmd == 'handle':
                   try:
                         ha,rcb = {},self.reply_cb

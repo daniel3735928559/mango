@@ -21,7 +21,7 @@ than using the transport for addressing as is standard.
 
 * Python: Completed
 * Javascript: Completed
-* C: In progress
+* C: Completed (alpha)
 * Clojure: Planned
 * C++: Tentatively planned
 
@@ -36,14 +36,14 @@ At a high level, a mango program runs the following steps:
 3. Send the central hub a "hello" message, which looks like:
 
    ```
-   MANGO [version number]
+   MANGO[version number] json
    {"header":{"command":"hello",...},"args":{"id":[id requested],"if":[dictionary describing functions and their arguments]}
    ```
 
 4. The response will be a registration message, which will look like:
 
    ```
-   MANGO [version number]
+   MANGO[version number] json
    {"header":{"command":"reg",...},"args":{"id":[id given]}
    ```
 
@@ -97,3 +97,19 @@ messages as XML RPC calls, then that should be made easy):
 
 * Error: Something to codify and translate the various mango error
   codes.
+
+## Message format:
+
+All messages look like:
+
+```
+MANGO[version number] [serialisation method]
+[Serialised dictionary with two keys: "header" and "args"]
+```
+
+The `header` dictionary contians the following keys:
+
+* `command`: The command to run
+* `src_node`: The node sending the message
+* `src_port`: The port from which the message is being sent
+* `callback`: The command to be used in the reply, if any.

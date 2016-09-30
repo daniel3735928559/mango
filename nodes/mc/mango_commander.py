@@ -122,8 +122,8 @@ class mc(m_node):
     def mc_dispatch(self,header,args,route):
         print("MC DISPATCH",header,args)
         result = self.interface.interface[header['command']]['handler'](header,args)
-        if not result is None and 'callback' in header:
-            header = self.make_header(header['callback'],callback=None,mid=header['mid'],src_port=header['port'])
+        if not result is None:
+            header = self.make_header("reg" if header["command"] == "hello" else "reply",src_port=header['port'])
             self.dataflow.send(header,result,route)
         
     def remote_recv(self,h,c,raw,route,dataflow):
@@ -154,7 +154,7 @@ class mc(m_node):
                 n.hb_thread.start()
                 
                 # Send the "reg" message
-                header = self.make_header("reg")
+                # header = self.make_header("reg")
                 #dataflow.send(header,{"id":new_id,"key":n.key},route)
                 
                 # Add the Node object to our registery
@@ -163,13 +163,15 @@ class mc(m_node):
                 print("passing along init msg finally",h,c,raw,src_node,src_port)
                 self.routes[route].ports[src_port].send(raw,h,c)
             else:
-                print("Non-hello init message: \n\n{}\n\n{}\n\nIgnoring".format(h,c))
+                print("Non-hello init message: \n\n{}\n{}\n\nIgnoring".format(h,c))
         else:
             if not src_port in self.routes[route].ports:
                 # If there is no matching Port object in the specified Node, fail
                 print("Invalid port: " + src_node+"/"+src_port)
                 return
-
+            elif src_node != self.routes[route].node_id:
+                print("Attempted impersonation: " + src_node+" != "+self.routes[route].node_id)
+                return
             # Now that we are guaranteed either way a matching Node/Port
             # combo for the incoming message, send it!,
             print("passing along",h,c,raw,src_node,src_port)

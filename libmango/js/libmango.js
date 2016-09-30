@@ -9,7 +9,6 @@ function MNode(debug){
     this.serialiser = new Serialiser(this.version);
     this.iface = new Interface();
     this.node_id = process.env['MANGO_ID'];
-    this.mid = 0;
     this.ports = [];
     var server = process.env['MC_ADDR'];
     
@@ -20,7 +19,7 @@ function MNode(debug){
 	    delete ifce[i]['handler'];
 	}
 	console.log("IF",ifce)
-	self.m_send('hello',{'id':self.node_id,'if':ifce,'ports':self.ports},"reg",null,"mc")
+	self.m_send('hello',{'id':self.node_id,'if':ifce,'ports':self.ports},"mc")
     }
     
     this.dispatch = function(header,args){
@@ -28,7 +27,7 @@ function MNode(debug){
 	try{
             result = self.iface.iface[header['command']]['handler'](header,args);
             if(result){
-		self.m_send('callback' in header ? header['callback'] : "reply", result, null, header['mid'], header['port'])
+		self.m_send("reply", result, header['port'])
 	    }
 	} catch(e) {
 	    console.log(e);
@@ -38,7 +37,7 @@ function MNode(debug){
     
     this.handle_error = function(src,err){
 	console.log('OOPS',src,err);
-	self.m_send('error',{'source':src,'message':err},null,null,"mc");
+	self.m_send('error',{'source':src,'message':err},"mc");
     }
 
     this.reg = function(header,args){
@@ -50,25 +49,18 @@ function MNode(debug){
     }
 
     this.heartbeat = function(header,args){
-	self.m_send("alive",{},null,null,"mc");
+	self.m_send("alive",{},"mc");
     }
 
-    this.make_header = function(command,callback,mid,src_port){
-	if(!callback) callback = "reply";
-	if(!mid) mid = self.get_mid();
+    this.make_header = function(command,src_port){
 	if(!src_port) src_port = "stdio";
-	return {'src_node':self.node_id, 'src_port':src_port, 'mid':mid, 'command':command, 'callback': callback};
+	return {'src_node':self.node_id, 'src_port':src_port, 'command':command};
     }
 
-    this.get_mid = function(){
-	return self.mid++;
-    }
-
-    this.m_send = function(command,msg,callback,mid,port){
-	console.log('sending',command,msg,mid,port)
-	header = self.make_header(command,callback,mid,port)
+    this.m_send = function(command,msg,port){
+	console.log('sending',command,msg,port)
+	header = self.make_header(command,port)
 	self.dataflow.send(header,msg)
-	return header['mid']
     }
     
     this.iface.add_interface('/home/zoom/suit/mango/libmango/node_if.yaml',{
@@ -156,7 +148,6 @@ function Dataflow(iface,transport,serialiser,dispatch_cb,error_cb){
     }
 
 }
-
 
 function Serialiser(version){
     var self = this;
