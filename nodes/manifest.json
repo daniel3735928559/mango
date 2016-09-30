@@ -13,12 +13,12 @@
 	    "run":"python mu.py",
 	    "lang":"py"
 	},
-	"excite":{
+	"excite_py":{
 	    "dir":"examples/excite",
 	    "run":"python excite.py",
 	    "lang":"py"
 	},
-	"excitejs":{
+	"excite_js":{
 	    "dir":"examples/excite",
 	    "run":"node excite.js",
 	    "lang":"js"

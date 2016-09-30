@@ -74,7 +74,6 @@ class mx_agent(m_node):
             self.output.write("asd2\n")
             self.output.flush()
             #print("asd3")
-            self.ready()
             self.run()
 
 

@@ -12,7 +12,7 @@ function MNode(debug){
     this.ports = [];
     var server = process.env['MC_ADDR'];
     
-    this.ready = function(header,args){
+    this.run = function(){
 	var ifce = {};
 	for(var i in this.iface.iface){
 	    ifce[i] = JSON.parse(JSON.stringify(this.iface.iface[i]));

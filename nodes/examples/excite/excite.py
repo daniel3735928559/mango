@@ -1,5 +1,3 @@
-import time, os
-print(os.environ,os.getcwd())
 from libmango import *
 
 class excite(m_node):
@@ -9,7 +7,6 @@ class excite(m_node):
             'excite':self.excite,
             'print':self.output
         })
-        self.ready()
         self.run()
     def output(self,header,args):
         print("PRINTING",header,args)

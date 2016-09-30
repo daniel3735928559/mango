@@ -127,6 +127,7 @@ void m_node_send(m_node_t *node, char *command, cJSON *msg, char *port){
 }
 
 void m_node_run(m_node_t *node){
+  m_node_ready(node);
   while(1){
     zmq_pollitem_t items [] = {{node->local_gateway->socket, 0, ZMQ_POLLIN, 0}};
     zmq_poll(items, 1, 10);

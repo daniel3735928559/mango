@@ -21,10 +21,10 @@ class m_node:
             'heartbeat':self.heartbeat
         })
         self.ports = []
-        server = os.getenv('MC_ADDR',None)
-        print(server,os.environ)
-        if not server is None:
-            self.local_gateway = m_ZMQ_transport(server,self.context,self.poller)
+        self.server = os.getenv('MC_ADDR',None)
+        print(self.server,os.environ)
+        if not self.server is None:
+            self.local_gateway = m_ZMQ_transport(self.server,self.context,self.poller)
             s = self.local_gateway.socket
             self.dataflow = m_dataflow(self.interface,self.local_gateway,self.serialiser,self.dispatch,self.handle_error)
             self.dataflows[s] = self.dataflow
@@ -55,7 +55,8 @@ class m_node:
         self.m_send('error',{'source':src,'message':err},port="mc")
 
     def reg(self,header,args):
-        if header['src_node'] == 'mc':
+        if header['src_node'] != 'mc':
+            print('only accepts reg from mc',header,args)
             return
         self.node_id = args["id"]
         self.debug_print('my new node id')
@@ -79,6 +80,8 @@ class m_node:
         if self.debug: print("[DEBUG] ",*args)
     
     def run(self,f=None):
+        if not self.server is None:
+            self.ready()
         while True:
             socks = dict(self.poller.poll(1000*1000))
             #self.local_gateway.socket.send()

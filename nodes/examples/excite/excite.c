@@ -8,7 +8,6 @@ int main(int argc, char **argv){
   m_node_add_interface(node, "./excite.yaml");
   m_node_handle(node, "excite", excite);
   m_node_handle(node, "print", print);
-  m_node_ready(node);
   m_node_run(node);
 }
 
