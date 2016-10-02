@@ -228,7 +228,7 @@ which node sent it and which node and port it gets routed to.
 ### Base interface:
 
 Every node must implement the basic node interface, whose descriptor
-is found in [node_if.yaml](node_if.yaml).  In addition, every node may
+is found in [node.yaml](node.yaml).  In addition, every node may
 implement any number of non-conflicting interfaces loaded from
 separate YAML files.  As mentioned before, all interface descriptor
 files use the interface descriptor language from

@@ -53,7 +53,7 @@ class mx_agent(m_node):
             #self.load_if("mc")
             self.pid = os.getpid()
             self.command_cbs = {}
-            self.interface.add_interface('/home/zoom/suit/mango/nodes/mx/mx_if.yaml',{
+            self.interface.add_interface('./mx.yaml',{
                   'answer':self.mx_handle_reply
             })
 

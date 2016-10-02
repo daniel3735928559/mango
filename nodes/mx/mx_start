@@ -1,5 +1,6 @@
 export MC_ADDR='tcp://localhost:'"$1"
-export PYTHONPATH='/home/zoom/suit/mango/libmango/py'
+export PYTHONPATH="$(realpath $( dirname "${BASH_SOURCE[0]}" )'/../../libmango/py' )"
+echo $PYTHONPATH
 export MANGO_ID=$2
 python mx_agent.py &
 export MX_PID=$!

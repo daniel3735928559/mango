@@ -23,7 +23,7 @@ class mc(m_node):
         # for child in etree.parse("nodes.xml").getroot():
         #     self.node_types[child.get("name")] = NodeType(child.get("name"),child.get("wd"),child.get("runner"))
 
-        self.interface.add_interface("mc_if.yaml",
+        self.interface.add_interface("mc.yaml",
                                      {
                                          "route":self.route_add,
                                          "hello":self.hello,

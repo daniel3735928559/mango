@@ -15,7 +15,7 @@ class m_node:
         self.interface = m_if()
         self.dataflows = {}
         self.node_id = os.getenv('MANGO_ID')
-        self.interface.add_interface('/home/zoom/suit/mango/libmango/node_if.yaml',{
+        self.interface.add_interface(os.path.join(os.getenv('PYTHONPATH'),'../node.yaml'),{
             'reg':self.reg,
             'reply':self.reply,
             'heartbeat':self.heartbeat

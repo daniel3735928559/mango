@@ -31,9 +31,11 @@ m_node_t *m_node_new(char debug){
   n->ports = NULL;
   n->num_ports = 0;
   n->server_addr = getenv("MC_ADDR");
-  
+  char *node_if_path = malloc(strlen(getenv("LD_LIBRARY_PATH"))+strlen("/../node.yaml")+1);
+  sprintf(node_if_path, "%s/../node.yaml",getenv("LD_LIBRARY_PATH"));
   n->zmq_context = zmq_ctx_new();
-  m_interface_load(n->interface, "/home/zoom/suit/mango/libmango/node_if.yaml");
+  m_interface_load(n->interface, node_if_path);
+  free(node_if_path);
   int x;
   x = m_interface_handle(n->interface, "reg", m_node_reg);
   x = m_interface_handle(n->interface, "reply", m_node_reply);

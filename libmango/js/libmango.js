@@ -63,7 +63,7 @@ function MNode(debug){
 	self.dataflow.send(header,msg)
     }
     
-    this.iface.add_interface('/home/zoom/suit/mango/libmango/node_if.yaml',{
+    this.iface.add_interface(process.env['NODE_PATH']+'/../node.yaml',{
         'reg':self.reg, 'reply':self.reply, 'heartbeat':self.heartbeat
     });
     this.local_gateway = new Transport(server);
