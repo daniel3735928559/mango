@@ -27,6 +27,8 @@ than using the transport for addressing as is standard.
 
 ## Outline of the task
 
+### Example
+
 To describe what a Mango program should look like, we shall work with
 an example: An `excite` program, which has one function called
 `excite` that takes in a string argument `str` and returns a string
@@ -61,7 +63,6 @@ class excite(m_node):
     def __init__(self):
         super().__init__()
         self.interface.add_interface('excite.yaml', {'excite':self.excite})
-        self.ready()
         self.run()
     def excite(self,header,args):
         return {'excited':args['str']+'!'}
@@ -70,41 +71,61 @@ t = excite()
 
 Let us walk through this a little bit:
 
+First, we import libmango to give us access to the RPC functionality: 
+
 ```
-# import libmango
 from libmango import *
-
-# the program is a mango node, and so should extend the m_node class
-class excite(m_node):
-    def __init__(self):
-    
-        # instantiate the node
-        super().__init__()
-
-	# register that we are implementing the functions from
-        # excite.yaml, and specifically that the 'excite' function is
-        # implemented by self.excite
-        self.interface.add_interface('excite.yaml', {'excite':self.excite})
-
-	# register that we are done adding other interfaces and
-	# otherwise configuring the node
-	self.ready()
-
-        # start the main loop of the program
-	self.run()
-
-    # this is the function that implements the 'excite' function from
-    # the interface descriptor.  
-    def excite(self,header,args):
-    
-        # all this needs to do is return a dictionary with 'excited' as 
-	# its only key.  In this case, the corresponding value is the
-	# 'excited' version of the input value 'str'.
-        return {'excited':args['str']+'!'}
-
-# actually create an instance of the node
-t = excite()
 ```
+
+This program is a mango node, and the main class should extend the m_node class:
+
+```
+class excite(m_node):
+```
+
+The first thing we do when we initialise the class is to initialise
+the node as well, by calling the superclass's constructor:
+
+```
+  def __init__(self):
+    super().__init__()
+```
+
+Once we have initialised the node, we have an interface member
+variable that we can add to, using the add_interface function to
+register that we are implementing the functions from excite.yaml, and
+specifically that the 'excite' function specified in the YAML file is
+implemented by the Python function self.excite: 
+
+```
+    self.interface.add_interface('excite.yaml', {'excite':self.excite})
+```
+
+Finally, we start the main loop of the program: 
+
+
+```
+    self.run()
+```
+
+
+We need also to write the function that implements the 'excite'
+function from the interface descriptor.  All this needs to do is
+return a dictionary with 'excited' as its only key.  In this case, the
+corresponding value is the 'excited' version of the input value 'str'.
+
+```
+  def excite(self,header,args):    
+    return {'excited':args['str']+'!'}
+```
+
+Having now defined the class, we can simply instantiate it:
+
+```
+excite()
+```
+
+### Behind the scenes
 
 So the task in writing a libmango implementation, broadly, is to write
 the library that enables this code to work.  Here, "work" means the
@@ -203,6 +224,17 @@ rather than specify where you want your command to do, you simply send
 a command and an indication of which of your ports is emitting the
 command, and then the router will attach all the information about
 which node sent it and which node and port it gets routed to.
+
+### Dataflow
+
+Given this, the usual dataflow of the libmango implementation is the
+following:
+
+#### Initialisation
+
+* Make a ZMQ dealer socket and connect to the ZMQ server
+
+* Send the "hello" message
 
 ## Components
 

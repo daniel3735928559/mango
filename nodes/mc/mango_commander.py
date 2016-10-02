@@ -225,7 +225,7 @@ class mc(m_node):
     def node_list(self,header,args):
         print("NODES")
         print(",".join(self.nodes.keys()))
-        return {"list":", ".join([x for x in self.nodes.keys() if (x != 'mc' and (not 'pattern' in args or args['pattern'] in x))])}
+        return {"list":[x for x in self.nodes.keys() if (x != 'mc' and (not 'pattern' in args or args['pattern'] in x))]}
 
     def node_flags(self,header,args):
         nid = args["ID"];

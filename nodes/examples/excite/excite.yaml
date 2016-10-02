@@ -5,5 +5,3 @@ excite:
   rets:
     excited:
       type: string
-
-print:
