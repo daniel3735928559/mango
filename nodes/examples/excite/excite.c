@@ -11,7 +11,6 @@ int main(int argc, char **argv){
 }
 
 cJSON *excite(m_node_t *node, cJSON *header, cJSON *args){
-  printf("EXCITING\n%s\n%s\n",cJSON_Print(header),cJSON_Print(args));
   cJSON *ans = cJSON_CreateObject();
   char *s = cJSON_GetObjectItem(args,"str")->valuestring;
   unsigned long l = strlen(s);

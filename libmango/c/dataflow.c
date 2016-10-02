@@ -32,21 +32,17 @@ m_dataflow_t *m_dataflow_new(m_node_t *node,
 
 void m_dataflow_send(m_dataflow_t *d, cJSON *header, cJSON *args){
   char *data = m_serialiser_serialise(d->serialiser, header, args);
-  printf("SENDING %s\n",data);
   m_transport_tx(d->transport, data);
   free(data);
 }
     
 void m_dataflow_recv(m_dataflow_t *d){
   char *data = m_transport_rx(d->transport);
-  printf("RECVING %s\n",data);
   cJSON *m = m_serialiser_deserialise(d->serialiser,data);
-  printf("RECVING %s\n",cJSON_Print(m));
   cJSON *header = cJSON_GetObjectItem(m,"header");
   cJSON *args = cJSON_GetObjectItem(m,"args");
   
   if(!m_interface_validate(d->interface, cJSON_GetObjectItem(header,"command")->valuestring)){
-    printf("ERR %s\n",cJSON_GetObjectItem(header,"command")->valuestring);
     d->error(d->node, cJSON_GetObjectItem(header,"src_port")->valuestring, "Unkown command");
     return;
   }

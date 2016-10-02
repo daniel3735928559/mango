@@ -51,7 +51,7 @@ excite:
 
 This uses the interface descriptor language from
 [Pijemont](https://github.com/daniel3735928559/pijemont), and
-documnetation for the format can be found there.
+documentation for the format can be found there.
 
 Then, the program that implements this function and allows it to be
 called through Mango RPC looks simply like: 
@@ -225,6 +225,16 @@ a command and an indication of which of your ports is emitting the
 command, and then the router will attach all the information about
 which node sent it and which node and port it gets routed to.
 
+### Interface descriptor
+
+The commands are verified by the central router against a description
+of the node's interface.  
+
+uses the interface
+descriptor language from
+[Pijemont](https://github.com/daniel3735928559/pijemont), and
+documentation for the format can be found there.
+
 ### Dataflow
 
 Given this, the usual dataflow of the libmango implementation is the
@@ -234,7 +244,21 @@ following:
 
 * Make a ZMQ dealer socket and connect to the ZMQ server
 
-* Send the "hello" message
+* Send the "hello" message, which has command "hello" and port "mc",
+  and therefore has header dictionary:
+
+   ```
+   {"command":"hello","port":"mc")
+   ```
+
+  and further has arguments `id` and `if`, which are, respectively the
+  node ID that we want for this node and the dictionary describing the
+  interface for the node.
+
+#### Main loop
+
+* Receive each message
+
 
 ## Components
 

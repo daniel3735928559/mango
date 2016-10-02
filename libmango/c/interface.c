@@ -30,7 +30,6 @@ cJSON *m_interface_spec(m_interface_t *i){
 }
 
 cJSON *m_interface_process_yaml(yaml_parser_t *parser){
-  printf("PROCESSING\n");
   cJSON *current = cJSON_CreateObject();
   char *current_key = NULL;
   yaml_event_t event;
@@ -85,29 +84,22 @@ void m_interface_load(m_interface_t *i, char *filename){
   yaml_parser_initialize(&parser);
   yaml_parser_set_input_file(&parser, source);
   cJSON *obj = m_interface_process_yaml(&parser);
-  printf("LAODED %s",cJSON_Print(obj));
   yaml_parser_delete(&parser);
   fclose(source);
   cJSON *o = obj->child;
   while(o){
     if(cJSON_HasObjectItem(i->interface, o->string)) return; // already implemented
-    printf("A %s\n",o->string);
     o = o->next;
   }
   o = obj->child;
   while(o){
-    printf("A %s %s\n",o->string,cJSON_Print(o));
     cJSON_AddItemToObject(i->interface, o->string, cJSON_Duplicate(o,1));
-    printf("hi\n\n");
     o = o->next;
   }
-  printf("LOADED: %s\n", cJSON_Print(i->interface));
-  printf("A\n");
 }
 
 int m_interface_handle(m_interface_t *i, char *fn_name, cJSON *handler(m_node_t *node, cJSON *header, cJSON *args)){
   int present = cJSON_HasObjectItem(i->interface, fn_name);
-  printf("P=%d\n",present);
   void *fn = m_dict_get(i->handlers, fn_name);
   if(!present) return -1; // Function not in interface
   if(fn) return -2; // Already implemented
@@ -117,7 +109,6 @@ int m_interface_handle(m_interface_t *i, char *fn_name, cJSON *handler(m_node_t 
 }
 
 int m_interface_validate(m_interface_t *i, char *fn_name){
-  printf("VAL %s %08x\n",fn_name, m_dict_get(i->handlers, fn_name));
   return m_dict_get(i->handlers, fn_name) == NULL ? 0 : 1;
 }
 

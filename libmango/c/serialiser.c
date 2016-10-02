@@ -53,7 +53,6 @@ char *m_serialiser_serialise(m_serialiser_t *s, cJSON *header, cJSON *args){
 
 cJSON *m_serialiser_deserialise(m_serialiser_t *s, char *data){
   char *content = m_serialiser_parse_preamble(s, data);
-  printf("DES %s\n",content);
   if(!content) return NULL;
   return cJSON_Parse(content);
 }

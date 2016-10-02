@@ -42,7 +42,6 @@ void *m_dict_get(m_dict_t *dict, char *key){
 
 int m_dict_set(m_dict_t *dict, char *key, void *val){
   long h = m_dict_hash(dict, key);
-  printf("h=%d,s=%d\n",h,dict->size);
   int i = 0;
   while(i++ < dict->size && dict->data[h] && strcmp(dict->data[h]->key, key)){
     h = (h+1)%(dict->size);
