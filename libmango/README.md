@@ -263,7 +263,11 @@ function of the Node object).
 
 #### Interface prep
 
-* Create a mapping of function pointers 
+* Load all the desired YAML files (libmango will load the default
+  node.yaml and implement all its functions, but the program may at
+  this stage load any number of other interface descriptor files), and
+  create a mapping of function names in those interface files to the
+  corresponding actual functions.
 
 #### Main loop
 
@@ -274,7 +278,28 @@ function of the Node object).
 * When we receive input on this socket, first parse and deserialise
   the input into its consitutuent header and arguments dictionaries.
 
-* From the header dictionary, determine the command they wish to call
+* From the header dictionary, determine the command they wish to call,
+  look up the correspoding function in the aforementioned mapping, and
+  call it with the supplied arguments.
+
+* If it returns something, send that as a "reply" command on the port
+  on which the message was received.  If an error occurs in the
+  function, (e.g. an exception, in languages that support them) return
+  a description of the error in an "error" command on the port "mc".
+  Otherwise, do nothing.
+
+* If in the course of the program, a command gets sent, which will
+  specify the command name, the arguments, and optionally the port.
+  If the port is unspecified, it should default to "stdio".  Sending a
+  message should create the header:
+
+  ```
+  {"command":[command name], "src_port":[port name]}
+  ```
+
+  It should then serialise the message with this as the header and
+  with the supplied arguments as the arguments and otuput them on the
+  node's main dealer ZMQ socket.
 
 
 ## Components
