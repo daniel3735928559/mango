@@ -238,11 +238,19 @@ documented in that repository.
 ### Dataflow
 
 Given this, the usual dataflow of the libmango implementation happens
-in two steps: Initialisation (which usually happens when the libmango
-Node class (in whatever form) is instantiated), interface definition
-(where we set up the functions we want to be accessible from the
-outside world, and the main loop (usually started by calling the `run`
-function of the Node object).
+in four steps:
+
+* Initialisation: Usually happens when the libmango Node class (in
+  whatever form) is instantiated.
+
+* Interface setup: This is when we set up the functions we want to be
+  accessible from the outside world
+
+* Main loop: Usually started by calling the `run` function of the Node
+  object.
+
+* Sending: As we run the program, sometimes it wants to send commands,
+  so we need a function in libmango to handle this also.
 
 #### Initialisation
 
@@ -287,6 +295,8 @@ function of the Node object).
   function, (e.g. an exception, in languages that support them) return
   a description of the error in an "error" command on the port "mc".
   Otherwise, do nothing.
+
+#### Sending
 
 * If in the course of the program, a command gets sent, which will
   specify the command name, the arguments, and optionally the port.
