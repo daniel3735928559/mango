@@ -225,20 +225,24 @@ a command and an indication of which of your ports is emitting the
 command, and then the router will attach all the information about
 which node sent it and which node and port it gets routed to.
 
-### Interface descriptor
+### Base interface:
 
-The commands are verified by the central router against a description
-of the node's interface.  
-
-uses the interface
-descriptor language from
-[Pijemont](https://github.com/daniel3735928559/pijemont), and
-documentation for the format can be found there.
+Every node must implement the basic node interface, whose descriptor
+is found in [node_if.yaml](node_if.yaml).  In addition, every node may
+implement any number of non-conflicting interfaces loaded from
+separate YAML files.  As mentioned before, all interface descriptor
+files use the interface descriptor language from
+[Pijemont](https://github.com/daniel3735928559/pijemont), which is
+documented in that repository.
 
 ### Dataflow
 
-Given this, the usual dataflow of the libmango implementation is the
-following:
+Given this, the usual dataflow of the libmango implementation happens
+in two steps: Initialisation (which usually happens when the libmango
+Node class (in whatever form) is instantiated), interface definition
+(where we set up the functions we want to be accessible from the
+outside world, and the main loop (usually started by calling the `run`
+function of the Node object).
 
 #### Initialisation
 
@@ -247,17 +251,30 @@ following:
 * Send the "hello" message, which has command "hello" and port "mc",
   and therefore has header dictionary:
 
-   ```
-   {"command":"hello","port":"mc")
-   ```
+  ```
+  {"command":"hello","port":"mc")
+  ```
 
   and further has arguments `id` and `if`, which are, respectively the
   node ID that we want for this node and the dictionary describing the
-  interface for the node.
+  interface for the node (which is the dictionary compiled from the
+  various interface descriptor files for the interfaces we are
+  implementing).
+
+#### Interface prep
+
+* Create a mapping of function pointers 
 
 #### Main loop
 
-* Receive each message
+* Polls the ZMQ dealer socket (and possibly any other sockets the user
+  wishes to poll in this loop, although there is another pattern
+  recommended for integrating multiple "main loops").
+
+* When we receive input on this socket, first parse and deserialise
+  the input into its consitutuent header and arguments dictionaries.
+
+* From the header dictionary, determine the command they wish to call
 
 
 ## Components
