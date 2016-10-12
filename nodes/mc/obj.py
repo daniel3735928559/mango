@@ -76,7 +76,12 @@ class Route:
                     #    new_header[k] = o[k] if o[k][0] != '$' else (args[o[k][1:]] if o[k][1] != '_' else message.decode('ASCII'))
                     #else:
                     #    new_args[k] = o[k] if o[k][0] != '$' else (args[o[k][1:]] if o[k][1] != '_' else message.decode('ASCII'))
-                    new_args[k] = o[k] if o[k][0] != '$' else (args[o[k][1:]] if o[k][1] != '_' else message.decode('ASCII'))
+                    if o[k] == "$_":
+                        new_args[k] = message.decode('ASCII')
+                    elif o[k][0] != '$':
+                        new_args[k] = o[k]
+                    elif o[k][1:] in args:
+                        new_args[k] = args[o[k][1:]]
             elif(t == "addn"):
                 for k in o:
                     if not k in args:
@@ -93,7 +98,12 @@ class Route:
             elif(t == "sub"):
                 new_args = {}
                 for k in o:
-                    new_args[k] = o[k] if o[k][0] != '$' else (args[o[k][1:]] if o[k][1] != '_' else message.decode('ASCII'))
+                    if o[k] == "$_":
+                        new_args[k] = message.decode('ASCII')
+                    elif o[k][0] != '$':
+                        new_args[k] = o[k]
+                    elif o[k][1:] in args:
+                        new_args[k] = args[o[k][1:]]
             elif(t == "filter"):
                 if header['command'] != o:
                     print("FILTER BLOCK",header['command'],'is not',o)

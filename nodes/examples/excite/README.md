@@ -28,7 +28,9 @@ To run and test any/all of the excite nodes, you will need two nodes running in 
 
 #### Starting mc
 
-Open a terminal, go to `/nodes/mc` and run `./mc_start 61453 61454`.  Leave this terminal window open.
+Open a terminal, go to `/nodes/mc` and run `./mc_start 61453 61454`.
+Leave this terminal window open.  When anything goes wrong, this is
+where the error message will likely be.
 
 #### Starting mx
 
@@ -78,3 +80,42 @@ And to send it with a `str` argument of, say, `"Hello World"`, we use
 
 You should receive `"excited": "Hello World!"` in the debug spew.  You
 did it!
+
+#### A more complex example
+
+Suppose you are going to send many messages from your `mx` shell, and
+only want the `excite` messages to go to your `foo` node.  Further,
+you want to be able to send these with argument `bored` instead of
+`str`.
+
+To get rid of the outbound route you created before, do
+
+`mc delroute -src_node mx -dest_node foo -src_port stdio -dest_port stdio`
+
+Then add a new route that will allow only `excite` messages through,
+and that will change an argument called `bored` to one called `str`:
+
+`mc route -map 'mx > ? excite > {"str":"$bored"} > foo'
+
+(The old route from `foo` to `mx` will still exist since we did not
+delete that.)
+
+You should be able to see this route if you do
+
+`mc routes -src_node mx -src_port stdio`
+
+Then if you do:
+
+`mx excite -bored blah`
+
+you will get `"excited":"blah!"` back, whereas if you do
+
+`mx somethingelse -bored blah`
+
+then this will get nothing back.
+
+If you do
+
+`mx excite -str blah`
+
+you will get nothing back and see an error in the `mc` console.  
