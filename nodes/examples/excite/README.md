@@ -127,7 +127,7 @@ commands, you can use
 Try to launch two excite nodes (possibly in different languages), say
 with ids `foo` and `bar`, and have `excite` messages from `mx` go to
 foo and then be converted into valid `excite` messages and passed on
-to `bar`, and then have the now-twice-excited resutl passed back to
+to `bar`, and then have the now-twice-excited result passed back to
 mx`.
 
 Answer below:
