@@ -13,7 +13,7 @@ class mc_loopback_dataflow(m_dataflow):
 
     def send(self,header,msg,route):
         print("SS",header,msg)
-        self.interface.validate(header['command'],msg)
+        self.interface.validate(header['name'],msg)
         result = self.dispatch_cb(header,msg,route)
         print(result)
         #self.reply_df.send(header,result,route)

@@ -14,7 +14,7 @@ class mc_if:
         - success is a boolean true if there were no problems and false otherwise
         - list_of_errors is as in verify_helper
         """
-
+        return args
         if(function_name in self.interface):
             print("MC VALIDATING",function_name,"AGAINST",self.interface[function_name])
             if not 'args' in self.interface[function_name]:

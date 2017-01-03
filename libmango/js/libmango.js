@@ -85,20 +85,19 @@ function Interface(){
 	try {
 	    var spec = jsyaml.safeLoad(fs.readFileSync(if_file, 'utf8'));
 	    console.log(JSON.stringify(spec));
-	    var missing = [], extra = [], existing = [];
-	    for(var i in spec)
-		if(!(i in handlers)) missing.push(i);
+	    var name = spec.name;
+	    var missing = [], extra = [];
 	    for(var i in handlers)
-		if(!(i in spec)) extra.push(i);
-	    for(var i in spec)
-		if(i in self.iface) existing.push(i);
-	    if(missing.length > 0) throw new MError("Functions not implemented: "+missing.join(", "));
+		if(!(i in spec.inputs)) extra.push(i);
+	    for(var i in spec.inputs)
+		if(!(i in handlers)) missing.push(i);
 	    if(extra.length > 0) throw new MError("Functions not in interface: "+extra.join(", "));
-	    if(existing.length > 0) throw new MError("Functions already implemented: "+existing.join(", "));
+	    if(missing.length > 0) throw new MError("Functions not implemented: "+missing.join(", "));
 
+	    self.iface[name] = {};
 	    for(var i in handlers){
-		self.iface[i] = spec[i] ? spec[i] : {};
-		self.iface[i]['handler'] = handlers[i];
+		self.iface[name][i] = spec.inputs[i] ? spec.inputs[i] : {};
+		self.iface[name][i]['handler'] = handlers[i];
 	    }
 	} catch (e) {
 	    console.log(e);
@@ -106,6 +105,12 @@ function Interface(){
 	}
     }
 
+    this.get_function = function(fn,ns){
+	if(ns) return self.iface[ns][fn];
+	for(var n in self.iface) if(fn in self.iface[n]) return self.iface[n][fn];
+	throw new MError("Functions not implemented: "+ns+"."+fn);	
+    }
+    
     this.validate = function(fn){
 	return fn in self.iface;
     }

@@ -37,15 +37,17 @@ it.
 
 This program consists of two files:
 `[excite.yaml](../nodes/example/excite/excite.yaml)`, which describes
-the functions of the program and their inputs and outputs:
+the inputs the program accepts and the outputs it generates:
 
 ```
-excite:
-  args:
+name: excite
+inputs:
+  excite:
     str:
       type: string
-  rets:
-    excited:
+outputs:
+  excited:
+    str:
       type: string
 ```
 
@@ -65,7 +67,7 @@ class excite(m_node):
         self.interface.add_interface('excite.yaml', {'excite':self.excite})
         self.run()
     def excite(self,header,args):
-        return {'excited':args['str']+'!'}
+        m_send("excited",{'str':args['str']+'!'})
 t = excite()
 ```
 
@@ -165,14 +167,14 @@ MANGO0.1 json
 
   ```
 MANGO0.1 json
-{"header":{"command":"excite","src_node":"some_node","src_port","stdio","port":"stdio"},"args":{"str":"Hello World"}}
+{"header":{"name":"excite","src_node":"some_node","src_port","stdio","port":"stdio"},"args":{"str":"Hello World"}}
   ```
 
   and will respond like: 
 
   ```
 MANGO0.1 json
-{"header":{"command":"reply","src_node":"ex.0","src_port","stdio"},"args":{"excited":"Hello World!"}}
+{"header":{"name":"excited","src_node":"ex.0","src_port","stdio"},"args":{"str":"Hello World!"}}
   ```
 
 ## Mango RPC specification

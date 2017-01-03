@@ -12,7 +12,7 @@ class m_node:
         self.context = zmq.Context()
         self.poller = zmq.Poller()
         self.serialiser = m_serialiser(self.version)
-        self.interface = m_if()
+        self.interface = m_if(default_handler=self.reply)
         self.dataflows = {}
         self.node_id = os.getenv('MANGO_ID')
         self.interface.add_interface(os.path.join(os.getenv('PYTHONPATH'),'../node.yaml'),{
@@ -21,6 +21,7 @@ class m_node:
             'heartbeat':self.heartbeat
         })
         self.ports = []
+        self.flags = {}
         self.server = os.getenv('MC_ADDR',None)
         print(self.server,os.environ)
         if not self.server is None:
@@ -31,14 +32,14 @@ class m_node:
             self.poller.register(s,zmq.POLLIN)
 
     def ready(self):
-        iface = {f:{c:self.interface.interface[f][c] for c in self.interface.interface[f] if c != 'handler'} for f in self.interface.interface}
+        iface = self.interface.get_spec()
         self.debug_print("IF",iface)
-        self.m_send('hello',{'id':self.node_id,'if':iface,'ports':self.ports},port="mc")
+        self.m_send('hello',{'id':self.node_id,'if':iface,'ports':self.ports,'flags':self.flags},port="mc")
             
     def dispatch(self,header,args):
         self.debug_print("DISPATCH",header,args)
         try:
-           result = self.interface.interface[header['command']]['handler'](header,args)
+           result = self.interface.get_function(header['name'])(header,args)
            if not result is None:
                self.m_send("reply",result,port=header['port'])
         except Exception as exc:
@@ -63,15 +64,15 @@ class m_node:
         self.debug_print(self.node_id)
         self.debug_print("registered as " + self.node_id)
 
-    def make_header(self,command,src_port='stdio'):
+    def make_header(self,name,src_port='stdio'):
         header = {'src_port':src_port,
-                  'command':command}
+                  'name':name}
         self.debug_print("H",header)
         return header
     
-    def m_send(self,command,msg,port='stdio',async=True):
+    def m_send(self,name,msg,port='stdio',async=True):
         self.debug_print('sending',msg)
-        header = self.make_header(command,port)
+        header = self.make_header(name,port)
         self.dataflow.send(header,msg)
         if not async and not callback is None:
             self.dataflow.recv()

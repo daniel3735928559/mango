@@ -1,20 +1,16 @@
-route:
-  args:
+name: mc
+inputs:
+  route:
     map:
       type: string
-  rets:
-    success:
-      type: bool
 
-error:
-  args:
+  error:
     source:
       type: string
     message:
       type: string
 
-hello:
-  args:
+  hello:
     id:
       type: string
       description: The requested ID
@@ -25,24 +21,18 @@ hello:
       type: list
       values:
         type: string
-  rets:
-    id:
-      type: string
-      description: The requested ID, or, if that was unavailable, [id].[n] for the minimum positive integer n that makes it unique
 
-alive:
+  alive:
 
-doc:
-  description: Print out the documentation for a given node, a specific function, or a specific argument/return value for a function
-  args:
+  doc:
+    description: Print out the documentation for a given node, a specific function, or a specific argument/return value for a function
     node:
       type: string
     function:
       type: string
       optional: true
 
-nodes:
-  rets:
+  nodes:
     nodes:
       type: list
       values:
@@ -53,9 +43,8 @@ nodes:
           id:
             type: string
 
-launch:
-  description: launch a new node with the specified ID
-  args:
+  launch:
+    description: launch a new node with the specified ID
     node:
       type: string
     id:
@@ -66,54 +55,59 @@ launch:
       optional: true
       description: JSON string giving environment vars to add
 
-types:
-  rets:
+  types:
+
+  routes:
+    src_node:
+      type: string
+      optional: true
+    src_port:
+      type: string
+      optional: true
+    dest_node:
+      type: string
+      optional: true
+    dest_port:
+      type: string
+      optional: true
+
+  ports:
+    node:
+      type: string
+
+  delroute:
+    src_node:
+      type: string
+    src_port:
+      type: string
+    dest_node:
+      type: string
+    dest_port:
+      type: string
+
+outputs:
+  success:
+    success:
+      type: bool
+  reg:
+    id:
+      type: string
+      description: The requested ID, or, if that was unavailable, [id].[n] for the minimum positive integer n that makes it unique
+  types:
     types:
       type: list
       values:
         type: string
-
-routes:
-  args:
-    src_node:
-      type: string
-      optional: true
-    src_port:
-      type: string
-      optional: true
-    dest_node:
-      type: string
-      optional: true
-    dest_port:
-      type: string
-      optional: true
-  rets:
+  routes:
     routes:
       type: list
       values:
         type: string
-
-ports:
-  args:
-    node:
+  ports:
+    type: list
+    values:
       type: string
-  rets:
-    ports:
-      type: list
-      values:
-        type: string
-
-
-delroute:
-  args:
-    src_node:
+  mc_error:
+    message:
       type: string
-    src_port:
-      type: string
-    dest_node:
-      type: string
-    dest_port:
-      type: string
-  rets:
-    success:
-      type: bool
+  heartbeat:

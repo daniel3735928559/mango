@@ -47,6 +47,7 @@ class zmq_rep_transport():
 class mx_agent(m_node):
       def __init__(self):  
             super().__init__(debug=True)
+            self.flags = {"strict":False}
             self.fc = mx_dataflow(self.handler,zmq_rep_transport(self,self.context,self.poller))
             self.dataflows[self.fc.transport.socket] = self.fc
             time.sleep(1)
@@ -54,7 +55,7 @@ class mx_agent(m_node):
             self.pid = os.getpid()
             self.command_cbs = {}
             self.interface.add_interface('./mx.yaml',{
-                  'answer':self.mx_handle_reply
+                  'reply':self.mx_handle_reply
             })
 
             self.handlers = {'print':self.print_handler,'file':self.file_handler,'forward':self.forward_handler,'nop':self.nop_handler}

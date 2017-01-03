@@ -114,19 +114,21 @@ class mc(m_node):
         
     def hello(self,header,args):
         print("HELLO",header,args)
-        return {'id':args['id']}
+        return "reg",{'id':args['id']}
         
     def mc_error(self,header,args):
         print("ERR",header,args)
 
     def mc_dispatch(self,header,args,route):
         print("MC DISPATCH",header,args)
-        result = self.interface.interface[header['command']]['handler'](header,args)
+        result = self.interface.get_function(header['name'])(header,args)
+        print("RES",result)
         if not result is None:
-            header = self.make_header("reg" if header["command"] == "hello" else "reply",src_port=header['port'])
-            header['src_node'] = 'mc'
-            header['port'] = 'mc'
-            self.dataflow.send(header,result,route)
+            name,resp_data = result
+            resp_header = self.make_header(name, src_port=header['port'])
+            resp_header['src_node'] = 'mc'
+            resp_header['port'] = 'mc'
+            self.dataflow.send(resp_header,resp_data,route)
         
     def remote_recv(self,h,c,raw,route,dataflow):
         pass
@@ -140,16 +142,17 @@ class mc(m_node):
             # first message to be "hello".  Otherwise we ignore it.
             # If it is, make a Node object for it and send it the
 
-            if h['command'] == 'hello' and h['src_port'] == 'mc' and 'id' in c:
+            if h['name'] == 'hello' and h['src_port'] == 'mc' and 'id' in c:
                 # Make the ID for the node object
                 new_id = self.gen_id(c['id'])
                 print("New node: " + c['id'] + " id = " + new_id)
                 c['id'] = new_id
                 h['src_node'] = new_id
                 # Make the Node object
-                iface = mc_if(c["if"] if "if" in c else {})
-                ports = c["ports"] if "ports" in c else []
-                n = Node(new_id,self.gen_key(), self.dataflow, route, iface, master=self.nodes["mc"].ports["stdio"], ports=ports)
+                iface = mc_if(c.get("if",{}))
+                ports = c.get("ports",[])
+                flags = c.get("flags", {})
+                n = Node(new_id,self.gen_key(), self.dataflow, route, iface, master=self.nodes["mc"].ports["stdio"], ports=ports, flags=flags)
 
                 # Start heartbeating thread
                 n.hb_thread = threading.Thread(target=mc_heartbeat_worker, args=(new_id,self.mc_hb_addr,self.hb_time,self.context))
@@ -219,13 +222,13 @@ class mc(m_node):
         nid = args["node"]
         if nid in self.nodes and self.nodes[nid].local:
             del self.nodes[nid]
-            return {'result':'success'}
-        return {'result':'fail'}
+            return "success",{}
+        return "error",{'message':'fail'}
 
     def node_list(self,header,args):
         print("NODES")
         print(",".join(self.nodes.keys()))
-        return {"list":[x for x in self.nodes.keys() if (x != 'mc' and (not 'pattern' in args or args['pattern'] in x))]}
+        return "nodes",{"list":[x for x in self.nodes.keys() if (x != 'mc' and (not 'pattern' in args or args['pattern'] in x))]}
 
     def node_flags(self,header,args):
         nid = args["ID"];
@@ -235,29 +238,31 @@ class mc(m_node):
 
     def port_list(self,header,args):
         if not args['node'] in self.nodes:
-            return {}
+            return "ports",{}
         n = self.nodes[args['node']]
-        return {'ports':[p for p in n.ports]}
+        return "ports",{'ports':[p for p in n.ports]}
 
     def delroute(self,header,args):
         if not args['src_node'] in self.nodes:
             print(1)
-            return {'success':False}
+            return "error",{"message":"Source node not found"}
         sn = self.nodes[args['src_node']]
         if not args['src_port'] in sn.ports:
             print(2)
-            return {'success':False}
+            return "error",{"message":"Source port not found"}
         sp = sn.ports[args['src_port']]
         if not args['dest_node'] in self.nodes:
             print(3)
-            return {'success':False}
+            return "error",{"message":"Target node not found"}
         dn = self.nodes[args['dest_node']]
         if not args['dest_port'] in dn.ports:
             print(4)
-            return {'success':False}
+            return "error",{"message":"Target port not found"}
         dp = dn.ports[args['dest_port']]
         print("A",sn.ports,sp,dn.ports,dp,sp.routes)
-        return {'success':sp.del_route_to(dp)}
+        if sp.del_route_to(dp):
+            return "success",{}
+        return "error",{"message":"Failed to delete route"}
     
     def route_list(self,header,args):
         everything = r".*"
@@ -272,13 +277,13 @@ class mc(m_node):
         rs = []
         for p in sps:
             rs += [p.routes[r] for r in p.routes if re.match(dn,p.routes[r].endpoint.owner.node_id) and re.match(dp,p.routes[r].endpoint.name)]
-        return {'routes':[r.to_string() for r in rs]}
+        return "routes",{'routes':[r.to_string() for r in rs]}
 
     def route_add(self,header,args):
         print("BUILDING ROUTE",header,args)
         rt = self.route_parser.parse(args['map'])
         if(rt is None):
-            return {'success':False}
+            return "success",{}
         chains = []
         print("RT",rt)
         for chain in rt:
@@ -304,9 +309,9 @@ class mc(m_node):
                                 chains += [[r[1] for r in chain[start:i+1]]]
                                 start = i
                         else:
-                            return {'result':'bad port: '+str(n)+'/'+str(p)}
+                            return "error",{'message':'bad port: '+str(n)+'/'+str(p)}
                     else:
-                        return {'result':'bad node: '+str(n)}
+                        return "error",{'message':'bad node: '+str(n)}
         print("chains",chains)
         # Now check that all routes are valid
         for c in chains:
@@ -318,7 +323,7 @@ class mc(m_node):
             for t in c[1:-1]:
                 new_route.transmogrifiers += [t]
             self.nodes[sn].ports[sp].add_route(new_route)
-        return {'success':True}
+        return "success",{}
             
     def rt_del(self,header,args):
         sn,sp = self.find_port(args['src'].decode())
@@ -330,19 +335,19 @@ class mc(m_node):
         port = args['name']
         print("PORT ADD: ",node, "PORT", port)
         if(not node in self.nodes):
-            return {'result':'no such node'}
+            return "error",{'message':'no such node'}
         if(port in self.nodes[node].ports):
-            return {'result':'port exists'}
+            return "error",{'message':'port exists'}
         self.nodes[node].ports[port] = Port(port,self.nodes[node])
-        return {'result':'success'}
+        return "success",{}
 
     def port_del(self,header,args):
         s = self.find_port(args['port'].decode())
         if s == None:
-            return {'result':'fail'}
+            return "error",{'message':'port not found'}
         node,port = s
         del self.nodes[node].ports[port]
-        return {'result':'success'}
+        return "success",{}
 
     def launch(self,header,args):
         n = args['node']
@@ -360,19 +365,16 @@ class mc(m_node):
                 nenv.update(json.loads(args['env']))
             print("E",nenv,"B",node_base)
             subprocess.Popen(shlex.split(self.node_types[n]['run']), cwd=node_base, env=nenv)
-            return {'result':'success'}
-        return {'result':'fail'}
+            return "success",{}
+        return "error",{'message':'failure to launch'}
 
     def list_types(self,header,args):
-        return {'types':[x for x in self.node_types]}
+        return "types",{'types':[x for x in self.node_types]}
     
     def find_if(self,header,args):
-        #idf = m_send_sync("stdio",{'command':'get_if'})
+        #idf = m_send_sync("stdio",{'name':'get_if'})
         #return {'if':idf}
         pass
-
-    def type_list(self,header,args):
-        return {'types':",".join(self.node_types.keys())}
 
 os.environ["MANGO_ID"] = "mc"
 m = mc()

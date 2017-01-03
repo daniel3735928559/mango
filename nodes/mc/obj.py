@@ -13,7 +13,7 @@ class NodeType:
         self.runner = runner
 
 class Node: 
-    def __init__(self,node_id,key,dataflow,route,iface,master=None,ports=[],local=True):
+    def __init__(self,node_id,key,dataflow,route,iface,master=None,ports=[],flags={},local=True):
         # self.dataflow is the socket (or whatever) that you can use
         # to talk to this node.  It will usually be set by mc to
         # self.connections[0], and to send on it you can just use
@@ -21,7 +21,7 @@ class Node:
         self.dataflow = dataflow
         self.key = key
         self.node_id = node_id
-        self.flags = 0
+        self.flags = flags
         self.interface = iface
         self.ports = {"stdio":Port("stdio",self)}
         print("PPP",self.ports)
@@ -41,7 +41,7 @@ class Node:
             route = self.route
         try:
             print("HH",header,self.interface.interface,type(self.interface.interface))
-            args = self.interface.validate(header['command'],args)
+            if self.flags.get("strict",True): args = self.interface.validate(header['name'],args)
             print("Sending",self.node_id,route,header,args)
             self.dataflow.send(header,args,route)
         except Exception as exc:
@@ -94,7 +94,7 @@ class Route:
                     if k in new_args:
                         del new_args[k]
             elif(t == "comm"):
-                new_header['command'] = o
+                new_header['name'] = o
             elif(t == "sub"):
                 new_args = {}
                 for k in o:
@@ -105,10 +105,10 @@ class Route:
                     elif o[k][1:] in args:
                         new_args[k] = args[o[k][1:]]
             elif(t == "filter"):
-                if header['command'] != o:
-                    print("FILTER BLOCK",header['command'],'is not',o)
+                if header['name'] != o:
+                    print("FILTER BLOCK",header['name'],'is not',o)
                     return None,None,None
-                print("FILTER PASS",header['command'],o)
+                print("FILTER PASS",header['name'],o)
 
             # Syntax for a bash transmogrifier is: 
             # ...> sh $key [cmd] > ...
