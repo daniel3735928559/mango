@@ -16,16 +16,16 @@ function MNode(debug){
 	var ifce = {};
 	for(var i in this.iface.iface){
 	    ifce[i] = JSON.parse(JSON.stringify(this.iface.iface[i]));
-	    delete ifce[i]['handler'];
+	    delete ifce[i]['handlers'];
 	}
 	console.log("IF",ifce)
 	self.m_send('hello',{'id':self.node_id,'if':ifce,'ports':self.ports},"mc")
     }
     
     this.dispatch = function(header,args){
-	console.log("DISPATCH",header,args,self.iface.iface,self.iface.iface[header['command']]);
+	console.log("DISPATCH",header,args,self.iface.iface,self.iface.get_function(header['name']));
 	try{
-            result = self.iface.iface[header['command']]['handler'](header,args);
+            result = self.iface.get_function(header['name'])(header,args);
             if(result){
 		self.m_send("reply", result, header['port'])
 	    }
@@ -52,14 +52,14 @@ function MNode(debug){
 	self.m_send("alive",{},"mc");
     }
 
-    this.make_header = function(command,src_port){
+    this.make_header = function(name,src_port){
 	if(!src_port) src_port = "stdio";
-	return {'src_port':src_port, 'command':command};
+	return {'src_port':src_port, 'name':name};
     }
 
-    this.m_send = function(command,msg,port){
-	console.log('sending',command,msg,port)
-	header = self.make_header(command,port)
+    this.m_send = function(name,msg,port){
+	console.log('sending',name,msg,port)
+	header = self.make_header(name,port)
 	self.dataflow.send(header,msg)
     }
     
@@ -86,6 +86,7 @@ function Interface(){
 	    var spec = jsyaml.safeLoad(fs.readFileSync(if_file, 'utf8'));
 	    console.log(JSON.stringify(spec));
 	    var name = spec.name;
+	    if(name in self.iface) throw new MError("Namespace already exists: "+name);
 	    var missing = [], extra = [];
 	    for(var i in handlers)
 		if(!(i in spec.inputs)) extra.push(i);
@@ -94,10 +95,14 @@ function Interface(){
 	    if(extra.length > 0) throw new MError("Functions not in interface: "+extra.join(", "));
 	    if(missing.length > 0) throw new MError("Functions not implemented: "+missing.join(", "));
 
-	    self.iface[name] = {};
+	    self.iface[name] = {"inputs":{},"outputs":{},"handlers":{}};
+	    
 	    for(var i in handlers){
-		self.iface[name][i] = spec.inputs[i] ? spec.inputs[i] : {};
-		self.iface[name][i]['handler'] = handlers[i];
+		self.iface[name]["inputs"][i] = spec.inputs[i] ? spec.inputs[i] : {};
+		self.iface[name]["handlers"][i] = handlers[i];
+	    }
+	    for(var i in spec.outputs){
+		self.iface[name]["outputs"][i] = spec.outputs[i] ? spec.outputs[i] : {};
 	    }
 	} catch (e) {
 	    console.log(e);
@@ -107,12 +112,12 @@ function Interface(){
 
     this.get_function = function(fn,ns){
 	if(ns) return self.iface[ns][fn];
-	for(var n in self.iface) if(fn in self.iface[n]) return self.iface[n][fn];
-	throw new MError("Functions not implemented: "+ns+"."+fn);	
+	for(var n in self.iface) if(fn in self.iface[n].handlers) return self.iface[n].handlers[fn];
+	throw new MError("Functions not implemented: "+ns+"."+fn);
     }
     
     this.validate = function(fn){
-	return fn in self.iface;
+	return self.get_function(fn);
     }
 }
 
@@ -143,7 +148,7 @@ function Dataflow(iface,transport,serialiser,dispatch_cb,error_cb){
     this.recv = function(data){
 	try{
 	    var m = self.serialiser.deserialise(data);
-	    if(!self.iface.validate(m[0]["command"])) throw new MError("Unknown function");
+	    if(!self.iface.validate(m[0]["name"])) throw new MError("Unknown function");
 	    console.log(self.dispatch_cb);
 	    self.dispatch_cb(m[0],m[1]);
 	} catch(e) {
