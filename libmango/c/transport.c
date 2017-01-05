@@ -17,37 +17,19 @@ void m_transport_tx(m_transport_t *t, char *data){
 }
 
 char *m_transport_rx(m_transport_t *t){
-  int cur_max = 256;
-  char *msg = malloc(cur_max);
-  memset(msg,0,cur_max);
-  int size = zmq_recv(t->socket, msg, cur_max-1, 0);
-  int msg_size = size;
-  if(size == -1){
+  zmq_msg_t msg;
+  zmq_msg_init(&msg);
+  int rc = zmq_msg_recv(&msg, t->socket, 0);
+  if(rc == -1){
+    perror("Problem");
     return NULL;
   }
-  else if(size < cur_max-1){
-    return msg;
-  }
-  while(1){
-    int size = zmq_recv(t->socket, msg, cur_max-1, 0);
-    if(size == -1){
-      return msg;
-    }
-    else{
-      char *msg2 = malloc(cur_max);
-      memset(msg2,0,cur_max);
-      char *new_msg = malloc(2*cur_max);
-      memset(new_msg,0,2*cur_max);
-      memcpy(new_msg, msg, msg_size);
-      memcpy(new_msg+msg_size, msg2, size);
-      msg_size += size;
-      cur_max *= 2;
-      free(msg);
-      free(msg2);
-      msg = new_msg;
-    }
-  }
-  return msg;
+  size_t sz = zmq_msg_size(&msg);
+  char *data = malloc(sz+1);
+  data[sz] = 0;
+  memcpy(data, zmq_msg_data(&msg), sz);
+  zmq_msg_close(&msg);
+  return data;
 }
 
 void m_transport_free(m_transport_t *t){

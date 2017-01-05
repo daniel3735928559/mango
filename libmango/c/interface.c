@@ -39,12 +39,12 @@ cJSON *m_interface_process_yaml(yaml_parser_t *parser){
 
     if (event.type == YAML_SCALAR_EVENT) {
       if(storage){
-	printf("STORE EV=%s key=%s, CUR=%s\n", event.data.scalar.value, current_key, cJSON_Print(current));
+	//printf("STORE EV=%s key=%s, CUR=%s\n", event.data.scalar.value, current_key, cJSON_Print(current));
 	cJSON *o = cJSON_CreateString(event.data.scalar.value);
 	cJSON_AddItemToObject(current, current_key, o);
       }
       else{
-	printf("MAP EV=%s\n", event.data.scalar.value);
+	//printf("MAP EV=%s\n", event.data.scalar.value);
 	current_key = strdup(event.data.scalar.value);
       }
       storage ^= VAL;
@@ -61,7 +61,7 @@ cJSON *m_interface_process_yaml(yaml_parser_t *parser){
     }
 
     else if (event.type == YAML_MAPPING_START_EVENT) {
-      printf("START MAP\n");
+      //printf("START MAP\n");
       if(current_key == NULL || strcmp(current_key,"") == 0)
 	return m_interface_process_yaml(parser);
       else
@@ -70,7 +70,7 @@ cJSON *m_interface_process_yaml(yaml_parser_t *parser){
     }
     
     else if(event.type == YAML_MAPPING_END_EVENT || event.type == YAML_STREAM_END_EVENT){
-      printf("END MAP\n");
+      //printf("END MAP\n");
       return current;
     }
     
