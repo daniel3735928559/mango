@@ -87,13 +87,26 @@ void m_interface_load(m_interface_t *i, char *filename){
   yaml_parser_delete(&parser);
   fclose(source);
   char *name = cJSON_GetObjectItem(obj, "name")->valuestring;
-  if(cJSON_HasObjectItem(i->interface, o->string)) return;
   cJSON *new_if = cJSON_CreateObject();
-  cJSON *o = obj->child;
-  while(o){
-    cJSON_AddItemToObject(new_if, o->string, cJSON_Duplicate(o,1));
-    o = o->next;
+  cJSON *new_inputs = cJSON_CreateObject();
+  cJSON *new_outputs = cJSON_CreateObject();
+  
+  if(cJSON_HasObjectItem(obj, "inputs")){
+    cJSON *o = cJSON_GetObjectItem(obj, "inputs")->child;
+    while(o){
+      cJSON_AddItemToObject(new_inputs, o->string, cJSON_Duplicate(o,1));
+      o = o->next;
+    }
   }
+  if(cJSON_HasObjectItem(obj, "outputs")){
+    cJSON *o = cJSON_GetObjectItem(obj, "outputs")->child;
+    while(o){
+      cJSON_AddItemToObject(new_outputs, o->string, cJSON_Duplicate(o,1));
+      o = o->next;
+    }
+  }
+  cJSON_AddItemToObject(new_if, "inputs", new_inputs);
+  cJSON_AddItemToObject(new_if, "outputs", new_outputs);
   cJSON_AddItemToObject(i->interface, name, new_if);
 }
 

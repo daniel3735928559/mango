@@ -42,8 +42,8 @@ void m_dataflow_recv(m_dataflow_t *d){
   cJSON *header = cJSON_GetObjectItem(m,"header");
   cJSON *args = cJSON_GetObjectItem(m,"args");
   
-  if(!m_interface_validate(d->interface, cJSON_GetObjectItem(header,"command")->valuestring)){
-    d->error(d->node, cJSON_GetObjectItem(header,"src_port")->valuestring, "Unkown command");
+  if(!m_interface_validate(d->interface, cJSON_GetObjectItem(header,"name")->valuestring)){
+    d->error(d->node, cJSON_GetObjectItem(header,"src_port")->valuestring, "Unkown message");
     return;
   }
   d->dispatch(d->node, header, args);

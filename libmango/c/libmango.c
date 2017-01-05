@@ -54,7 +54,7 @@ int m_node_handle(m_node_t *node, char *fn_name, cJSON *(*handler)(m_node_t *, c
 }
 
 void m_node_dispatch(m_node_t *node, cJSON *header, cJSON *args){
-  cJSON *result = m_interface_handler(node->interface, cJSON_GetObjectItem(header,"command")->valuestring)(node, header, args);
+  cJSON *result = m_interface_handler(node->interface, cJSON_GetObjectItem(header,"name")->valuestring)(node, header, args);
   if(cJSON_HasObjectItem(result,"error")){
     m_node_handle_error(node,
 			cJSON_GetObjectItem(header,"src_node")->valuestring,
@@ -94,14 +94,14 @@ cJSON *m_node_heartbeat(m_node_t *node, cJSON *header, cJSON *args){
   return NULL;
 }
 
-cJSON *m_node_make_header(m_node_t *node, char *command, char *src_port){
+cJSON *m_node_make_header(m_node_t *node, char *name, char *src_port){
   if(!src_port) src_port = LIBMANGO_STDIO;
   cJSON *header = cJSON_CreateObject();
   cJSON_AddStringToObject(header,"src_port", src_port);
-  cJSON_AddStringToObject(header,"command", command);
+  cJSON_AddStringToObject(header,"name", name);
   return header;
 }
-    
+
 void m_node_ready(m_node_t *node){
   char *iface = m_interface_string(node->interface);
   cJSON *hello_args = cJSON_CreateObject();
@@ -113,8 +113,8 @@ void m_node_ready(m_node_t *node){
   free(iface);
 }
 
-void m_node_send(m_node_t *node, char *command, cJSON *msg, char *port){
-  cJSON *header = m_node_make_header(node,command,port);
+void m_node_send(m_node_t *node, char *name, cJSON *msg, char *port){
+  cJSON *header = m_node_make_header(node,name,port);
   m_dataflow_send(node->dataflow,header,msg);
 }
 
