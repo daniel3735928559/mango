@@ -86,22 +86,21 @@ void m_interface_load(m_interface_t *i, char *filename){
   cJSON *obj = m_interface_process_yaml(&parser);
   yaml_parser_delete(&parser);
   fclose(source);
+  char *name = cJSON_GetObjectItem(obj, "name")->valuestring;
+  if(cJSON_HasObjectItem(i->interface, o->string)) return;
+  cJSON *new_if = cJSON_CreateObject();
   cJSON *o = obj->child;
   while(o){
-    if(cJSON_HasObjectItem(i->interface, o->string)) return; // already implemented
+    cJSON_AddItemToObject(new_if, o->string, cJSON_Duplicate(o,1));
     o = o->next;
   }
-  o = obj->child;
-  while(o){
-    cJSON_AddItemToObject(i->interface, o->string, cJSON_Duplicate(o,1));
-    o = o->next;
-  }
+  cJSON_AddItemToObject(i->interface, name, new_if);
 }
 
 int m_interface_handle(m_interface_t *i, char *fn_name, cJSON *handler(m_node_t *node, cJSON *header, cJSON *args)){
-  int present = cJSON_HasObjectItem(i->interface, fn_name);
+  //int present = cJSON_HasObjectItem(i->interface, fn_name);
   void *fn = m_dict_get(i->handlers, fn_name);
-  if(!present) return -1; // Function not in interface
+  //if(!present) return -1; // Function not in interface
   if(fn) return -2; // Already implemented
   m_dict_set(i->handlers, fn_name, handler);
   i->implemented++;
