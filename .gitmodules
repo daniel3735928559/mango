@@ -1,3 +1,6 @@
 [submodule "libmango/c/cJSON"]
 	path = libmango/c/cJSON
 	url = https://github.com/DaveGamble/cJSON.git
+[submodule "nodes/peel"]
+	path = nodes/peel
+	url = https://github.com/daniel3735928559/peel.git
