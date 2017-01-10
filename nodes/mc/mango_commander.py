@@ -40,7 +40,7 @@ class mc(m_node):
                                          #"delremote":self.remote_disconnect,
                                          "routes":self.route_list
                                      })
-        print(self.interface.interface);
+        print(self.interface.interface['mc']);
         self.uuid = str(self.gen_key())
 
         self.mc_addr = "tcp://*:"+sys.argv[1]
@@ -83,11 +83,21 @@ class mc(m_node):
         print("ALIVE",header,args)
         
     def collect_nodes(self):
-        manifest_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../manifest.json')
+        manifest_dir = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../')
+        manifest_path = manifest_dir+'/manifest.json'
         with open(manifest_path) as f:
             manifest = json.loads(f.read())
         self.node_types = manifest['nodes']
         self.langs = manifest['langs']
+        for ext in manifest['extensions']:
+            manifest_path = manifest_dir+'/'+ext+'/manifest.json'
+            with open(manifest_path) as f:
+                manifest = json.loads(f.read())
+            for n in manifest.get('nodes',{}):
+                self.node_types[n] = manifest['nodes'][n]
+                self.node_types[n]['dir'] = ext + '/' + self.node_types[n].get('dir',n)
+            self.langs.update(manifest.get('langs',{}))
+            
         
     def doc(self,header,args):
         n = args['node']

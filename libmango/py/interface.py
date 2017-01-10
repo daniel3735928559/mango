@@ -9,7 +9,6 @@ class m_if:
         self.loaders = {"yaml":m_YAML_if()}
 
     def canonical_name(self, function_name, namespace=None):
-        print(self.interface)
         if namespace is None:
             ans = []
             for n in self.interface:
@@ -33,11 +32,9 @@ class m_if:
         self.interface[name] = {"inputs":{},"outputs":{},"handlers":{}}
         for f in iface.get("inputs",[]):
             self.interface[name]["handlers"][f] = handlers[f]
-            if not iface["inputs"][f] is None:
-                self.interface[name]["inputs"][f] = iface["inputs"][f]
+            self.interface[name]["inputs"][f] = iface["inputs"].get(f,{})
         for f in iface.get("outputs",[]):
-            if not iface["outputs"][f] is None:
-                self.interface[name]["outputs"][f] = iface["outputs"][f]
+            self.interface[name]["outputs"][f] = iface["outputs"].get(f,{})
 
     def get_spec(self):
         return {name:{c:self.interface[name][c] for c in self.interface[name] if c != 'handlers'} for name in self.interface}
@@ -49,7 +46,6 @@ class m_if:
                 return self.default_handler
             
         name,fn = function_name.rsplit(".",1)
-        print("NF",name,fn)
         if name in self.interface and fn in self.interface[name]["handlers"]:
             return self.interface[name]["handlers"][fn]
             
