@@ -142,7 +142,7 @@ class mu_client_dataflow(m_dataflow):
             result = self.dispatch_cb(header,args)
         except m_error as exc:
             # self.error_cb(header['src_node'],str(exc))
-            print(header['src_node'],str(exc))
+            print(str(exc))
             return None
         
     # def send(self,header,msg):

@@ -29,7 +29,7 @@ class route_lexer:
       t_DEL = r"-|del"
       t_COMM = r"@|comm"
       t_FILTER = r"\?|filter"
-      t_SH = r'sh "(?:[^"\\]|\\.)*"'
+      t_SH = r'\| "(?:[^"\\]|\\.)*"'
       t_RAW = r"%[a-z]+"
 
       def t_PORT(self,t):
@@ -146,4 +146,4 @@ class route_parser:
             p[0] = [['edit',('raw',p[1][1:])]]
       def p_transmogrifier_sh(self,p):
             ''' transmogrifier : SH '''
-            p[0] = [['edit',('sh',p[1][4:-1])]]
+            p[0] = [['edit',('sh',p[1][2:-1])]]

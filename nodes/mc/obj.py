@@ -80,8 +80,8 @@ class Route:
                         new_args[k] = message.decode('ASCII')
                     elif o[k][0] != '$':
                         new_args[k] = o[k]
-                    elif o[k][1:] in args:
-                        new_args[k] = args[o[k][1:]]
+                    elif o[k][1:] in new_args:
+                        new_args[k] = new_args[o[k][1:]]
             elif(t == "addn"):
                 for k in o:
                     if not k in args:
@@ -96,14 +96,15 @@ class Route:
             elif(t == "comm"):
                 new_header['name'] = o
             elif(t == "sub"):
-                new_args = {}
+                n_args = {}
                 for k in o:
                     if o[k] == "$_":
                         new_args[k] = message.decode('ASCII')
                     elif o[k][0] != '$':
-                        new_args[k] = o[k]
-                    elif o[k][1:] in args:
-                        new_args[k] = args[o[k][1:]]
+                        n_args[k] = o[k]
+                    elif o[k][1:] in new_args:
+                        n_args[k] = new_args[o[k][1:]]
+                new_args = n_args
             elif(t == "filter"):
                 if header['name'] != o:
                     print("FILTER BLOCK",header['name'],'is not',o)
@@ -114,11 +115,12 @@ class Route:
             # ...> sh $key [cmd] > ...
             # Which is equivalent to dict[$key] = $(echo $key | cmd)
             elif(t == "sh"):
+                print(new_args)
                 k,cmd = o.split(' ',1)
                 if(not k in new_args):
                     print("Bad key",k)
                     return None,None,None
-                args[k] = subprocess.check_output('printf {} | {}'.format(args[k],cmd),shell=True).decode()
+                new_args[k] = subprocess.check_output('printf \'{}\' | {}'.format(new_args[k],cmd),shell=True).decode()
 
         #new_header['port'] = self.endpoint.name
         return new_header,new_args,new_message

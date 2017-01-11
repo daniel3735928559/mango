@@ -24,13 +24,13 @@ class mu(m_node):
                 traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
                 traceback.print_exception(exc_type, exc_value, exc_traceback,file=sys.stdout)
 
-        subprocess.Popen(["python", "server.py"], cwd=os.path.dirname(os.path.realpath(__file__)), env={"MU_HTTP_PORT":os.getenv("MU_HTTP_PORT"),"MU_ROOT_DIR":os.getenv("MU_ROOT_DIR")})
+        subprocess.Popen(["python", "server.py"], cwd=os.path.dirname(os.path.realpath(__file__)), env={"MU_HTTP_PORT":os.getenv("MU_HTTP_PORT"),"MU_WS_PORT":os.getenv("MU_WS_PORT"),"MU_ROOT_DIR":os.getenv("MU_ROOT_DIR")})
         self.ready()
         self.run()#self.main_loop)
 
     def ui_to_world(self, header, args):
         print("UI2W",header,args)
-        self.m_send(header['command'], args)
+        self.m_send(header['name'], args)
 
     def world_to_ui(self, header, args):
         print("W2UI", header, args)
