@@ -64,22 +64,36 @@ class mc(m_node):
         self.poller.register(f,zmq.POLLIN)
 
         # Heartbeat listening stuff:
-
         self.mc_hb_addr = "inproc://hb"
-        self.hb_time = 100
+        self.hb_time = 10
         self.hb_gateway = m_ZMQ_transport(self.mc_hb_addr,self.context,self.poller,True)
         h = self.hb_gateway.socket
         self.dataflows[h] = mc_heartbeat_dataflow(self.hb_gateway,self.do_heartbeat)
         self.poller.register(h,zmq.POLLIN)
 
+        # Start reaper thread
+        self.reap_time = 15
+        self.reaper_thread = threading.Thread(target=mc_heartbeat_worker, args=("mc",self.mc_hb_addr,self.reap_time,self.context))
+        self.reaper_thread.start()
+        self.too_old = 25
+        
         self.run()
 
     def do_heartbeat(self,node_name):
-        print("HB",node_name)
-        header = self.make_header("heartbeat",src_port="mc")
-        self.dataflow.send(header,{},self.nodes[node_name.decode()].route)
+        if node_name == b"mc":
+            print("REAP")
+            now = time.time()
+            for n in self.nodes:
+                if self.nodes[n].node_id != "mc" and (now - self.nodes[n].alive_time) > self.too_old:
+                    print("REAPING",self.nodes[n].node_id)
+        else:
+            print("HB",node_name)
+            header = self.make_header("heartbeat",src_port="mc")
+            self.dataflow.send(header,{},self.nodes[node_name.decode()].route)
 
     def alive(self,header,args):
+        if header['src_node'] in self.nodes:
+            self.nodes[header['src_node']].alive_time = time.time()
         print("ALIVE",header,args)
         
     def collect_nodes(self):
