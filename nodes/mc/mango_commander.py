@@ -33,7 +33,7 @@ class mc(m_node):
                                          "error":self.mc_error,
                                          "launch":self.launch,
                                          "types":self.list_types,
-                                         #"delnode":self.delnode,
+                                         "delnode":self.delnode,
                                          "ports":self.port_list,
                                          "delroute":self.delroute,
                                          #"remote":self.remote_connect,
@@ -65,27 +65,30 @@ class mc(m_node):
 
         # Heartbeat listening stuff:
         self.mc_hb_addr = "inproc://hb"
-        self.hb_time = 10
+        self.hb_time = 100
         self.hb_gateway = m_ZMQ_transport(self.mc_hb_addr,self.context,self.poller,True)
         h = self.hb_gateway.socket
         self.dataflows[h] = mc_heartbeat_dataflow(self.hb_gateway,self.do_heartbeat)
         self.poller.register(h,zmq.POLLIN)
 
         # Start reaper thread
-        self.reap_time = 15
-        self.reaper_thread = threading.Thread(target=mc_heartbeat_worker, args=("mc",self.mc_hb_addr,self.reap_time,self.context))
+        self.reap_time = 150
+        self.reaper_thread = threading.Thread(target=mc_heartbeat_worker, args=("mc",self.mc_hb_addr,self.reap_time,threading.Event(),self.context))
         self.reaper_thread.start()
-        self.too_old = 25
+        self.too_old = 200
         
         self.run()
 
     def do_heartbeat(self,node_name):
         if node_name == b"mc":
             print("REAP")
+            to_reap = []
             now = time.time()
             for n in self.nodes:
                 if self.nodes[n].node_id != "mc" and (now - self.nodes[n].alive_time) > self.too_old:
-                    print("REAPING",self.nodes[n].node_id)
+                    to_reap.append(n)
+            for n in to_reap:
+                self.delete_node(n)
         else:
             print("HB",node_name)
             header = self.make_header("heartbeat",src_port="mc")
@@ -95,7 +98,30 @@ class mc(m_node):
         if header['src_node'] in self.nodes:
             self.nodes[header['src_node']].alive_time = time.time()
         print("ALIVE",header,args)
+
+
+    def delnode(self, header, args):
+        node_name = args['node']
+        if node_name in self.nodes:
+            self.delete_node(node_name)
+            return "success",{}
+        else:
+            return "error",{"message":"no such node"}
         
+    def delete_node(self, node_name):
+        node = self.nodes[node_name]
+        print("REAPING",node.node_id)
+        for n in self.nodes:
+            for p in self.nodes[n].ports:
+                self.nodes[n].ports[p].del_route_to(node_name)
+                
+        if not node.hb_stopper is None:
+            node.hb_stopper.set()
+        del self.nodes[node_name]
+        for r in self.routes:
+            if self.routes[r] == node_name:
+                del self.routes[r]
+    
     def collect_nodes(self):
         manifest_dir = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../')
         manifest_path = manifest_dir+'/manifest.json'
@@ -134,7 +160,7 @@ class mc(m_node):
         #             to_doc = to_doc[ei]
         #         else:
         #             raise m_error(m_error.BAD_ARGUMENT,"Function not found: {}".format(ei))
-        return {"doc":pijemont.doc.doc_gen(to_doc)}
+        return "doc",{"doc":pijemont.doc.doc_gen(to_doc)}
         
     def hello(self,header,args):
         print("HELLO",header,args)
@@ -179,7 +205,8 @@ class mc(m_node):
                 n = Node(new_id,self.gen_key(), self.dataflow, route, iface, master=self.nodes["mc"].ports["stdio"], ports=ports, flags=flags)
 
                 # Start heartbeating thread
-                n.hb_thread = threading.Thread(target=mc_heartbeat_worker, args=(new_id,self.mc_hb_addr,self.hb_time,self.context))
+                n.hb_stopper = threading.Event()
+                n.hb_thread = threading.Thread(target=mc_heartbeat_worker, args=(new_id,self.mc_hb_addr,self.hb_time,n.hb_stopper,self.context))
                 n.hb_thread.start()
                 
                 # Send the "reg" message

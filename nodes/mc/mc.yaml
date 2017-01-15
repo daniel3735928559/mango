@@ -84,11 +84,18 @@ inputs:
       type: string
     dest_port:
       type: string
+      
+  delnode:
+    node:
+      type: string
 
 outputs:
   success:
     success:
       type: bool
+  doc:
+    doc:
+      type: any
   reg:
     id:
       type: string

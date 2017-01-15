@@ -28,6 +28,8 @@ class Node:
         print("PPP",self.ports)
         self.local = local
         self.route = route
+        self.hb_thread = None
+        self.hb_stopper = None
         if (not master is None) and local:
             self.ports["mc"] = Port("mc",self)
             self.ports["mc"].add_route(Route(self.ports["mc"],master))
@@ -36,7 +38,7 @@ class Node:
         for x in ports:
             if x != "mc" and x != "stdio":
                 self.ports[x] = Port(x,self)
-            
+                
     def send(self, header, args, route=None):
         if route is None:
             route = self.route
