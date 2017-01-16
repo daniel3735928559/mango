@@ -73,7 +73,7 @@ class mc(m_node):
 
         # Start reaper thread
         self.reap_time = 150
-        self.reaper_thread = threading.Thread(target=mc_heartbeat_worker, args=("mc",self.mc_hb_addr,self.reap_time,threading.Event(),self.context))
+        self.reaper_thread = threading.Thread(target=mc_heartbeat_worker, daemon=True, args=("mc",self.mc_hb_addr,self.reap_time,threading.Event(),self.context))
         self.reaper_thread.start()
         self.too_old = 200
         
@@ -206,7 +206,7 @@ class mc(m_node):
 
                 # Start heartbeating thread
                 n.hb_stopper = threading.Event()
-                n.hb_thread = threading.Thread(target=mc_heartbeat_worker, args=(new_id,self.mc_hb_addr,self.hb_time,n.hb_stopper,self.context))
+                n.hb_thread = threading.Thread(target=mc_heartbeat_worker, daemon=True, args=(new_id,self.mc_hb_addr,self.hb_time,n.hb_stopper,self.context))
                 n.hb_thread.start()
                 
                 # Send the "reg" message
