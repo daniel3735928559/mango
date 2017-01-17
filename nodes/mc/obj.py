@@ -24,7 +24,8 @@ class Node:
         self.flags = flags
         self.interface = iface
         self.ports = {"stdio":Port("stdio",self)}
-        self.alive_time = time.time()
+        self.last_heartbeat_time = time.time()
+        self.last_alive_time = time.time()
         print("PPP",self.ports)
         self.local = local
         self.route = route

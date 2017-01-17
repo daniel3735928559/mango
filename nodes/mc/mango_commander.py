@@ -56,12 +56,13 @@ class mc(m_node):
         #self.ports["stdio"] = self.dataflows[s]
 
         # Remote listening stuff: 
-
-        self.mc_remote_addr = "tcp://*:"+sys.argv[2]
-        self.remote_gateway = m_ZMQ_transport(self.mc_remote_addr,self.context,self.poller,True)
-        f = self.remote_gateway.socket
-        self.dataflows[f] = mc_remote_dataflow(self.remote_gateway,self.serialiser,self.remote_recv)
-        self.poller.register(f,zmq.POLLIN)
+        if len(sys.argv) > 2:
+            print("Adding remote port: ",sys.argv[2])
+            self.mc_remote_addr = "tcp://*:"+sys.argv[2]
+            self.remote_gateway = m_ZMQ_transport(self.mc_remote_addr,self.context,self.poller,True)
+            f = self.remote_gateway.socket
+            self.dataflows[f] = mc_remote_dataflow(self.remote_gateway,self.serialiser,self.remote_recv)
+            self.poller.register(f,zmq.POLLIN)
 
         # Heartbeat listening stuff:
         self.mc_hb_addr = "inproc://hb"
@@ -85,18 +86,19 @@ class mc(m_node):
             to_reap = []
             now = time.time()
             for n in self.nodes:
-                if self.nodes[n].node_id != "mc" and (now - self.nodes[n].alive_time) > self.too_old:
+                if self.nodes[n].node_id != "mc" and (now - self.nodes[n].last_alive_time) > self.too_old and (now - self.nodes[n].last_heartbeat_time) < self.too_old:
                     to_reap.append(n)
             for n in to_reap:
                 self.delete_node(n)
         else:
             print("HB",node_name)
             header = self.make_header("heartbeat",src_port="mc")
+            self.nodes[node_name.decode()].last_heartbeat_time = time.time()
             self.dataflow.send(header,{},self.nodes[node_name.decode()].route)
 
     def alive(self,header,args):
         if header['src_node'] in self.nodes:
-            self.nodes[header['src_node']].alive_time = time.time()
+            self.nodes[header['src_node']].last_alive_time = time.time()
         print("ALIVE",header,args)
 
 
@@ -414,8 +416,13 @@ class mc(m_node):
                 nenv[self.langs[lang]['pathvar']] = lib_path
             if 'env' in args:
                 nenv.update(json.loads(args['env']))
-            print("E",nenv,"B",node_base)
-            subprocess.Popen(shlex.split(self.node_types[n]['run']), cwd=node_base, env=nenv)
+            if lang == "mu":
+                mu_path = os.path.join(base_path, 'mu/mu.py')
+                print(mu_path)
+                subprocess.Popen(shlex.split("python " + mu_path), cwd=node_base, env=nenv)
+            else:
+                print("E",nenv,"B",node_base)
+                subprocess.Popen(shlex.split(self.node_types[n]['run']), cwd=node_base, env=nenv)
             return "success",{}
         return "error",{'message':'failure to launch'}
 
