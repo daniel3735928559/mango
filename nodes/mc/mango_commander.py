@@ -419,6 +419,12 @@ class mc(m_node):
             if lang == "mu":
                 mu_path = os.path.join(base_path, 'mu/mu.py')
                 print(mu_path)
+                nenv.update({
+                    "MU_WS_PORT":int(self.node_types[n]['ws_port']),
+                    "MU_HTTP_PORT":int(self.node_types[n]['http_port']),
+                    "MU_IF":os.path.join(node_base + '/' + self.node_types[n]['dir'] + '/' + self.node_types[n]['if']),
+                    "MU_ROOT_DIR":os.path.join(node_base + '/' + self.node_types[n]['dir']),
+                })
                 subprocess.Popen(shlex.split("python " + mu_path), cwd=node_base, env=nenv)
             else:
                 print("E",nenv,"B",node_base)

@@ -4,6 +4,7 @@ from dataflow import *
 from transport import *
 from interface import *
 from error import *
+import traceback
 
 class m_node: 
     def __init__(self,debug=False):
@@ -43,7 +44,7 @@ class m_node:
            if not result is None:
                self.m_send("reply",result,port=header['port'])
         except Exception as exc:
-           self.handle_error(header['src_node'],str(exc))
+           self.handle_error(header['src_node'],traceback.format_exc())
 
     def heartbeat(self,header,args):
         self.m_send('alive',{},port="mc")
@@ -78,7 +79,7 @@ class m_node:
             self.dataflow.recv()
 
     def debug_print(self,*args):
-        if self.debug: print("[DEBUG] ",*args)
+        if self.debug: print("[{} DEBUG] ".format(self.node_id),*args)
     
     def run(self,f=None):
         if not self.server is None:

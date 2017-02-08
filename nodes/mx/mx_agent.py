@@ -187,6 +187,11 @@ class mx_agent(m_node):
                               ha,rcb = new_cb
                         del args["r"]
                   c = args.pop('command')
+                  for a in args:
+                        try:
+                              args[a] = json.loads(args[a])
+                        except:
+                              pass
                   self.m_send(c,args,port=port)
             if(cmd == 'mc'):
                   rcb = self.reply_cb
