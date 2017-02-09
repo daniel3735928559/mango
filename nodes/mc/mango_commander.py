@@ -412,19 +412,22 @@ class mc(m_node):
             node_base = os.path.join(base_path,n if not 'dir' in self.node_types[n] else self.node_types[n]['dir'])
             lib_path = os.path.join(lib_base_path,lang)
             nenv = {'MC_ADDR':self.mc_target,'MANGO_ID':nid}
-            if 'pathvar' in self.langs[lang]:
+            if 'pathvar' in self.langs.get(lang, {}):
                 nenv[self.langs[lang]['pathvar']] = lib_path
             if 'env' in args:
                 nenv.update(json.loads(args['env']))
             if lang == "mu":
                 mu_path = os.path.join(base_path, 'mu/mu.py')
                 print(mu_path)
+                lib_path = os.path.join(lib_base_path,"py")
                 nenv.update({
-                    "MU_WS_PORT":int(self.node_types[n]['ws_port']),
-                    "MU_HTTP_PORT":int(self.node_types[n]['http_port']),
-                    "MU_IF":os.path.join(node_base + '/' + self.node_types[n]['dir'] + '/' + self.node_types[n]['if']),
-                    "MU_ROOT_DIR":os.path.join(node_base + '/' + self.node_types[n]['dir']),
+                    "MU_WS_PORT":self.node_types[n]['ws_port'],
+                    "MU_HTTP_PORT":self.node_types[n]['http_port'],
+                    "MU_IF":os.path.join(node_base, self.node_types[n]['if']),
+                    "MU_ROOT_DIR":os.path.join(node_base),
                 })
+                nenv[self.langs["py"]['pathvar']] = lib_path
+                print("nb",node_base,nenv,mu_path,shlex.split("python " + mu_path))
                 subprocess.Popen(shlex.split("python " + mu_path), cwd=node_base, env=nenv)
             else:
                 print("E",nenv,"B",node_base)
