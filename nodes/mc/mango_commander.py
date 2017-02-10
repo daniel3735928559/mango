@@ -424,7 +424,7 @@ class mc(m_node):
                     "MU_WS_PORT":self.node_types[n]['ws_port'],
                     "MU_HTTP_PORT":self.node_types[n]['http_port'],
                     "MU_IF":os.path.join(node_base, self.node_types[n]['if']),
-                    "MU_ROOT_DIR":os.path.join(node_base),
+                    "MU_ROOT_DIR":node_base
                 })
                 nenv[self.langs["py"]['pathvar']] = lib_path
                 print("nb",node_base,nenv,mu_path,shlex.split("python " + mu_path))

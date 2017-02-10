@@ -14,10 +14,11 @@ class mu(m_node):
         mu_if_file = os.getenv("MU_IF",None)
         if not mu_if_file is None:
             try:
+                print("IF_FILE", os.getcwd(), mu_if_file)
                 with open(mu_if_file,"r") as f:
                     new_if = yaml.load(f)
-                if_dict = {x:self.world_to_ui for x in new_if}
-                print("ASDASDASD",if_dict,new_if)
+                if_dict = {x:self.world_to_ui for x in new_if['inputs']}
+                print("INTERFACE",if_dict,new_if)
                 self.interface.add_interface(mu_if_file,if_dict)
             except:
                 exc_type, exc_value, exc_traceback = sys.exc_info()

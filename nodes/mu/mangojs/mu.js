@@ -16,6 +16,7 @@ var Mango = function(commands){
 		       payload_bin = byte_array.slice(byte_array.indexOf(10)+1);
 		       payload = String.fromCharCode.apply(null, payload_bin);
 		       data = JSON.parse(payload);
+		       console.log("RECVD",JSON.stringify(data));
 		       self.m_recv(data.header, data.args)
 		   });
 		   reader.readAsArrayBuffer(e.data);
