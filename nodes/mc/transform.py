@@ -152,13 +152,57 @@ class transform_parser:
             ''' transform : R replace '''
             p[0] = [p[2]]
             
-      def p_transform_filter_edit(self,p):
-            ''' transform : FE filter edit '''
-            p[0] = [p[2],p[3]]
+      # def p_transform_filter_edit(self,p):
+      #       ''' transform : FE filter edit '''
+      #       p[0] = [p[2],p[3]]
             
-      def p_transform_filter_replace(self,p):
-            ''' transform : FR filter replace '''
-            p[0] = [p[2],p[3]]
+      def p_transform_filter_edit_name_script(self,p):
+            ''' transform : FE NAME script '''
+            p[0] = [('filter',{'name':p[2]}), ('edit',{'script':p[3]})]
+            
+      def p_transform_filter_edit_name_name(self,p):
+            ''' transform : FE NAME NAME '''
+            p[0] = [('filter',{'name':p[2]}), ('edit',{'newname':p[3]})]
+            
+      def p_transform_filter_edit_name_name_script(self,p):
+            ''' transform : FE NAME NAME script '''
+            p[0] = [('filter',{'name':p[2]}), ('edit',{'newname':p[3],'script':p[4]})]
+
+      def p_transform_filter_edit_name_test_script(self,p):
+            ''' transform : FE NAME '{' test '}' script '''
+            p[0] = [('filter',{'name':p[2],'test':p[4]}), ('edit',{'script':p[6]})]
+            
+      def p_transform_filter_edit_name_test_name(self,p):
+            ''' transform : FE NAME '{' test '}' NAME '''
+            p[0] = [('filter',{'name':p[2],'test':p[4]}), ('edit',{'newname':p[6]})]
+            
+      def p_transform_filter_edit_name_test_name_script(self,p):
+            ''' transform : FE NAME '{' test '}' NAME script '''
+            p[0] = [('filter',{'name':p[2],'test':p[4]}), ('edit',{'newname':p[6],'script':p[7]})]
+
+      def p_transform_filter_edit_test_script(self,p):
+            ''' transform : FE '{' test '}' script '''
+            p[0] = [('filter',{'test':p[3]}), ('edit',{'script':p[5]})]
+            
+      def p_transform_filter_edit_test_name(self,p):
+            ''' transform : FE '{' test '}' NAME '''
+            p[0] = [('filter',{'test':p[3]}), ('edit',{'newname':p[5]})]
+            
+      def p_transform_filter_edit_test_name_script(self,p):
+            ''' transform : FE '{' test '}' NAME script '''
+            p[0] = [('filter',{'test':p[3]}), ('edit',{'newname':p[5],'script':p[6]})]
+            
+      def p_transform_filter_replace_test(self,p):
+            ''' transform : FR '{' test '}' NAME map '''
+            p[0] = [('filter',{'test':p[3]}), ('replace',{'newname':p[5],'map':p[6]})]
+            
+      def p_transform_filter_replace_name(self,p):
+            ''' transform : FR NAME NAME map '''
+            p[0] = [('filter',{'name':p[2]}), ('replace',{'newname':p[3],'map':p[4]})]
+            
+      def p_transform_filter_replace_name_test(self,p):
+            ''' transform : FR NAME '{' test '}' NAME map '''
+            p[0] = [('filter',{'name':p[2], 'test':p[4]}), ('replace',{'newname':p[6],'map':p[7]})]
             
       def p_filter_name(self,p):
             ''' filter : NAME '''
@@ -543,14 +587,17 @@ tp = transform_parser()
 routes = tp.parse(sys.argv[1])
 ok = True
 for route in routes:
-      if ok:
-            for x in route:
-                  if x[0] in ['edit','replace','filter']:
-                        t = transform(x)
-                        ok = False
-                        break
-      else: break
+      for i in range(len(route)):
+            if route[i][0] in ['edit','replace','filter']:
+                  route[i] = (route[i][0],transform(route[i]))
 
-
-ans = t.evaluate({'_name': 'hello', 'x':2, 'y':'asda', 'z':[1,2,3,4], 'w':{'a':'blah'}})
-print(ans)
+data = {'_name': 'hello', 'x':2, 'y':'asda', 'z':[1,2,3,4], 'w':{'a':'blah'}}
+for t in routes[0][1:-1]:
+      if t[0] == 'filter':
+            if t[1].evaluate(data):
+                  continue
+            else:
+                  print("FILTERED")
+      else:
+            data = t[1].evaluate(data)
+print(data)
