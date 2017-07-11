@@ -17,7 +17,7 @@ class transform_lexer:
             self.t_BI = '<>'
             self.t_AND = '&&'
             self.t_OR = '\|\|'
-            self.t_ID = r'[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+'
+            #self.t_ID = r'[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+'
             self.lexer = lex.lex(module=self)
             
       def t_FLOAT(self,t):
@@ -30,8 +30,9 @@ class transform_lexer:
             t.value = int(t.value)
             return t
       
-      def t_NAME(self, t):
-            r'[a-zA-Z_][a-zA-Z0-9_]*'
+      def t_ID(self, t):
+            r'[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)*'
+            r = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
             reserved = {
                   'f' : 'F',
                   'e' : 'E',
@@ -44,6 +45,8 @@ class transform_lexer:
             }
             if t.value in reserved:
                   t.type = reserved[t.value]
+            elif r.match(t.value):
+                  t.type = 'NAME'
             return t
             
       def t_STRING(self,t):
@@ -52,10 +55,10 @@ class transform_lexer:
             return t
 
       def t_REGEX(self,t):
-            r'/(?:[^/\\]|\\.)*/'
+            r'/(?:[^/\\]|\\.)*/(i|g|ig|gi)?[0-9]*'
             t.value = t.value[1:-1]
             return t
-
+      
       t_ignore = ' \t\n'
 
       def t_error(self,t):
@@ -81,7 +84,7 @@ class transform_parser:
             )
             self.lexer = transform_lexer()
             self.tokens = self.lexer.tokens
-            self.parser = yacc.yacc(module=self,write_tables=0,debug=True)
+            self.parser = yacc.yacc(module=self,write_tables=0,debug=False)
 
       def parse(self,data):
             if data:
@@ -233,6 +236,10 @@ class transform_parser:
       def p_statement_deq(self,p):
             ''' statement : var DE expr '''
             p[0] = ('assign',p[1],('div',('var_value',p[1][1]),p[3]))
+            
+      def p_statement_req(self,p):
+            ''' statement : var RE REGEX ',' REGEX '''
+            p[0] = ('assign',p[1],('re_sub',('var_value',p[1][1]),p[3],p[5]))
                     
       def p_expr_test(self,p):
             ''' expr : test '''
@@ -293,6 +300,10 @@ class transform_parser:
       def p_test_eq(self,p):
             ''' test : expr EQ expr '''
             p[0] = ('eq',p[1],p[3])
+            
+      def p_test_like(self,p):
+            ''' test : expr '~' REGEX '''
+            p[0] = ('like',p[1],re.compile(p[3]))
             
       def p_test_ge(self,p):
             ''' test : expr GE expr '''
@@ -373,7 +384,7 @@ class transform_parser:
 class transform:
       def __init__(self, ast):
             self.ast = ast
-            self.node_types = ['add','and','div','edit','eq','filter','ge','gt','le','list','lt','map','mul','neg','not','or','replace','script','sub','test','value','var','var_value']
+            self.node_types = ['add','and','div','edit','eq','filter','ge','gt','le','like','list','lt','map','mul','neg','not','or','replace','re_sub','script','sub','test','value','var','var_value','pop','assign']
             self.evals = {}
             for x in self.node_types:
                   self.evals[x] = getattr(self,'eval_'+x)
@@ -398,6 +409,9 @@ class transform:
 
       def eval_le(self, n, d):
             return self.e(n[1], d) <= self.e(n[2], d)
+
+      def eval_like(self, n, d):
+            return n[2].match(self.e(n[1], d)) != None
 
       def eval_list(self, n, d):
             return [self.e(x, d) for x in n[1]]
@@ -426,6 +440,9 @@ class transform:
       def eval_value(self, n, d):
             return n[1]
       
+      def eval_re_sub(self, n, d):
+            return re.sub(n[2], n[3], self.e(n[1], d))
+      
       def eval_ternary(self, n, d):
             return self.e(n[2], d) if self.e(n[1], d) else self.e(n[3], d)
       
@@ -444,28 +461,29 @@ class transform:
             return True
 
       def eval_script(self, n, d):
-            ans = copy.deepcopy(d)
+            self.editing = copy.deepcopy(d)
             for x in n[1]:
-                  if x[0] == 'assign':
-                        var = self.e(x[1], d)
-                        val = self.e(x[2], d)
-                        tmp = ans
-                        for i in range(len(var)):
-                              if i == len(var) - 1:
-                                    tmp[var[i]] = val
-                              else:
-                                    tmp = tmp[var[i]]
-                  elif x[0] == 'pop':
-                        var = self.e(x[1], d)
-                        tmp = ans
-                        for i in range(len(var)):
-                              if i == len(var) - 1:
-                                    del tmp[var[i]]
-                              else:
-                                    tmp = tmp[var[i]]
+                  self.e(x, d)
+            return self.editing
+                  
+      def eval_assign(self, n, d):
+            var = self.e(n[1], d)
+            val = self.e(n[2], d)
+            tmp = self.editing
+            for i in range(len(var)):
+                  if i == len(var) - 1:
+                        tmp[var[i]] = val
                   else:
-                        print("ignoring non-statement expression: ",x)
-            return ans
+                        tmp = tmp[var[i]]
+                        
+      def eval_pop(self, n, d):
+            var = self.e(n[1], d)
+            tmp = self.editing
+            for i in range(len(var)):
+                  if i == len(var) - 1:
+                        del tmp[var[i]]
+                  else:
+                        tmp = tmp[var[i]]
 
       def eval_replace(self, n, d):
             r = n[1]
@@ -492,9 +510,9 @@ class transform:
             return None
       
       def e(self, n, d):
-            print('NODE: ',n)
+            #print('NODE: ',n)
             ans = self.evals[n[0]](n, d)
-            print('ANS: ',ans,n)
+            #print('ANS: ',ans,n)
             return ans
       
       def evaluate(self, d):
@@ -507,12 +525,11 @@ for route in routes:
       if ok:
             for x in route:
                   if x[0] in ['edit','replace','filter']:
-                        print('using ',x)
                         t = transform(x)
                         ok = False
                         break
       else: break
 
 
-ans = t.evaluate({'_name': 'hello', 'x':2, 'y':'asda'})
-print("\n",ans)
+ans = t.evaluate({'_name': 'hello', 'x':2, 'y':'asda', 'z':[1,2,3,4], 'w':{'a':'blah'}})
+print(ans)
