@@ -4,7 +4,7 @@ import sys,re,json,copy
 
 class transform_lexer:
       def __init__(self):
-            self.tokens = ['NAME','FLOAT','INT','F','E','R','FE','FR','TRUE','FALSE','POP','STRING','REGEX','GE','EQ','LE','AND','OR','PE','ME','TE','DE','RE','BI','ID']
+            self.tokens = ['NAME','FLOAT','INT','F','E','R','FE','FR','TRUE','FALSE','POP','STRING','REGEX','GE','EQ','LE','EXP','AND','OR','PE','ME','TE','DE','RE','BI','ID']
             self.literals = ['<','>',';','+','-','{','}','[',']','(',')','=','!','&','|','~',',',':','*','/','?']
             self.t_RE = '~='
             self.t_PE = '\+='
@@ -15,6 +15,7 @@ class transform_lexer:
             self.t_LE = '<='
             self.t_EQ = '=='
             self.t_BI = '<>'
+            self.t_EXP = '\*\*'
             self.t_AND = '&&'
             self.t_OR = '\|\|'
             #self.t_ID = r'[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+'
@@ -80,6 +81,7 @@ class transform_parser:
                   ('left', 'AND', 'OR'),
                   ('left', '+', '-'),
                   ('left', '*', '/'),
+                  ('right', 'EXP'),
                   ('right', 'UMINUS'),
             )
             self.lexer = transform_lexer()
@@ -88,7 +90,8 @@ class transform_parser:
 
       def parse(self,data):
             if data:
-                  return self.parser.parse(data,self.lexer.lexer,0,0,None)
+                  ans = self.parser.parse(data,self.lexer.lexer,0,0,None)
+                  return ans
             else:
                   return []
 
@@ -100,7 +103,7 @@ class transform_parser:
       # parses to: 
       # [[node1, node2], [node2, node3]]
             
-      def p_route_node_nodex(self,p):
+      def p_route_node_node(self,p):
             ''' route : node '>' node'''
             p[0] = [[p[1], p[3]]]
             
@@ -240,6 +243,14 @@ class transform_parser:
       def p_statement_req(self,p):
             ''' statement : var RE REGEX ',' REGEX '''
             p[0] = ('assign',p[1],('re_sub',('var_value',p[1][1]),p[3],p[5]))
+            
+      def p_statement_reqf(self,p):
+            ''' statement : var RE REGEX ',' REGEX ',' NAME'''
+            flags = []
+            if p[7] == 'i' or p[7] == 'I': 
+                  p[0] = ('assign',p[1],('re_subi',('var_value',p[1][1]),p[3],p[5]))
+            else:
+                  raise ParseError                  
                     
       def p_expr_test(self,p):
             ''' expr : test '''
@@ -264,6 +275,10 @@ class transform_parser:
       def p_expr_div(self,p):
             ''' expr : expr '/' expr '''
             p[0] = ('div',p[1],p[3])
+            
+      def p_expr_exp(self,p):
+            ''' expr : expr EXP expr '''
+            p[0] = ('exp',p[1],p[3])
             
       def p_expr_neg(self,p):
             ''' expr : '-' expr %prec UMINUS'''
@@ -384,7 +399,7 @@ class transform_parser:
 class transform:
       def __init__(self, ast):
             self.ast = ast
-            self.node_types = ['add','and','div','edit','eq','filter','ge','gt','le','like','list','lt','map','mul','neg','not','or','replace','re_sub','script','sub','test','value','var','var_value','pop','assign']
+            self.node_types = ['add','and','div','edit','eq','filter','ge','gt','le','like','list','lt','map','mul','exp','neg','not','or','replace','re_sub','re_subi','script','sub','test','value','var','var_value','pop','assign']
             self.evals = {}
             for x in self.node_types:
                   self.evals[x] = getattr(self,'eval_'+x)
@@ -436,12 +451,18 @@ class transform:
 
       def eval_sub(self, n, d):
             return self.e(n[1], d) - self.e(n[2], d)
+      
+      def eval_exp(self, n, d):
+            return self.e(n[1], d) ** self.e(n[2], d)
 
       def eval_value(self, n, d):
             return n[1]
       
       def eval_re_sub(self, n, d):
             return re.sub(n[2], n[3], self.e(n[1], d))
+            
+      def eval_re_subi(self, n, d):
+            return re.sub(n[2], n[3], self.e(n[1], d),flags=re.I)
       
       def eval_ternary(self, n, d):
             return self.e(n[2], d) if self.e(n[1], d) else self.e(n[3], d)
