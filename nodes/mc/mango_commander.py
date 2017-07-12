@@ -34,7 +34,6 @@ class mc(m_node):
                                          "launch":self.launch,
                                          "types":self.list_types,
                                          "delnode":self.delnode,
-                                         "ports":self.port_list,
                                          "delroute":self.delroute,
                                          #"remote":self.remote_connect,
                                          #"delremote":self.remote_disconnect,
@@ -50,7 +49,7 @@ class mc(m_node):
         self.dataflow = mc_router_dataflow(self.local_gateway,self.serialiser,self.mc_recv)
         self.dataflows[s] = self.dataflow
         self.poller.register(s,zmq.POLLIN)
-        self.routes = {}
+        self.routes_to_node_ids = {}
         self.nodes = {"mc":Node("mc",0,mc_loopback_dataflow(self.interface,self.mc_dispatch,self.dataflow),bytes("mc","ASCII"),mc_if(self.interface.interface))}
 
         #self.ports["stdio"] = self.dataflows[s]
@@ -114,15 +113,14 @@ class mc(m_node):
         node = self.nodes[node_name]
         print("REAPING",node.node_id)
         for n in self.nodes:
-            for p in self.nodes[n].ports:
-                self.nodes[n].ports[p].del_route_to(node_name)
+                self.nodes[n].del_route_to(node_name)
                 
         if not node.hb_stopper is None:
             node.hb_stopper.set()
         del self.nodes[node_name]
-        for r in self.routes:
-            if self.routes[r] == node_name:
-                del self.routes[r]
+        for r in self.routes_to_node_ids:
+            if self.routes_to_node_ids[r] == node_name:
+                del self.routes_to_node_ids[r]
     
     def collect_nodes(self):
         manifest_dir = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../')
@@ -189,12 +187,12 @@ class mc(m_node):
         print("MC got",h,c,raw,route)
         src_port = h['src_port']
         print(str(route),h,c)
-        if not route in self.routes:
+        if not route in self.routes_to_node_ids:
             # If we don't have a Node for this already, we expect the
             # first message to be "hello".  Otherwise we ignore it.
             # If it is, make a Node object for it and send it the
 
-            if h['name'] == 'hello' and h['src_port'] == 'mc' and 'id' in c:
+            if h['name'] == 'hello':
                 # Make the ID for the node object
                 new_id = self.gen_id(c['id'])
                 print("New node: " + c['id'] + " id = " + new_id)
@@ -202,9 +200,8 @@ class mc(m_node):
                 h['src_node'] = new_id
                 # Make the Node object
                 iface = mc_if(c.get("if",{}))
-                ports = c.get("ports",[])
                 flags = c.get("flags", {})
-                n = Node(new_id,self.gen_key(), self.dataflow, route, iface, master=self.nodes["mc"].ports["stdio"], ports=ports, flags=flags)
+                n = Node(new_id,self.gen_key(), self.dataflow, route, iface, ports=ports, flags=flags)
 
                 # Start heartbeating thread
                 n.hb_stopper = threading.Event()
@@ -217,22 +214,16 @@ class mc(m_node):
                 
                 # Add the Node object to our registery
                 self.nodes[n.node_id] = n
-                self.routes[route] = n
+                self.routes_to_node_ids[route] = n
                 print("passing along init msg finally",h,c,raw,c['id'],src_port)
-                self.routes[route].ports[src_port].send(raw,h,c)
+                self.routes_to_node_ids[route].send(raw,h,c)
             else:
                 print("Non-hello init message: \n\n{}\n{}\n\nIgnoring".format(h,c))
         else:
-            src_node = self.routes[route].node_id
+            src_node = self.routes_to_node_ids[route].node_id
             h['src_node'] = src_node
-            if not src_port in self.routes[route].ports:
-                # If there is no matching Port object in the specified Node, fail
-                print("Invalid port: " + src_node+"/"+src_port)
-                return
-            # Now that we are guaranteed either way a matching Node/Port
-            # combo for the incoming message, send it!,
             print("passing along",h,c,raw,src_node,src_port)
-            self.routes[route].ports[src_port].send(raw,h,c)
+            self.routes_to_node_ids[route].send(raw,h,c)
         
     def gen_id(self,ID_req):
         if(not (ID_req in self.nodes.keys())):
@@ -288,12 +279,6 @@ class mc(m_node):
         f = int(args["flags"])
         self.nodes[nid].flags = f
         pass
-
-    def port_list(self,header,args):
-        if not args['node'] in self.nodes:
-            return "ports",{}
-        n = self.nodes[args['node']]
-        return "ports",{'ports':[p for p in n.ports]}
 
     def delroute(self,header,args):
         if not args['src_node'] in self.nodes:
