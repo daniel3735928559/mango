@@ -6,15 +6,12 @@ from transport import *
 from libmango import m_node
 
 class Route:
-    def __init__(self, start, transforms, end, source_code):
+    def __init__(self, start, transforms, end):
         self.source_code = source_code
-        self.start = nodelist[0]
-        self.end = nodelist[-1]
+        self.src = nodelist[0]
+        self.dst = nodelist[-1]
         self.transforms = transforms
 
-    def to_string(self):
-        print(self.source_code)
-        
     def apply(self,message,header,args):
         data = args
         env = {"raw":message,"name":header["name"]}
@@ -37,22 +34,18 @@ class Route:
         m,h,a = self.apply(message,header,args)
         if h is None and m is None: return
         if m is None:
-            print("ROUTE send",m,h,a,self.end.node_id)
+            print("ROUTE send",m,h,a,self.dst.node_id)
 
             # Special case so that mc can reply directly
             
-            if str(self.end.node_id) == "mc":
-                self.end.send(h,a,self.start.route)
+            if str(self.dst.node_id) == "mc":
+                self.dst.send(h,a,self.src.route)
             else:
-                self.end.send(h,a)
+                self.dst.send(h,a)
 
         else:
-            print("R SEND RAW",self.end,self.end.dataflow)
-            self.end.dataflow.send_raw(m,bytearray(self.endpoint.owner.node_id,'utf-8'))
+            print("R SEND RAW",self.dst,self.dst.dataflow)
+            self.dst.dataflow.send_raw(m,bytearray(self.dst.node_id,'utf-8'))
 
     def __repr__(self):
-        return str(self.source) + " > " + "".join([str(t)+" > " for t in self.transmogrifiers]) + str(self.endpoint)
-
-    # def reply(self,port,header,reply,raw,route=None):
-    #     print("MC REPLY",port,header,reply,raw,route)
-    #     self.source.owner.conn.send(a,port=self.source.name,dest=self.endpoint.get_id(),route=bytearray(self.source.owner.node_id,'utf-8'),source_node=header['source'],mid=header['mid'])
+        return "{} > {} > {}".format(self.src.node_id, str(self.transforms), self.dst.node_id)

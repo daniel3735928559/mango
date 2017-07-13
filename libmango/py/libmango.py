@@ -21,7 +21,6 @@ class m_node:
             'reply':self.reply,
             'heartbeat':self.heartbeat
         })
-        self.ports = []
         self.flags = {}
         self.server = os.getenv('MC_ADDR',None)
         print(self.server,os.environ)
@@ -35,26 +34,26 @@ class m_node:
     def ready(self):
         iface = self.interface.get_spec()
         self.debug_print("IF",iface)
-        self.m_send('hello',{'id':self.node_id,'if':iface,'ports':self.ports,'flags':self.flags},port="mc")
+        self.m_send('_mc_hello',{'id':self.node_id,'if':iface,'flags':self.flags})
             
     def dispatch(self,header,args):
         self.debug_print("DISPATCH",header,args)
         try:
            result = self.interface.get_function(header['name'])(header,args)
            if not result is None:
-               self.m_send("reply",result,port=header['port'])
+               self.m_send("reply",result)
         except Exception as exc:
            self.handle_error(header['src_node'],traceback.format_exc())
 
     def heartbeat(self,header,args):
-        self.m_send('alive',{},port="mc")
+        self.m_send('_mc_alive',{})
             
     def reply(self,header,args):
         print("REPLY",header,args)
 
     def handle_error(self,src,err):
         self.debug_print('OOPS',src,err)
-        self.m_send('error',{'source':src,'message':err},port="mc")
+        self.m_send('_mc_error',{'source':src,'message':err})
 
     def reg(self,header,args):
         if header['src_node'] != 'mc':
@@ -65,15 +64,14 @@ class m_node:
         self.debug_print(self.node_id)
         self.debug_print("registered as " + self.node_id)
 
-    def make_header(self,name,src_port='stdio'):
-        header = {'src_port':src_port,
-                  'name':name}
+    def make_header(self,name):
+        header = {'name':name}
         self.debug_print("H",header)
         return header
     
-    def m_send(self,name,msg,port='stdio',async=True):
+    def m_send(self,name,msg,async=True):
         self.debug_print('sending',msg)
-        header = self.make_header(name,port)
+        header = self.make_header(name)
         self.dataflow.send(header,msg)
         if not async and not callback is None:
             self.dataflow.recv()

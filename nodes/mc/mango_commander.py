@@ -1,5 +1,4 @@
 import io, re, socket, time, signal, os, sys, random, zmq, subprocess, shlex, json, traceback
-from route_parser import route_parser
 from mc_dataflows import *
 from mc_transport import *
 from mc_interface import *
@@ -17,7 +16,7 @@ class mc(m_node):
         super().__init__(debug=True)
         self.node_types = {}
         self.collect_nodes()
-        self.route_parser = route_parser()
+        self.transform_parser = transform_parser()
         
         # Now read xml file to get list of nodes and shell commands to spin them up.  
         # for child in etree.parse("nodes.xml").getroot():
@@ -49,7 +48,7 @@ class mc(m_node):
         self.dataflow = mc_router_dataflow(self.local_gateway,self.serialiser,self.mc_recv)
         self.dataflows[s] = self.dataflow
         self.poller.register(s,zmq.POLLIN)
-        self.routes_to_node_ids = {}
+        self.routes_to_nodes = {}
         self.nodes = {"mc":Node("mc",0,mc_loopback_dataflow(self.interface,self.mc_dispatch,self.dataflow),bytes("mc","ASCII"),mc_if(self.interface.interface))}
 
         #self.ports["stdio"] = self.dataflows[s]
@@ -91,7 +90,7 @@ class mc(m_node):
                 self.delete_node(n)
         else:
             print("HB",node_name)
-            header = self.make_header("heartbeat",src_port="mc")
+            header = self.make_header("heartbeat")
             self.nodes[node_name.decode()].last_heartbeat_time = time.time()
             self.dataflow.send(header,{},self.nodes[node_name.decode()].route)
 
@@ -118,9 +117,9 @@ class mc(m_node):
         if not node.hb_stopper is None:
             node.hb_stopper.set()
         del self.nodes[node_name]
-        for r in self.routes_to_node_ids:
-            if self.routes_to_node_ids[r] == node_name:
-                del self.routes_to_node_ids[r]
+        for r in self.routes_to_nodes:
+            if self.routes_to_nodes[r] == node_name:
+                del self.routes_to_nodes[r]
     
     def collect_nodes(self):
         manifest_dir = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../')
@@ -175,9 +174,8 @@ class mc(m_node):
         print("RES",result)
         if not result is None:
             name,resp_data = result
-            resp_header = self.make_header(name, src_port=header['port'])
+            resp_header = self.make_header(name)
             resp_header['src_node'] = 'mc'
-            resp_header['port'] = 'mc'
             self.dataflow.send(resp_header,resp_data,route)
         
     def remote_recv(self,h,c,raw,route,dataflow):
@@ -185,23 +183,25 @@ class mc(m_node):
     
     def mc_recv(self,h,c,raw,route,dataflow):
         print("MC got",h,c,raw,route)
-        src_port = h['src_port']
         print(str(route),h,c)
-        if not route in self.routes_to_node_ids:
+        if not route in self.routes_to_nodes:
             # If we don't have a Node for this already, we expect the
             # first message to be "hello".  Otherwise we ignore it.
             # If it is, make a Node object for it and send it the
 
-            if h['name'] == 'hello':
+            if h['name'] == '_mc_hello':
+                if not c['group'] in self.groups:
+                    print("Joining non-existent group",c['group'])
+                    return
                 # Make the ID for the node object
-                new_id = self.gen_id(c['id'])
+                new_id = self.gen_id(c['group'], c['id'])
                 print("New node: " + c['id'] + " id = " + new_id)
                 c['id'] = new_id
                 h['src_node'] = new_id
                 # Make the Node object
                 iface = mc_if(c.get("if",{}))
                 flags = c.get("flags", {})
-                n = Node(new_id,self.gen_key(), self.dataflow, route, iface, ports=ports, flags=flags)
+                n = Node(new_id,self.gen_key(), self.dataflow, route, iface, flags=flags)
 
                 # Start heartbeating thread
                 n.hb_stopper = threading.Event()
@@ -214,18 +214,18 @@ class mc(m_node):
                 
                 # Add the Node object to our registery
                 self.nodes[n.node_id] = n
-                self.routes_to_node_ids[route] = n
-                print("passing along init msg finally",h,c,raw,c['id'],src_port)
-                self.routes_to_node_ids[route].send(raw,h,c)
+                self.routes_to_nodes[route] = n
+                print("passing along init msg finally",h,c,raw,c['id'])
+                self.routes_to_nodes[route].send(raw,h,c)
             else:
                 print("Non-hello init message: \n\n{}\n{}\n\nIgnoring".format(h,c))
         else:
-            src_node = self.routes_to_node_ids[route].node_id
+            src_node = self.routes_to_nodes[route].node_id
             h['src_node'] = src_node
-            print("passing along",h,c,raw,src_node,src_port)
-            self.routes_to_node_ids[route].send(raw,h,c)
+            print("passing along",h,c,raw,src_node)
+            self.routes_to_nodes[route].send(raw,h,c)
         
-    def gen_id(self,ID_req):
+    def gen_id(self, group, ID_req):
         if(not (ID_req in self.nodes.keys())):
             return ID_req
         for i in range(0,255):
@@ -235,20 +235,6 @@ class mc(m_node):
         
     def gen_key(self):
         return random.randint(0,2**64-1)
-
-    def find_port(self,port_id):
-        if not "/" in port_id:
-            node = port_id
-            port = "stdio"
-        else:
-            s = port_id.split("/")
-            node = s[0]
-            port=  s[1]
-        if(not node in self.nodes):
-            return None
-        if not port in self.nodes[node].ports:
-            return None
-        return self.nodes[node].ports[port]
 
     # def node_add(self,header,args):
     #     # Generate ID based on requested name ID and a key, make a
@@ -285,107 +271,37 @@ class mc(m_node):
             print(1)
             return "error",{"message":"Source node not found"}
         sn = self.nodes[args['src_node']]
-        if not args['src_port'] in sn.ports:
-            print(2)
-            return "error",{"message":"Source port not found"}
-        sp = sn.ports[args['src_port']]
         if not args['dest_node'] in self.nodes:
             print(3)
             return "error",{"message":"Target node not found"}
         dn = self.nodes[args['dest_node']]
-        if not args['dest_port'] in dn.ports:
-            print(4)
-            return "error",{"message":"Target port not found"}
-        dp = dn.ports[args['dest_port']]
-        print("A",sn.ports,sp,dn.ports,dp,sp.routes)
-        if sp.del_route_to(dp):
+        if sn.del_route_to(dn):
             return "success",{}
         return "error",{"message":"Failed to delete route"}
     
     def route_list(self,header,args):
         everything = r".*"
         sn = args.get('src_node',everything)
-        sp = args.get('src_port',everything)
         dn = args.get('dest_node',everything)
-        dp = args.get('dest_port',everything)
         sns = [self.nodes[n] for n in self.nodes if re.match(sn,n)]
-        sps = []
-        for n in sns:
-            sps += [n.ports[p] for p in n.ports if re.match(sp,p)]
         rs = []
-        for p in sps:
-            rs += [p.routes[r] for r in p.routes if re.match(dn,p.routes[r].endpoint.owner.node_id) and re.match(dp,p.routes[r].endpoint.name)]
-        return "routes",{'routes':[r.to_string() for r in rs]}
+        for n in sns:
+            rs += [n.routes[r] for r in n.routes if re.match(dn,n.routes[r].end.node_id) and re.match(dn,n.routes[r].end.name)]
+        return "routes",{'routes':[str(r) for r in rs]}
 
     def route_add(self,header,args):
         print("BUILDING ROUTE",header,args)
-        rt = self.route_parser.parse(args['map'])
-        if(rt is None):
-            return "success",{}
-        chains = []
-        print("RT",rt)
-        for chain in rt:
-            start = 0
-            for i in range(len(chain)):
-                print('chaini',chain[i])
-                if(chain[i][0] == 'port'):
-                    n,p = chain[i][1]
-                    print('port',n,p)
-                    if(n in self.nodes):
-                        print("NNN",i,start,p,p in self.nodes[n].ports,self.nodes[n].ports)
-                        if not self.nodes[n].local:
-                            if not '.' in p:
-                                p = p+'.stdio'
-                                chain[i][1][1]+='.stdio'
-                            print("Making a remote port",p,"in",n)
-                            self.nodes[n].ports[p] = Port(p,self.nodes[n])
-                            if(i != start):
-                                chains += [[r[1] for r in chain[start:i+1]]]
-                                start = i
-                        elif p in self.nodes[n].ports:
-                            if i != start:
-                                chains += [[r[1] for r in chain[start:i+1]]]
-                                start = i
-                        else:
-                            return "error",{'message':'bad port: '+str(n)+'/'+str(p)}
-                    else:
-                        return "error",{'message':'bad node: '+str(n)}
-        print("chains",chains)
-        # Now check that all routes are valid
-        for c in chains:
-            print("C",c)
-            sn,sp = c[0]
-            dn,dp = c[-1]
-            print("src:",sn,sp,"dest:",dn,dp)
-            new_route = Route(self.nodes[sn].ports[sp],self.nodes[dn].ports[dp])
-            for t in c[1:-1]:
-                new_route.transmogrifiers += [t]
-            self.nodes[sn].ports[sp].add_route(new_route)
+        for r in self.transform_parser.parse(args['rt']):
+            src = self.nodes[r[0][1]]
+            dest = self.nodes[r[-1][1]]
+            new_route = Route(src, dest, r[1:-1])
+        self.nodes[sn].add_route(new_route)
         return "success",{}
             
     def rt_del(self,header,args):
-        sn,sp = self.find_port(args['src'].decode())
+        sn = self.find_node(args['src'].decode())
         res = sp.del_route(args['dest'].decode())
         return {'result':'success' if res else 'fail'}
-
-    def port_add(self,header,args):
-        node,sp = self.parse_port(header['source'])
-        port = args['name']
-        print("PORT ADD: ",node, "PORT", port)
-        if(not node in self.nodes):
-            return "error",{'message':'no such node'}
-        if(port in self.nodes[node].ports):
-            return "error",{'message':'port exists'}
-        self.nodes[node].ports[port] = Port(port,self.nodes[node])
-        return "success",{}
-
-    def port_del(self,header,args):
-        s = self.find_port(args['port'].decode())
-        if s == None:
-            return "error",{'message':'port not found'}
-        node,port = s
-        del self.nodes[node].ports[port]
-        return "success",{}
 
     def launch(self,header,args):
         n = args['node']
