@@ -6,7 +6,7 @@ from transport import *
 from libmango import m_node
 
 class Node: 
-    def __init__(self,node_id,key,dataflow,route,iface,flags={},local=True):
+    def __init__(self,node_id,key,dataflow,route,iface,group,flags={},local=True):
         # self.dataflow is the socket (or whatever) that you can use
         # to talk to this node.  It will usually be set by mc to
         # self.connections[0], and to send on it you can just use
@@ -20,13 +20,13 @@ class Node:
         self.last_alive_time = time.time()
         self.local = local
         self.route = route
+        self.group = group
         self.hb_thread = None
         self.hb_stopper = None
         self.routes = {}
                 
     def add_route(self,r):
         self.routes[r.endpoint] = r
-        print("ROUTE ADD",str(r))
         return True
 
     def del_route(self,r):
@@ -50,7 +50,7 @@ class Node:
             print("SENDING ON",str(r))
             self.routes[r].send(message,header,args)
 
-    def send(self, header, args, route=None):
+    def handle(self, header, args, route=None):
         if route is None:
             route = self.route
         try:

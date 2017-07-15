@@ -16,6 +16,7 @@ class m_node:
         self.interface = m_if(default_handler=self.reply)
         self.dataflows = {}
         self.node_id = os.getenv('MANGO_ID')
+        self.group_id = os.getenv('MANGO_GROUP','root')
         self.interface.add_interface(os.path.join(os.getenv('PYTHONPATH'),'../node.yaml'),{
             'reg':self.reg,
             'reply':self.reply,
@@ -34,7 +35,7 @@ class m_node:
     def ready(self):
         iface = self.interface.get_spec()
         self.debug_print("IF",iface)
-        self.m_send('_mc_hello',{'id':self.node_id,'if':iface,'flags':self.flags})
+        self.m_send('_mc_hello',{'id':self.node_id,'if':iface,'flags':self.flags,'group':self.group_id})
             
     def dispatch(self,header,args):
         self.debug_print("DISPATCH",header,args)
@@ -69,12 +70,15 @@ class m_node:
         self.debug_print("H",header)
         return header
     
-    def m_send(self,name,msg,async=True):
+    def mc_send(self,name,msg):
+        self.debug_print('sending',msg)
+        header = self.make_header("_mc_"+name)
+        self.dataflow.send(header,msg)
+    
+    def m_send(self,name,msg):
         self.debug_print('sending',msg)
         header = self.make_header(name)
         self.dataflow.send(header,msg)
-        if not async and not callback is None:
-            self.dataflow.recv()
 
     def debug_print(self,*args):
         if self.debug: print("[{} DEBUG] ".format(self.node_id),*args)

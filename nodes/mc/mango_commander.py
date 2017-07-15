@@ -7,7 +7,9 @@ from dataflow import m_dataflow
 from transport import *
 from libmango import m_node
 from lxml import etree
-from obj import *
+from node import *
+from route import *
+from transform_parser import *
 import pijemont.doc
 
 class mc(m_node):
@@ -38,7 +40,6 @@ class mc(m_node):
                                          #"delremote":self.remote_disconnect,
                                          "routes":self.route_list
                                      })
-        print(self.interface.interface['mc']);
         self.uuid = str(self.gen_key())
 
         self.mc_addr = "tcp://*:"+sys.argv[1]
@@ -49,13 +50,13 @@ class mc(m_node):
         self.dataflows[s] = self.dataflow
         self.poller.register(s,zmq.POLLIN)
         self.routes_to_nodes = {}
-        self.nodes = {"mc":Node("mc",0,mc_loopback_dataflow(self.interface,self.mc_dispatch,self.dataflow),bytes("mc","ASCII"),mc_if(self.interface.interface))}
-
+        self.nodes = {"mc":Node("mc",0,mc_loopback_dataflow(self.interface,self.mc_dispatch,self.dataflow),bytes("mc","ASCII"),mc_if(self.interface.interface),"root"),}
+        self.groups = {"root":{"mc":self.nodes["mc"]}}
         #self.ports["stdio"] = self.dataflows[s]
 
         # Remote listening stuff: 
         if len(sys.argv) > 2:
-            print("Adding remote port: ",sys.argv[2])
+            self.debug_print("Adding remote port: ",sys.argv[2])
             self.mc_remote_addr = "tcp://*:"+sys.argv[2]
             self.remote_gateway = m_ZMQ_transport(self.mc_remote_addr,self.context,self.poller,True)
             f = self.remote_gateway.socket
@@ -80,7 +81,7 @@ class mc(m_node):
 
     def do_heartbeat(self,node_name):
         if node_name == b"mc":
-            print("REAP")
+            self.debug_print("REAP",node_name)
             to_reap = []
             now = time.time()
             for n in self.nodes:
@@ -89,7 +90,7 @@ class mc(m_node):
             for n in to_reap:
                 self.delete_node(n)
         else:
-            print("HB",node_name)
+            self.debug_print("HB",node_name)
             header = self.make_header("heartbeat")
             self.nodes[node_name.decode()].last_heartbeat_time = time.time()
             self.dataflow.send(header,{},self.nodes[node_name.decode()].route)
@@ -97,7 +98,7 @@ class mc(m_node):
     def alive(self,header,args):
         if header['src_node'] in self.nodes:
             self.nodes[header['src_node']].last_alive_time = time.time()
-        print("ALIVE",header,args)
+        self.debug_print("ALIVE",header,args)
 
 
     def delnode(self, header, args):
@@ -110,7 +111,7 @@ class mc(m_node):
         
     def delete_node(self, node_name):
         node = self.nodes[node_name]
-        print("REAPING",node.node_id)
+        self.debug_print("DELETING",node.node_id)
         for n in self.nodes:
                 self.nodes[n].del_route_to(node_name)
                 
@@ -162,16 +163,15 @@ class mc(m_node):
         return "doc",{"doc":pijemont.doc.doc_gen(to_doc)}
         
     def hello(self,header,args):
-        print("HELLO",header,args)
         return "reg",{'id':args['id']}
         
     def mc_error(self,header,args):
-        print("ERR",header,args)
+        self.deubg_print("ERR",header,args)
 
     def mc_dispatch(self,header,args,route):
-        print("MC DISPATCH",header,args)
+        self.debug_print("MC DISPATCH",header,args)
         result = self.interface.get_function(header['name'])(header,args)
-        print("RES",result)
+        self.debug_print("RES",result)
         if not result is None:
             name,resp_data = result
             resp_header = self.make_header(name)
@@ -182,8 +182,7 @@ class mc(m_node):
         pass
     
     def mc_recv(self,h,c,raw,route,dataflow):
-        print("MC got",h,c,raw,route)
-        print(str(route),h,c)
+        self.debug_print("MC got",h,c,raw,route)
         if not route in self.routes_to_nodes:
             # If we don't have a Node for this already, we expect the
             # first message to be "hello".  Otherwise we ignore it.
@@ -191,7 +190,7 @@ class mc(m_node):
 
             if h['name'] == '_mc_hello':
                 if not c['group'] in self.groups:
-                    print("Joining non-existent group",c['group'])
+                    self.debug_print("Joining non-existent group",c['group'])
                     return
                 # Make the ID for the node object
                 new_id = self.gen_id(c['group'], c['id'])
@@ -201,7 +200,7 @@ class mc(m_node):
                 # Make the Node object
                 iface = mc_if(c.get("if",{}))
                 flags = c.get("flags", {})
-                n = Node(new_id,self.gen_key(), self.dataflow, route, iface, flags=flags)
+                n = Node(new_id, self.gen_key(), self.dataflow, route, iface, group=c['group'], flags=flags)
 
                 # Start heartbeating thread
                 n.hb_stopper = threading.Event()
@@ -215,15 +214,17 @@ class mc(m_node):
                 # Add the Node object to our registery
                 self.nodes[n.node_id] = n
                 self.routes_to_nodes[route] = n
-                print("passing along init msg finally",h,c,raw,c['id'])
-                self.routes_to_nodes[route].send(raw,h,c)
             else:
                 print("Non-hello init message: \n\n{}\n{}\n\nIgnoring".format(h,c))
+        if h['name'][:4] == '_mc_':
+            h['name'] = h['name'][4:]
+            h['src_node'] = self.routes_to_nodes[route].node_id
+            self.nodes["mc"].handle(h, c, route)
         else:
             src_node = self.routes_to_nodes[route].node_id
             h['src_node'] = src_node
             print("passing along",h,c,raw,src_node)
-            self.routes_to_nodes[route].send(raw,h,c)
+            self.routes_to_nodes[route].emit(raw,h,c)
         
     def gen_id(self, group, ID_req):
         if(not (ID_req in self.nodes.keys())):

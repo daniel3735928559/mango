@@ -17,10 +17,6 @@ inputs:
     if:
       type: any
       description: The program's interface
-    ports:
-      type: list
-      values:
-        type: string
 
   alive:
 
@@ -70,10 +66,6 @@ inputs:
     dest_port:
       type: string
       optional: true
-
-  ports:
-    node:
-      type: string
 
   delroute:
     src_node:

@@ -3,7 +3,6 @@ from dataflow import m_dataflow
 from libmango import m_node
 from serialiser import *
 from transport import *
-from obj import *
 
 class mc_loopback_dataflow(m_dataflow):
     def __init__(self,interface,dispatch_cb,reply_df):
