@@ -35,26 +35,25 @@ class m_node:
     def ready(self):
         iface = self.interface.get_spec()
         self.debug_print("IF",iface)
-        self.m_send('_mc_hello',{'id':self.node_id,'if':iface,'flags':self.flags,'group':self.group_id})
             
     def dispatch(self,header,args):
         self.debug_print("DISPATCH",header,args)
         try:
            result = self.interface.get_function(header['name'])(header,args)
            if not result is None:
-               self.m_send("reply",result)
+               self.m_send(result[0],result[1])
         except Exception as exc:
            self.handle_error(header['src_node'],traceback.format_exc())
 
     def heartbeat(self,header,args):
-        self.m_send('_mc_alive',{})
+        self.mc_send('alive',{})
             
     def reply(self,header,args):
         print("REPLY",header,args)
 
     def handle_error(self,src,err):
         self.debug_print('OOPS',src,err)
-        self.m_send('_mc_error',{'source':src,'message':err})
+        self.mc_send('error',{'source':src,'message':err})
 
     def reg(self,header,args):
         if header['src_node'] != 'mc':
@@ -65,19 +64,17 @@ class m_node:
         self.debug_print(self.node_id)
         self.debug_print("registered as " + self.node_id)
 
-    def make_header(self,name):
+    def make_header(self,name,msg_type=None):
         header = {'name':name}
+        if msg_type: header['type'] = msg_type
         self.debug_print("H",header)
         return header
-    
-    def mc_send(self,name,msg):
-        self.debug_print('sending',msg)
-        header = self.make_header("_mc_"+name)
-        self.dataflow.send(header,msg)
-    
+
+    def mc_send(self,msg_type,name,msg):
+        self.dataflow.send(self.make_header(name,'system'),msg)
+        
     def m_send(self,name,msg):
         self.debug_print('sending',msg)
-        header = self.make_header(name)
         self.dataflow.send(header,msg)
 
     def debug_print(self,*args):

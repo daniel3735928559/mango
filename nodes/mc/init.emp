@@ -1,0 +1,8 @@
+[config]
+group = system
+
+[nodes]
+mx shell
+
+[routes]
+mx <> mc

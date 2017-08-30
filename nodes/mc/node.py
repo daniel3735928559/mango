@@ -5,58 +5,47 @@ from dataflow import m_dataflow
 from transport import *
 from libmango import m_node
 
+STARTING = 0
+RUNNING = 1
+REAP = 2
+
 class Node: 
-    def __init__(self,node_id,key,dataflow,route,iface,group,flags={},local=True):
+    def __init__(self,node_id, group, key, dataflow, route, iface):
         # self.dataflow is the socket (or whatever) that you can use
         # to talk to this node.  It will usually be set by mc to
         # self.connections[0], and to send on it you can just use
         # route=bytearray(self.node_id,'utf-8')
         self.dataflow = dataflow
+        self.group = group
         self.key = key
         self.node_id = node_id
-        self.flags = flags
         self.interface = iface
-        self.last_heartbeat_time = time.time()
-        self.last_alive_time = time.time()
-        self.local = local
         self.route = route
-        self.group = group
+        self.status = STARTING
         self.hb_thread = None
         self.hb_stopper = None
+        self.last_heartbeat_time = time.time()
+        self.last_alive_time = self.last_heartbeat_time
         self.routes = {}
                 
-    def add_route(self,r):
-        self.routes[r.endpoint] = r
-        return True
+    # A message was transmitted by this node.  Pass the message
+    # through the transmogrifiers for each route and send the results
+    # to their corresponding endpoints
+    
+    # def emit(self,message,header,args):
+    #     print("Node emitting",str(self))
+    #     for r in self.routes:
+    #         print("SENDING ON",str(r))
+    #         self.routes[r].send(message,header,args)
 
-    def del_route(self,r):
-        if(r.endpoint in self.routes): 
-            del self.routes[r.endpoint]
-            return True
-        return False
-
-    def del_route_to(self,p):
-        if(p in self.routes): 
-            del self.routes[p]
-            return True
-        return False
-
-    # pass the message through the transmogrifiers for each route and
-    # return a list of target nodes/ports and corresponding
-    # transmogrified messages
-    def emit(self,message,header,args):
-        print("Node emitting",str(self))
-        for r in self.routes:
-            print("SENDING ON",str(r))
-            self.routes[r].send(message,header,args)
-
+    # a message came in for this node.  Validate it and then pass it
+    # on to the node through the dataflow
+            
     def handle(self, header, args, route=None):
         if route is None:
             route = self.route
         try:
-            print("HH",header,self.interface.interface,type(self.interface.interface))
-            if self.flags.get("strict",True): args = self.interface.validate(header['name'],args)
-            print("Sending",self.node_id,route,header,args)
+            args = self.interface.validate(header['name'],args)
             self.dataflow.send(header,args,route)
         except Exception as exc:
             print('OOPS',exc)
