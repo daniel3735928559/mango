@@ -97,13 +97,6 @@ class mx_agent(m_node):
                   self.output.write("Fail")
             self.output.flush()
             
-
-      def load_if(self,if_name):
-            if if_name == "mc":
-                  self.m_send({"command":"get_if","if":if_name}, callback="setup_if", port="mc")
-            else:
-                  self.m_send({"command":"get_if","if":if_name}, callback="setup_if")
-            
             # def c_1(h,a,t):
             #       return ({"command":"get_if","if":if_name},"mc","mc"),()
             # def c_2(h,a,t):
@@ -168,7 +161,7 @@ class mx_agent(m_node):
       def handler(self,msg):
             self.fc.send("ack")
             #print(self.outstanding)
-            #print(msg)
+            print("MSG",msg)
             args = json.loads(msg.decode())
             #print(args)
             cmd = args["mx_cmd"]
@@ -176,11 +169,6 @@ class mx_agent(m_node):
             if(cmd == 'send'):
                   rcb = self.reply_cb
                   ha = {}
-                  if 'p' in args:
-                        port = args['p']
-                        del args['p']
-                  else:
-                        port = "stdio"
                   if "r" in args:
                         new_cb = self.parse_callback(args["r"])
                         if(not new_cb is None):
@@ -192,18 +180,17 @@ class mx_agent(m_node):
                               args[a] = json.loads(args[a])
                         except:
                               pass
-                  self.m_send(c,args,port=port)
+                  self.m_send(c,args)
             if(cmd == 'mc'):
                   rcb = self.reply_cb
                   ha = {}
-                  port = "mc"
                   if "r" in args:
                         new_cb = self.parse_callback(args["r"])
                         if(not new_cb is None):
                               ha,rcb = new_cb
                         del args["r"]
                   c = args.pop('command')
-                  self.m_send(c,args,port=port)
+                  self.m_send(c,args)
             elif cmd == 'handle':
                   try:
                         ha,rcb = {},self.reply_cb

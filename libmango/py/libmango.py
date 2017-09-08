@@ -15,18 +15,19 @@ class m_node:
         self.serialiser = m_serialiser(self.version)
         self.interface = m_if(default_handler=self.reply)
         self.dataflows = {}
+        self.route = os.getenv('MANGO_ROUTE')
         self.node_id = os.getenv('MANGO_ID')
         self.group_id = os.getenv('MANGO_GROUP','root')
         self.interface.add_interface(os.path.join(os.getenv('PYTHONPATH'),'../node.yaml'),{
-            'reg':self.reg,
-            'reply':self.reply,
+#            'reg':self.reg,
+#            'reply':self.reply,
             'heartbeat':self.heartbeat
         })
         self.flags = {}
         self.server = os.getenv('MC_ADDR',None)
         print(self.server,os.environ)
         if not self.server is None:
-            self.local_gateway = m_ZMQ_transport(self.server,self.context,self.poller)
+            self.local_gateway = m_ZMQ_transport(self.server,self.context,self.poller,self.route)
             s = self.local_gateway.socket
             self.dataflow = m_dataflow(self.interface,self.local_gateway,self.serialiser,self.dispatch,self.handle_error)
             self.dataflows[s] = self.dataflow
@@ -55,14 +56,14 @@ class m_node:
         self.debug_print('OOPS',src,err)
         self.mc_send('error',{'source':src,'message':err})
 
-    def reg(self,header,args):
-        if header['src_node'] != 'mc':
-            print('only accepts reg from mc',header,args)
-            return
-        self.node_id = args["id"]
-        self.debug_print('my new node id')
-        self.debug_print(self.node_id)
-        self.debug_print("registered as " + self.node_id)
+    # def reg(self,header,args):
+    #     if header['src_node'] != 'mc':
+    #         print('only accepts reg from mc',header,args)
+    #         return
+    #     self.node_id = args["id"]
+    #     self.debug_print('my new node id')
+    #     self.debug_print(self.node_id)
+    #     self.debug_print("registered as " + self.node_id)
 
     def make_header(self,name,msg_type=None):
         header = {'name':name}
@@ -70,12 +71,12 @@ class m_node:
         self.debug_print("H",header)
         return header
 
-    def mc_send(self,msg_type,name,msg):
+    def mc_send(self,name,msg):
         self.dataflow.send(self.make_header(name,'system'),msg)
         
     def m_send(self,name,msg):
         self.debug_print('sending',msg)
-        self.dataflow.send(header,msg)
+        self.dataflow.send(self.make_header(name),msg)
 
     def debug_print(self,*args):
         if self.debug: print("[{} DEBUG] ".format(self.node_id),*args)

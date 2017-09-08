@@ -6,10 +6,11 @@ from transport import *
 from libmango import m_node
 
 class Route:
-    def __init__(self, start, transforms, end):
+    def __init__(self, start, transforms, end, group, source_code):
         self.source_code = source_code
-        self.src = nodelist[0]
-        self.dst = nodelist[-1]
+        self.src = start
+        self.dst = end
+        self.group = group
         self.transforms = transforms
 
     def apply(self,message,header,args):
@@ -39,9 +40,9 @@ class Route:
             # Special case so that mc can reply directly
             
             if str(self.dst.node_id) == "mc":
-                self.dst.send(h,a,self.src.route)
+                self.dst.handle(h,a,self.src.route)
             else:
-                self.dst.send(h,a)
+                self.dst.handle(h,a)
 
         else:
             print("R SEND RAW",self.dst,self.dst.dataflow)

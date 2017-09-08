@@ -5,17 +5,16 @@ from serialiser import *
 from transport import *
 
 class mc_loopback_dataflow(m_dataflow):
-    def __init__(self,interface,dispatch_cb,reply_df):
+    def __init__(self,interface,serialiser,dispatch_cb,reply_cb):
         self.interface = interface
+        self.serialiser = serialiser
         self.dispatch_cb = dispatch_cb
-        self.reply_df = reply_df
+        self.reply_cb = reply_cb
 
     def send(self,header,msg,route):
         print("SS",header,msg)
         self.interface.validate(header['name'],msg)
-        result = self.dispatch_cb(header,msg,route)
-        print(result)
-        #self.reply_df.send(header,result,route)
+        self.dispatch_cb(header,msg,route)
         
     def send_raw(msg,route):
         pass#self.owner.ports["stdio"].send_raw(msg)
@@ -30,7 +29,7 @@ class mc_router_dataflow():
         route = self.transport.rx()
         data = self.transport.rx()
         header,args = self.serialiser.deserialise(data)
-        self.dispatch_cb(header,args,data,route,self)
+        self.dispatch_cb(header,args,data,route)
 
     def send(self,header,msg,route):
         print(type(route),route)
@@ -79,8 +78,8 @@ class mc_heartbeat_dataflow:
     
     def recv(self):
         route = self.transport.rx()
-        node_name = self.transport.rx()
-        self.dispatch_cb(node_name)
+        node = self.transport.rx()
+        self.dispatch_cb(node)
 
     def send(self,header,msg,route):
         pass

@@ -1,0 +1,3 @@
+mu: 
+  run: python mu.py
+  lang: py

@@ -1,0 +1,4 @@
+mx:
+  run: mx_start
+  lang: py
+  if: mx.yaml

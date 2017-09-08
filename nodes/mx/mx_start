@@ -1,7 +1,9 @@
-export MC_ADDR='tcp://localhost:'"$1"
+#!/bin/bash
+#export MC_ADDR='tcp://localhost:'"$1"
 export PYTHONPATH="$(realpath $( dirname "${BASH_SOURCE[0]}" )'/../../libmango/py' )"
 echo $PYTHONPATH
-export MANGO_ID=$2
+echo "MID" $MANGO_ID
+#export MANGO_ID=$2
 python mx_agent.py &
 export MX_PID=$!
 echo $MX_PID

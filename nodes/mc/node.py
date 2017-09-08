@@ -10,11 +10,12 @@ RUNNING = 1
 REAP = 2
 
 class Node: 
-    def __init__(self,node_id, group, key, dataflow, route, iface):
+    def __init__(self, node_id, group, node_type, key, dataflow, route, iface):
         # self.dataflow is the socket (or whatever) that you can use
         # to talk to this node.  It will usually be set by mc to
         # self.connections[0], and to send on it you can just use
         # route=bytearray(self.node_id,'utf-8')
+        self.node_type = node_type
         self.dataflow = dataflow
         self.group = group
         self.key = key

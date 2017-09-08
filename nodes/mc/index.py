@@ -10,6 +10,7 @@ class multiindex:
             """ indices = {group_name: {index1_name: [index1 property, subindex1 property, ...], index2_name: [index2 property, ...], ...}}"""
             self.indices = indices
             self.multiindex = {x:{n:{} for n in self.indices[x]} for x in self.indices}
+            self.flat = set()
             
       # internal methods
       
@@ -28,22 +29,41 @@ class multiindex:
       # external methods
 
       def exists(self, group_name, obj):
-            try:
-                  return len(self.idx_find(group_name, list(self.indices[group_name].keys())[0], obj)) > 0
-            except Exception as e:
-                  return False
+            return obj in self.flat
             
       def remove(self, group_name, obj):
-            for index_name in self.indices[group_name]:
-                  index = self.idx_find(group_name, index_name, obj)
-                  del index[obj]
-
+            if obj in self.flat:
+                  self.flat.remove(obj)
+                  for index_name in self.indices[group_name]:
+                        index = self.idx_find(group_name, index_name, obj)
+                        del index[obj]
+                        return True
+            return False
+      
       def add(self, group_name, obj):
+            if obj in self.flat:
+                  return False
+            self.flat.add(obj)
             for index_name in self.indices[group_name]:
                   self.idx_add(group_name, index_name, obj)
 
-      def query(self, group_name, index_name, prop_vals):
+      def search(self, group_name, props):
+            ans = []
+            full = self.query(group_name)
+            for obj in full:
+                  ok = True
+                  for p in props:
+                        if getattr(obj,p) != props[p]:
+                              ok = False
+                              break
+                  if ok:
+                        ans.append(obj)
+            return ans
+                  
+      def query(self, group_name, index_name=None, prop_vals=[]):
             """ return a list of all objects in the subtree given by prop_vals """
+            if index_name is None:
+                  index_name = list(self.indices[group_name].keys())[0]
             index = self.multiindex[group_name][index_name]
             for p in prop_vals:
                   index = index.get(p,{})
@@ -53,9 +73,7 @@ class multiindex:
                   for x in ans: new_ans += list(x.values())
                   ans = new_ans
             return ans
-            
 
-      
 if __name__ == "__main__":
       print("hi")
       class testobj:
@@ -79,7 +97,7 @@ if __name__ == "__main__":
       print(m.query("all","by_prop1_2",["ert"]))
       m.remove("all", t2)
       print(m.exists("all",t2))
-      print(m.exists("all",{}))
+      print(m.exists("all","qwe.asd"))
       print(m.query("all","by_prop1_2",["qwe","asd"]))
       print(m.query("all","by_prop2",["sdf"]))
       print(m.query("all","by_prop1_2",["ert"]))

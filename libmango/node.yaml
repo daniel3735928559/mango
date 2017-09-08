@@ -1,25 +1,7 @@
 name: node
 
 inputs:
-  reg:
-    id:
-      type: string
-
-  reply:
-
   heartbeat:
 
 outputs:
   alive:
-
-  hello:
-    id:
-      type: string
-      description: The requested ID
-    if:
-      type: any
-      description: The program's interface
-    ports:
-      type: list
-      values:
-        type: string
