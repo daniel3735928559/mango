@@ -3,8 +3,8 @@ export PS1="(mx) $PS1";
 export MX_PID={pid};
 export MX_PORT={port};
 export PATH="$PATH:$(pwd)";
-alias mc="$(pwd)/mx mc"
-alias mx="mx send"
+alias mx="$(pwd)/mx send"
+alias mr="$(pwd)/mx raw"
 function load_if {{ mx load_if $1; source .run/{pid}; }}
 function cleanup {{ echo "Goodbye"; kill {pid}; rm .run/{pid}_out .run/{pid}; exit; }}
 trap cleanup EXIT

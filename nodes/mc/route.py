@@ -10,6 +10,8 @@ class Route:
         self.source_code = source_code
         self.src = start
         self.dst = end
+        self.src_name = str(start)
+        self.dst_name = str(end)
         self.group = group
         self.transforms = transforms
 
@@ -18,14 +20,14 @@ class Route:
         env = {"raw":message,"name":header["name"]}
         
         for t in self.transforms:
-            if t[0] == 'filter':
-                if t[1].evaluate(env, data): continue
+            if t.kind == 'filter':
+                if t.evaluate(env, data): continue
                 else: return None,None,None
             else:
-                  new_header = t[1].evaluate(env, data)
-                  env = t[1].env
-                  if env['raw'] != message:
-                      return env['raw'],None,None
+                data = t.evaluate(env, data)
+                env = t.env
+                if env['raw'] != message:
+                    return env['raw'],None,None
         new_message = message
         new_header = {"name":env.get('name','')}
         new_args = data

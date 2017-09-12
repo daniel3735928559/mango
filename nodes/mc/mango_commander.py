@@ -52,11 +52,11 @@ class mc(m_node):
         self.poller.register(s,zmq.POLLIN)
         self.index = multiindex({
             "routes":{
-                "src":["src","dst"],
-                "dst":["dst","src"],
+                "src":["src_name","dst_name"],
+                "dst":["dst_name","src_name"],
                 "group":["group"],
-                "group_src":["group","src"],
-                "group_dst":["group","dst"]
+                "group_src":["group","src_name","dst_name"],
+                "group_dst":["group","dst_name","src_name"]
             },
             "nodes":{
                 "type":["node_type"],
@@ -87,14 +87,14 @@ class mc(m_node):
 
         # Heartbeat listening stuff:
         self.mc_hb_addr = "inproc://hb"
-        self.hb_time = 10
+        self.hb_time = 100
         self.hb_gateway = m_ZMQ_transport(self.mc_hb_addr,self.context,self.poller,None,True)
         h = self.hb_gateway.socket
         self.dataflows[h] = mc_heartbeat_dataflow(self.hb_gateway,self.do_heartbeat)
         self.poller.register(h,zmq.POLLIN)
 
         # Start reaper thread
-        self.reap_time = 15
+        self.reap_time = 150
         self.reaper_thread = threading.Thread(target=mc_heartbeat_worker, daemon=True, args=("mc",self.mc_hb_addr,self.reap_time,threading.Event(),self.context))
         self.reaper_thread.start()
         self.too_old = 200
@@ -127,7 +127,7 @@ class mc(m_node):
         self.deubg_print("ERR",header,args)
 
     def mc_dispatch(self,header,args,route):
-        self.debug_print("MC DISPATCH",header,args)
+        self.debug_print("MC DISPATCH",header,args, route)
         src_node = self.index.query("nodes","route",[route])[0]
         header['src_node'] = src_node
         result = self.interface.get_function(header['name'])(header,args)
@@ -137,7 +137,7 @@ class mc(m_node):
             resp_header = self.make_header(name)
             resp_header['src_node'] = 'mc'
             data = self.serialiser.serialise(resp_header,resp_data)
-            self.mc_recv(resp_header, resp_data, data, self.route)
+            self.mc_recv(resp_header, resp_data, data, bytes(self.route,'ascii'))
             #self.dataflow.send(resp_header,resp_data,route)
         
     def remote_recv(self,h,c,raw,route,dataflow):
@@ -147,16 +147,19 @@ class mc(m_node):
         self.debug_print("MC got",h,c,raw,route)
         nodes = self.index.query("nodes","route",[route.decode('ascii')])
         print("nodes",route.decode('ascii'),nodes)
-        print(self.index.multiindex)
+        #print(self.index.multiindex)
         if len(nodes) == 1:
-            src_node = nodes[0]
-            h['src_node'] = src_node.node_id
-            print("passing along",h,c,raw,src_node)
-            routes = self.index.query("routes","src",[src_node])
-            print("RS",routes)
-            for r in routes:
-                print("SENDING ON",str(r))
-                r.send(raw,h,c)
+            if h.get('type','') == 'system':
+                self.mc_dispatch(h,c,route.decode('ascii'))
+            else:
+                src_node = nodes[0]
+                h['src_node'] = src_node.node_id
+                print("passing along",h,c,raw,src_node)
+                routes = self.index.query("routes","src",[str(src_node)])
+                print("RS",routes)
+                for r in routes:
+                    print("SENDING ON",str(r))
+                    r.send(raw,h,c)
             #src_node.emit(raw,h,c)
         else:
             print("Received message from non-existent or ambiguous node",h,c,raw,route)
@@ -197,7 +200,7 @@ class mc(m_node):
             node.hb_stopper.set()
 
         # Remove all routes from or to this node
-        routes = self.index.query("routes","dst",[node]) + self.index.query("routes","src",[node])
+        routes = self.index.query("routes","dst",[str(node)]) + self.index.query("routes","src",[str(node)])
         for r in routes:
             self.index.remove("routes",r)
     
@@ -273,7 +276,7 @@ class mc(m_node):
 
             print("new route",src,dest)
             
-            new_route = {"src":src, "dest":dest, "route":Route(src, r[1:-1], dest, group, route_spec)}
+            new_route = {"src":src, "dest":dest, "route":Route(src, [Transform(t) for t in r[1:-1]], dest, group, route_spec)}
             self.index.add("routes",new_route['route'])
             #new_routes += [new_route]
             
@@ -371,7 +374,7 @@ class mc(m_node):
         if lang == "mu":
             mu_path = os.path.join(base_path, 'mu/mu.py')
             print(mu_path)
-            lib_path = os.path.join(lib_base_path,"py")c
+            lib_path = os.path.join(lib_base_path,"py")
             nenv.update({
                 "MU_WS_PORT":t.props['ws_port'],
                 "MU_HTTP_PORT":t.props['http_port'],
@@ -411,15 +414,11 @@ class mc(m_node):
         return self.launch_node(args['node'], args.get('name', args['node']), args['group'], json.loads(args.get('env',"{}")))
 
     def query(self,header,args):
-        ans = {}
-        if 'type' in args:
-            ans["types"] = self.index.search("types", {"name":args['type']['name']})
-        if 'group' in args:
-            ans["groups"] = self.index.search("groups", {"name":args['group']['name']})
-        if 'node' in args:
-            ans["nodes"] = self.index.search("nodes", {"name":args['node']['name'],"group":args['node']['group'],"type":args['node']['type']})
-        if 'route' in args:
-            ans["routes"] = self.index.search("routes", {"src":args['route']['src'],"group":args['route']['group'],"dst":args['route']['dst']})
+        ans = {s:self.index.search(s+'s',args[s]) for s in ['type','group','node','route'] if s+'s' in args}
+            
+        if len(list(ans.keys())) == 0:
+            ans = self.index.search("nodes")
+            ans = {"nodes":[str(x) for x in ans]}
         return "info",ans
 
     def delnode(self,header,args):

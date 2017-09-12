@@ -58,8 +58,7 @@ class mx_agent(m_node):
                   'reply':self.mx_handle_reply
             })
 
-            self.handlers = {'print':self.print_handler,'file':self.file_handler,'forward':self.forward_handler,'nop':self.nop_handler}
-            self.handler_arg_defaults = {'file':{'filename':'/dev/stdout'},'print':{'format':None},'nop':{}}
+            self.handlers = {'print':self.print_handler,'file':self.file_handler,'nop':self.nop_handler}
             #os.mkfifo('.run/'+str(self.pid)+'_out')
             self.sh_init = open('.run/'+str(self.pid),'w')
             with open('.init','r') as f:
@@ -90,6 +89,7 @@ class mx_agent(m_node):
             self.output.write(a)
             if(a['result'] == 'success'):
                   self.output.write("IF_NAME",if_name)
+                  # Change this from XSLT to templated bash script
                   self.sh_init.write(str(etree.XSLT(etree.parse('mx.xsl'))(etree.XML(a['if']),node_name="'"+src_node+"'",port=("'mc'" if if_name=="mc" else "'stdio'"))))
                   self.sh_init.flush()
                   self.output.write("Got it")
@@ -133,31 +133,6 @@ class mx_agent(m_node):
                   self.output.write(re.sub(r'([^\\]*)\{([a-zA-Z0-9_]+)\}',lambda m: m.group(1) + (args[m.group(2)].decode() if m.group(2) in args.keys() else ""),handler_args['format']))
             self.output.flush()
           
-      def forward_handler(self,header,message,conns):
-            for c in conns:
-                  m_send(0,c,message,lambda h,c:print(c),False,mtype=header['type'])
-  
-      def parse_callback(self,cb):
-            rcb = self.reply_cb
-            ha = {}
-            h = cb.split(" ",maxsplit=1)
-            if h[0] in self.handlers.keys():
-                  rcb = self.handlers[h[0]]
-                  try:
-                        for x in h[1].split(','):
-                              y = x.split('=')
-                              ha[y[0].strip()] = y[1].strip()
-                  except:
-                        exc_type, exc_value, exc_traceback = sys.exc_info()
-                        traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
-                        traceback.print_exception(exc_type, exc_value, exc_traceback,limit=10, file=sys.stdout)
-                        self.output.write('Broken reply callback specifier')
-                        return None
-            else:
-                  self.output.write('Bad reply callback specifier')
-                  return None
-            return ha,rcb
-
       def handler(self,msg):
             self.fc.send("ack")
             #print(self.outstanding)
@@ -167,30 +142,16 @@ class mx_agent(m_node):
             cmd = args["mx_cmd"]
             del args["mx_cmd"]
             if(cmd == 'send'):
-                  rcb = self.reply_cb
-                  ha = {}
-                  if "r" in args:
-                        new_cb = self.parse_callback(args["r"])
-                        if(not new_cb is None):
-                              ha,rcb = new_cb
-                        del args["r"]
                   c = args.pop('command')
                   for a in args:
-                        try:
-                              args[a] = json.loads(args[a])
-                        except:
-                              pass
+                        try: args[a] = json.loads(args[a])
+                        except: pass
                   self.m_send(c,args)
-            if(cmd == 'mc'):
-                  rcb = self.reply_cb
-                  ha = {}
-                  if "r" in args:
-                        new_cb = self.parse_callback(args["r"])
-                        if(not new_cb is None):
-                              ha,rcb = new_cb
-                        del args["r"]
+            if(cmd == 'raw'):
                   c = args.pop('command')
-                  self.m_send(c,args)
+                  try: a = json.loads(args['args'])
+                  except: pass
+                  self.m_send(c,a)
             elif cmd == 'handle':
                   try:
                         ha,rcb = {},self.reply_cb

@@ -3,6 +3,8 @@ import sys,re,json,copy
 class Transform:
       def __init__(self, ast):
             self.ast = ast
+            print("AST",ast)
+            self.kind = self.ast[0];
             self.env = {}
             self.node_types = ['add','and','div','edit','eq','filter','ge','gt','le','like','list','lt','map','mul','exp','neg','not','or','replace','re_sub','re_subi','script','sub','ternary','test','value','var','var_value','pop','assign']
             self.operand_types = ['list','num','bytes','map','bool']
@@ -16,6 +18,9 @@ class Transform:
             for x in self.node_types:
                   self.evals[x] = getattr(self,'eval_'+x)
 
+      def __repr__(self):
+            return str(self.ast)
+                  
       def eval_add(self, n, d):
             return self.e(n[1], d) + self.e(n[2], d)
 

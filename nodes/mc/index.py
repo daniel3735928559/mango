@@ -47,17 +47,10 @@ class multiindex:
             for index_name in self.indices[group_name]:
                   self.idx_add(group_name, index_name, obj)
 
-      def search(self, group_name, props):
-            ans = []
-            full = self.query(group_name)
-            for obj in full:
-                  ok = True
-                  for p in props:
-                        if getattr(obj,p) != props[p]:
-                              ok = False
-                              break
-                  if ok:
-                        ans.append(obj)
+      def search(self, group_name, props=[]):
+            ans = self.query(group_name)
+            for p in props:
+                  ans = [x for x in ans if getattr(x,p) == props[p]]
             return ans
                   
       def query(self, group_name, index_name=None, prop_vals=[]):

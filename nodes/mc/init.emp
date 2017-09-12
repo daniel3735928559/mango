@@ -1,8 +1,9 @@
 [config]
-group = system
 
 [nodes]
 mx shell
+excite_py ex
 
 [routes]
 shell <> mc
+shell > fr dostuff excite {str:input} > ex > shell

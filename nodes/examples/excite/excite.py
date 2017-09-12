@@ -6,6 +6,6 @@ class excite(m_node):
         self.interface.add_interface('excite.yaml',{'excite':self.excite})
         self.run()
     def excite(self,header,args):
-        return {'excited':args['str']+'!'}
+        return "excited",{'str':args['str']+'!'}
     
 excite()

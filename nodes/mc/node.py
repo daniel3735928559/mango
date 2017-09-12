@@ -20,6 +20,7 @@ class Node:
         self.group = group
         self.key = key
         self.node_id = node_id
+        self.name = self.node_id
         self.interface = iface
         self.route = route
         self.status = STARTING
@@ -28,16 +29,9 @@ class Node:
         self.last_heartbeat_time = time.time()
         self.last_alive_time = self.last_heartbeat_time
         self.routes = {}
-                
-    # A message was transmitted by this node.  Pass the message
-    # through the transmogrifiers for each route and send the results
-    # to their corresponding endpoints
-    
-    # def emit(self,message,header,args):
-    #     print("Node emitting",str(self))
-    #     for r in self.routes:
-    #         print("SENDING ON",str(r))
-    #         self.routes[r].send(message,header,args)
+        
+    def __repr__(self):
+        return "{}/{}".format(self.group, self.node_id)
 
     # a message came in for this node.  Validate it and then pass it
     # on to the node through the dataflow
@@ -53,11 +47,6 @@ class Node:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
             traceback.print_exception(exc_type, exc_value, exc_traceback,file=sys.stdout)
-
-    # def __repr__(self):
-    #     return self.node_id
-
-
             
 class Remote:
     def __init__(self,host,port):

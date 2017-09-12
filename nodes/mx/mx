@@ -20,11 +20,11 @@ mx_cmd = sys.argv[1]
 if(mx_cmd == "send"):
     argns = ["mx_cmd","command"]+[x[1:] for x in sys.argv[1:] if x[0] == '-']
     argvs = [x for x in sys.argv[1:] if x[0] != '-']
-elif(mx_cmd == "mc"):
-    argns = ["mx_cmd","command"]+[x[1:] for x in sys.argv[1:] if x[0] == '-']
-    argvs = [x for x in sys.argv[1:] if x[0] != '-']
 elif(mx_cmd == "handle"):
     argns = ["mx_cmd","command","handler"]
+    argvs = sys.argv[1:]
+elif(mx_cmd == "raw"):
+    argns = ["mx_cmd","command","args"]
     argvs = sys.argv[1:]
 elif(mx_cmd == "load_if"):
     argns = ["mx_cmd","if"]
