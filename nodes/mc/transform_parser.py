@@ -140,6 +140,10 @@ class transform_parser:
             ''' node : NAME'''
             p[0] = ('node',{'name':p[1]})
 
+      def p_node_group(self,p):
+            ''' node : NAME '/' NAME'''
+            p[0] = ('node',{'group':p[1],'name':p[3]})
+
       def p_transform_filter(self,p):
             ''' transform : F filter'''
             p[0] = [p[2]]

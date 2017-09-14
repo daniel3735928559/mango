@@ -269,7 +269,6 @@ class mc(m_node):
     
     def get_node(self, name, group="system"):
         print('GN',name, group)
-        print(self.index.multiindex)
         nodes = self.index.query("nodes","group_name", [group, name])
         if len(nodes) == 0:
             raise Exception("No such node: {}/{}".format(group, name))
@@ -291,13 +290,12 @@ class mc(m_node):
         grp = self.find_group(group)
         #new_routes = []
         for r in self.transform_parser.parse(route_spec):
-            src_name,src_group = r[0][1]['name'],group
+            src_name,src_group = r[0][1]['name'],r[0][1].get('group',group)
             print(src_name, src_group)
             if "/" in src_name: src_group,src_name = src_name.split("/")
-            print(self.index.multiindex['nodes'])
             src = self.get_node(src_name, src_group)
 
-            dst_name,dst_group = r[-1][1]['name'],group
+            dst_name,dst_group = r[-1][1]['name'],r[-1][1].get('group',group)
             if "/" in dst_name: dst_group,dst_name = dst_name.split("/")
             dest = self.get_node(dst_name, dst_group)
 
@@ -310,7 +308,7 @@ class mc(m_node):
         #return new_routes
 
     def emp(self, header, args):
-        return self.mp(args['program'], args['group'])
+        return self.mp(args['mp'], args['group'])
     
     def mp(self, program, group):
         prog_lines = program.split("\n")

@@ -1,0 +1,1 @@
+mx emp -group "$1" -mp "$(cat "$2")"

@@ -1,0 +1,7 @@
+[config]
+
+[nodes]
+excite_py ext
+
+[routes]
+system/shell <> ext

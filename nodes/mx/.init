@@ -5,6 +5,7 @@ export MX_PORT={port};
 export PATH="$PATH:$(pwd)";
 alias mx="$(pwd)/mx send"
 alias mr="$(pwd)/mx raw"
+alias emp="$(pwd)/emp"
 function load_if {{ mx load_if $1; source .run/{pid}; }}
 function cleanup {{ echo "Goodbye"; kill {pid}; rm .run/{pid}_out .run/{pid}; exit; }}
 trap cleanup EXIT
