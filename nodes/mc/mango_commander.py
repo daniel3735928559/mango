@@ -56,6 +56,7 @@ class mc(m_node):
                 "dst":["dst_name","src_name"],
                 "group":["group"],
                 "group_src":["group","src_name","dst_name"],
+                "group_id":["group","route_id"],
                 "group_dst":["group","dst_name","src_name"]
             },
             "nodes":{
@@ -126,6 +127,12 @@ class mc(m_node):
     def mc_error(self,header,args):
         self.deubg_print("ERR",header,args)
 
+    def mc_system_dispatch(self,header,args,route):
+        self.debug_print("MC SYSTEM DISPATCH",header,args, route)
+        src_node = self.index.query("nodes","route",[route])[0]
+        header['src_node'] = src_node
+        self.interface.get_function(header['name'])(header,args)
+        
     def mc_dispatch(self,header,args,route):
         self.debug_print("MC DISPATCH",header,args, route)
         src_node = self.index.query("nodes","route",[route])[0]
@@ -150,7 +157,7 @@ class mc(m_node):
         #print(self.index.multiindex)
         if len(nodes) == 1:
             if h.get('type','') == 'system':
-                self.mc_dispatch(h,c,route.decode('ascii'))
+                self.mc_system_dispatch(h,c,route.decode('ascii'))
             else:
                 src_node = nodes[0]
                 h['src_node'] = src_node.node_id
@@ -172,7 +179,7 @@ class mc(m_node):
             with open(os.path.join(base, iface_path),'r') as f:
                 spec[t]['if'] = mc_if(yaml.load(f.read()))
             spec[t]['dir'] = base
-            self.index.add("types",NodeType(t,base,spec[t]['run'],spec[t]['if'],spec[t]['lang'],spec[t]))
+            self.index.add("types",NodeType(t,base,spec[t].get('run',''),spec[t]['if'],spec[t]['lang'],spec[t]))
             
     def initialise_types(self):
         manifest_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..'))
@@ -192,6 +199,9 @@ class mc(m_node):
     ### Remove objects
     
     def delete_node(self, node):
+        # Send the node an exit message
+        node.handle(self.make_header("exit"),{})
+        
         # Remove the node
         self.index.remove("nodes",node)
         
@@ -205,16 +215,32 @@ class mc(m_node):
             self.index.remove("routes",r)
     
     def delete_route(self, route):
-        self.index.remove("routes",r)
+        self.index.remove("routes",route)
 
+    def find_group(self, group_name):
+        ans = self.index.query("groups","name",[group_name])
+        return ans[0] if len(ans) > 0 else None
+        
+    def find_node(self, node_spec):
+        if "/" in node_spec: 
+            ans = self.index.query("nodes","group_name",node_spec.split("/"))
+            if len(ans) == 1:
+                return ans[0]
+            else:
+                return None
+        else:
+            return None
+        
     def delete_group(self, group):
         # Delete all nodes
         nodes = self.index.query("nodes","group",[group])
+        print("DELETING NODES: ",nodes)
         for n in nodes:
             self.delete_node(n)
 
         # Delete all routes
         routes = self.index.query("routes","group",[group])
+        print("DELETING ROUTES: ",nodes)
         for r in routes:
             self.delete_route(r)
 
@@ -262,6 +288,7 @@ class mc(m_node):
 
     def create_routes(self, route_spec, group):
         print("CR",route_spec)
+        grp = self.find_group(group)
         #new_routes = []
         for r in self.transform_parser.parse(route_spec):
             src_name,src_group = r[0][1]['name'],group
@@ -276,7 +303,7 @@ class mc(m_node):
 
             print("new route",src,dest)
             
-            new_route = {"src":src, "dest":dest, "route":Route(src, [Transform(t) for t in r[1:-1]], dest, group, route_spec)}
+            new_route = {"src":src, "dest":dest, "route":Route(grp.rt_id(), src, [Transform(t) for t in r[1:-1]], dest, group, route_spec)}
             self.index.add("routes",new_route['route'])
             #new_routes += [new_route]
             
@@ -329,9 +356,9 @@ class mc(m_node):
             for l in prog.get('nodes',[]):
                 ll = shlex.split(l)
                 print(ll)
-                new_node = {"group": group, "node": ll[1], "args":[], "type": ll[0]}
+                new_node = {"group": group, "node": ll[1], "args":{}, "type": ll[0]}
                 for a in ll[2:]:
-                    m = re.match(a, '--([a-zA-Z_][a-zA-Z_0-9]*)=(.*)')
+                    m = re.match('--([a-zA-Z_][a-zA-Z_0-9]*)=(.*)',a)
                     if m:
                         new_node['args'][m.group(1)] = m.group(2)
                     else:
@@ -375,18 +402,18 @@ class mc(m_node):
             mu_path = os.path.join(base_path, 'mu/mu.py')
             print(mu_path)
             lib_path = os.path.join(lib_base_path,"py")
-            nenv.update({
-                "MU_WS_PORT":t.props['ws_port'],
-                "MU_HTTP_PORT":t.props['http_port'],
-                "MU_IF":os.path.join(node_base, t.iface),
-                "MU_ROOT_DIR":node_base
-            })
+            # nenv.update({
+            #     "MU_WS_PORT":t.props['ws_port'],
+            #     "MU_HTTP_PORT":t.props['http_port'],
+            #     "MU_IF":os.path.join(node_base, t.iface),
+            #     "MU_ROOT_DIR":node_base
+            # })
             nenv[self.langs["py"]['pathvar']] = lib_path
             print("nb",node_base,nenv,mu_path,shlex.split("python " + mu_path))
             subprocess.Popen(shlex.split("python " + mu_path), cwd=node_base, env=nenv)
-        
-        print("E",nenv,"B",node_base,"R",t.run)
-        subprocess.Popen(shlex.split(t.run), cwd=node_base, env=nenv)
+        else:
+            print("E",nenv,"B",node_base,"R",t.run)
+            subprocess.Popen(shlex.split(t.run), cwd=node_base, env=nenv)
         return "success",{}
         return "error",{'message':'no such node type: {}'.format(n)}
 
@@ -403,12 +430,18 @@ class mc(m_node):
         self.debug_print("ALIVE",header,args)
 
     def addgroup(self,header,args):
-        if self.add_group(args['name']):
-            return self.success()
-        return self.success(False, "group already exists")
+        if self.find_group(args['name']):
+            return self.success(False, "group already exists")
+        self.add_group(args['name'])
+        return self.success()
 
     def delgroup(self,header,args):
-        pass
+        grp = self.find_group(args['name'])
+        if grp:
+            self.delete_group(grp)
+            return self.success()
+        return self.success(False, "No such group")
+            
 
     def addnode(self,header,args):
         return self.launch_node(args['node'], args.get('name', args['node']), args['group'], json.loads(args.get('env',"{}")))
@@ -417,14 +450,22 @@ class mc(m_node):
         ans = {s:self.index.search(s+'s',args[s]) for s in ['type','group','node','route'] if s+'s' in args}
             
         if len(list(ans.keys())) == 0:
-            ans = self.index.search("nodes")
-            ans = {"nodes":[str(x) for x in ans]}
+            ns = self.index.search("nodes")
+            rs = self.index.search("routes")
+            gs = self.index.search("groups")
+            ts = self.index.search("types")
+            ans = {"nodes":[str(x) for x in ns],
+                   "routes":[str(x) for x in rs],
+                   "groups":[str(x) for x in gs],
+                   "types":[str(x) for x in ts]}
         return "info",ans
 
     def delnode(self,header,args):
         # Delete the node and all routes relating to it
         node_name = args['node']
-        if self.delete_node(node_name):
+        n = self.find_node(node_name)
+        if n:
+            self.delete_node(n)
             return self.success()
         else:
             return self.success(False,"no such node")
@@ -438,17 +479,14 @@ class mc(m_node):
             return self.success(False,"Failed to create route")
     
     def delroute(self,header,args):
-        if not args['src_node'] in self.nodes:
-            print(1)
-            return "error",{"message":"Source node not found"}
-        sn = self.nodes[args['src_node']]
-        if not args['dest_node'] in self.nodes:
-            print(3)
-            return "error",{"message":"Target node not found"}
-        dn = self.nodes[args['dest_node']]
-        if sn.del_route_to(dn):
-            return "success",{}
-        return self.success(False,"Failed to delete route")
+        rs = self.index.search("routes",args)
+        if len(rs) == 0:
+            return self.success(False, "No such route")
+        elif len(rs) > 1:
+            return self.success(False, "Multiple routes match: " + str(rs))
+        else:
+            self.delete_route(rs[0])
+            return self.success()
     
     def doc(self,header,args):
         n = args['node']

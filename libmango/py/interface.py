@@ -48,7 +48,8 @@ class m_if:
         name,fn = function_name.rsplit(".",1)
         if name in self.interface and fn in self.interface[name]["handlers"]:
             return self.interface[name]["handlers"][fn]
-            
+        elif not self.default_handler is None:
+            return self.default_handler
         raise m_error(m_error.VALIDATION_ERROR,"Unknown function")
     
     def validate(self, function_name, args):

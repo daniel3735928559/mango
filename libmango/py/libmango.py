@@ -21,7 +21,8 @@ class m_node:
         self.interface.add_interface(os.path.join(os.getenv('PYTHONPATH'),'../node.yaml'),{
 #            'reg':self.reg,
 #            'reply':self.reply,
-            'heartbeat':self.heartbeat
+            'heartbeat':self.heartbeat,
+            'exit':self.end
         })
         self.flags = {}
         self.server = os.getenv('MC_ADDR',None)
@@ -48,6 +49,9 @@ class m_node:
 
     def heartbeat(self,header,args):
         self.mc_send('alive',{})
+        
+    def end(self,header,args):
+        exit(0)
             
     def reply(self,header,args):
         print("REPLY",header,args)

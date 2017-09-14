@@ -1,0 +1,11 @@
+name: excite_fe
+
+inputs:
+  excited:
+    str:
+      type: string
+      
+outputs:
+  excite:
+    str:
+      type: string

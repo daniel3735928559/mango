@@ -6,3 +6,5 @@ class NodeType:
         self.lang = lang
         self.iface = iface
         self.props = props
+    def __repr__(self):
+        return self.name

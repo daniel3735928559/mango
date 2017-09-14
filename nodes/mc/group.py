@@ -8,3 +8,9 @@ from libmango import m_node
 class Group:
     def __init__(self, name):
         self.name = name
+        self.route_id = 0
+    def rt_id(self):
+        self.route_id += 1
+        return "rt{}".format(self.route_id)
+    def __repr__(self):
+        return self.name

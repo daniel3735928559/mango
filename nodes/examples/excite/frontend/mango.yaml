@@ -1,0 +1,3 @@
+excite_fe:
+  lang: mu
+  if: test.yaml

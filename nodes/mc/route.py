@@ -6,7 +6,8 @@ from transport import *
 from libmango import m_node
 
 class Route:
-    def __init__(self, start, transforms, end, group, source_code):
+    def __init__(self, route_id, start, transforms, end, group, source_code):
+        self.route_id = route_id
         self.source_code = source_code
         self.src = start
         self.dst = end
@@ -51,4 +52,9 @@ class Route:
             self.dst.dataflow.send_raw(m,bytearray(self.dst.node_id,'utf-8'))
 
     def __repr__(self):
-        return "{} > {} > {}".format(self.src.node_id, str(self.transforms), self.dst.node_id)
+        name = "{}/{}".format(self.group, self.route_id)
+        if len(self.transforms) > 0:
+            spec = "{} > {} > {}".format(str(self.src), str(self.transforms), str(self.dst))
+        else:
+            spec = "{} > {}".format(str(self.src), str(self.dst))
+        return "{}: {}".format(name, spec)

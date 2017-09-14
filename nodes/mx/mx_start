@@ -14,5 +14,6 @@ while [[ ! -f .run/$MX_PID && ! -p .run/"$MX_PID"_out ]]; do
   sleep 1;
   done
 bash --init-file .run/$MX_PID
+#XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/home/zoom/.Xauthority DISPLAY=:0 terminator -e "bash --init-file .run/$MX_PID"
 #screen -c screenrc
 
