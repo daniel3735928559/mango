@@ -1,7 +1,9 @@
 var Mango = function(commands,default_handler){
     var xhr = new XMLHttpRequest();
     var self = this;
-    self.sock = new WebSocket("ws://" + location.host + "/mango");
+    self.sock = new ReconnectingWebSocket("ws://" + location.host + "/mangorx");
+    self.txsock = new ReconnectingWebSocket("ws://"  + location.host + '/mangotx')
+
     self.sock.onmessage = function(e) {
 	var reader = new FileReader();
 	reader.addEventListener("loadend", function() {
@@ -22,7 +24,7 @@ var Mango = function(commands,default_handler){
 Mango.prototype.m_send = function(command,args){
     console.log("TX",JSON.stringify(command,args));
     var msg = "MANGO0.1 json\n"+JSON.stringify({"header":{"name":command},"args":args});
-    this.sock.send(msg);
+    this.txsock.send(msg);
 }
 
 Mango.prototype.m_recv = function(header,args){

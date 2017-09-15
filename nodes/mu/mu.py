@@ -6,11 +6,11 @@ from mu_transport import *
 class mu(m_node):    
     def __init__(self):
         super().__init__(debug=True)
-        self.server_sock = mu_server_ws("0.0.0.0",int(os.getenv("MU_WS_PORT")))
-        self.server_dataflow = mu_server_dataflow(None,self.server_sock,self.serialiser,self.ui_to_world,self.handle_error,self)
-        self.poller.register(self.server_sock.socket.fileno(),zmq.POLLIN)
-        self.dataflows[self.server_sock.socket.fileno()] = self.server_dataflow
-        self.client_ws_dataflows = {}
+        self.mu_transport = mu_transport(self.context, self.poller, "0.0.0.0")
+        
+        self.mu_dataflow = mu_dataflow(self.mu_transport, self.serialiser, self.ui_to_world, self.handle_error)
+        self.poller.register(self.mu_transport.socket,zmq.POLLIN)
+        self.dataflows[self.mu_transport.socket] = self.mu_dataflow
         self.interface.default_handler = self.world_to_ui
         subprocess.Popen(["python", "server.py"], cwd=os.path.dirname(os.path.realpath(__file__)), env={"MU_HTTP_PORT":os.getenv("MU_HTTP_PORT"),"MU_WS_PORT":os.getenv("MU_WS_PORT"),"MU_ROOT_DIR":os.getcwd()})
         self.run()
@@ -21,8 +21,6 @@ class mu(m_node):
 
     def world_to_ui(self, header, args):
         print("W2UI", header, args)
-        for x in self.client_ws_dataflows:
-            df = self.client_ws_dataflows[x]
-            if df.transport.alive:
-                df.send(header,args)
+        self.mu_dataflow.send(header,args)
+        
 mu()

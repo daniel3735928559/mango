@@ -25,37 +25,26 @@ def index():
 def index2():
     return render_template('index2.html')
 
-@app.route('/test')
-def test_rt():
-    return render_template('test.html')
-
-@sockets.route('/mangotx')
+@sockets.route('/test')
 def get_data(ws):
-    socket = context.socket(zmq.DEALER)
-    socket.connect('tcp://localhost:{PORT}'.format(PORT=ZMQ_LISTENING_PORT))
-    socket.send_string("tx")
-    print('helloing')
     while not ws.closed:
-        data = ws.receive()
-        print("D",data)
-        if data:
-            socket.send_string(data)
+        print("hello")
+        print(ws.receive())
 
-@sockets.route('/mangorx')
+@sockets.route('/zeromq')
 def send_data(ws):
     while not ws.closed:
         logger.info('Got a websocket connection, sending up data from zmq')
         socket = context.socket(zmq.DEALER)
         print("connecting")
         socket.connect('tcp://localhost:{PORT}'.format(PORT=ZMQ_LISTENING_PORT))
-        socket.send_string("rx")
+        socket.send_string("greets")
         gevent.sleep()
         while not ws.closed:
-
             print("rxing")
-            data = socket.recv()
+            data = socket.recv_json()
             logger.info(data)
-            ws.send(data)
+            ws.send(json.dumps(data))
             gevent.sleep()
         print("DEADED")
 
