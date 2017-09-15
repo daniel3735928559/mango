@@ -12,7 +12,7 @@ class mu(m_node):
         self.poller.register(self.mu_transport.socket,zmq.POLLIN)
         self.dataflows[self.mu_transport.socket] = self.mu_dataflow
         self.interface.default_handler = self.world_to_ui
-        subprocess.Popen(["python", "server.py"], cwd=os.path.dirname(os.path.realpath(__file__)), env={"MU_HTTP_PORT":os.getenv("MU_HTTP_PORT"),"MU_WS_PORT":os.getenv("MU_WS_PORT"),"MU_ROOT_DIR":os.getcwd()})
+        subprocess.Popen(["python", "server.py"], cwd=os.path.dirname(os.path.realpath(__file__)), env={"MU_HTTP_PORT":os.getenv("MU_HTTP_PORT"),"MANGO_SIDECHANNEL_PORT":str(self.mu_transport.port),"MU_ROOT_DIR":os.getcwd()})
         self.run()
 
     def ui_to_world(self, header, args):

@@ -3,7 +3,7 @@
 import zmq
 
 class mu_transport:
-    def __init__(self, context, poller, bind='*', port=12000):
+    def __init__(self, context, poller, bind='*', port=None):
         self.socket = context.socket(zmq.ROUTER)
         poller.register(self.socket,zmq.POLLIN)
         if port is None:

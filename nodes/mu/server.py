@@ -1,38 +1,33 @@
+from flask import Flask, send_from_directory, Response, render_template
+import os, json, gevent
 import zmq.green as zmq
-import json
-import gevent
 from flask_sockets import Sockets
-from flask import Flask, render_template
-import logging
 from gevent import monkey
 
 monkey.patch_all()
 
 app = Flask(__name__)
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 sockets = Sockets(app)
 context = zmq.Context()
 
-ZMQ_LISTENING_PORT = 12000
+m_port = int(os.getenv("MANGO_SIDECHANNEL_PORT"))
+root_dir = os.getenv("MU_ROOT_DIR")
+lib_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),"mangojs/")
+http_port = int(os.getenv("MU_HTTP_PORT"))
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+@app.route('/mangojs/<path:path>')
+def do_mangojs(path):
+    return send_from_directory(lib_dir, path)
 
-@app.route('/2')
-def index2():
-    return render_template('index2.html')
-
-@app.route('/test')
-def test_rt():
-    return render_template('test.html')
+@app.route('/<path:path>')
+def others(path):
+    return send_from_directory(root_dir, path)
 
 @sockets.route('/mangotx')
 def get_data(ws):
     socket = context.socket(zmq.DEALER)
-    socket.connect('tcp://localhost:{PORT}'.format(PORT=ZMQ_LISTENING_PORT))
+    socket.connect('tcp://localhost:{PORT}'.format(PORT=m_port))
     socket.send_string("tx")
     print('helloing')
     while not ws.closed:
@@ -44,17 +39,15 @@ def get_data(ws):
 @sockets.route('/mangorx')
 def send_data(ws):
     while not ws.closed:
-        logger.info('Got a websocket connection, sending up data from zmq')
         socket = context.socket(zmq.DEALER)
         print("connecting")
-        socket.connect('tcp://localhost:{PORT}'.format(PORT=ZMQ_LISTENING_PORT))
+        socket.connect('tcp://localhost:{PORT}'.format(PORT=m_port))
         socket.send_string("rx")
         gevent.sleep()
         while not ws.closed:
 
             print("rxing")
             data = socket.recv()
-            logger.info(data)
             ws.send(data)
             gevent.sleep()
         print("DEADED")
@@ -62,5 +55,5 @@ def send_data(ws):
 if __name__ == '__main__':
     from gevent import pywsgi
     from geventwebsocket.handler import WebSocketHandler
-    server = pywsgi.WSGIServer(('', 25000), app, handler_class=WebSocketHandler)
+    server = pywsgi.WSGIServer(('', http_port), app, handler_class=WebSocketHandler)
     server.serve_forever()
