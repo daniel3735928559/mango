@@ -7,7 +7,7 @@ function Excite(){
 }
 
 Excite.prototype.excite = function(header,args){
-    return {'excited':args['str']+'!'}
+    return ["excited",{'str':args['str']+'!'}]
 }
 
 new Excite();

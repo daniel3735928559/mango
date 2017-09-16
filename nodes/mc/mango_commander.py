@@ -111,12 +111,12 @@ class mc(m_node):
         node = node.decode()
         self.debug_print("HB",node)
         if node == "mc":
-            self.debug_print("REAP",node)
+            self.debug_print("REAPING")
             to_reap = []
             now = time.time()
             node_list = self.index.query("nodes")
             for n in node_list:
-                if n.node_id != "mc" and (now - n.last_alive_time) > self.too_old and (now - n.last_heartbeat_time) < self.too_old:
+                if n.node_id != "mc" and (not n.node_type in ['merge','split']) and (now - n.last_alive_time) > self.too_old and (now - n.last_heartbeat_time) < self.too_old:
                     to_reap.append(n)
             for n in to_reap:
                 self.delete_node(n)
@@ -425,12 +425,6 @@ class mc(m_node):
             mu_path = os.path.join(base_path, 'mu/mu.py')
             print(mu_path)
             lib_path = os.path.join(lib_base_path,"py")
-            # nenv.update({
-            #     "MU_WS_PORT":t.props['ws_port'],
-            #     "MU_HTTP_PORT":t.props['http_port'],
-            #     "MU_IF":os.path.join(node_base, t.iface),
-            #     "MU_ROOT_DIR":node_base
-            # })
             nenv[self.langs["py"]['pathvar']] = lib_path
             print("nb",node_base,nenv,mu_path,shlex.split("python " + mu_path))
             subprocess.Popen(shlex.split("python " + mu_path), cwd=node_base, env=nenv)

@@ -9,7 +9,7 @@ function MNode(debug){
     this.serialiser = new Serialiser(this.version);
     this.iface = new Interface();
     this.node_id = process.env['MANGO_ID'];
-    this.ports = [];
+    this.route = process.env['MANGO_ROUTE'];
     var server = process.env['MC_ADDR'];
     
     this.run = function(){
@@ -19,7 +19,6 @@ function MNode(debug){
 	    delete ifce[i]['handlers'];
 	}
 	console.log("IF",ifce)
-	self.m_send('hello',{'id':self.node_id,'if':ifce,'ports':self.ports},"mc")
     }
     
     this.dispatch = function(header,args){
@@ -27,7 +26,7 @@ function MNode(debug){
 	try{
             result = self.iface.get_function(header['name'])(header,args);
             if(result){
-		self.m_send("reply", result, header['port'])
+		self.m_send(result[0], result[1], header.mid)
 	    }
 	} catch(e) {
 	    console.log(e);
@@ -40,33 +39,29 @@ function MNode(debug){
 	self.m_send('error',{'source':src,'message':err},"mc");
     }
 
-    this.reg = function(header,args){
-	if(header.src_node == "mc") self.node_id = args["id"];
-    }
-
-    this.reply = function(header,args){
-	console.log("REPLY",header,args);
-    }
-
     this.heartbeat = function(header,args){
-	self.m_send("alive",{},"mc");
+	this.m_send("alive",{},undefined,"system");
     }
 
-    this.make_header = function(name,src_port){
-	if(!src_port) src_port = "stdio";
-	return {'src_port':src_port, 'name':name};
+    this.make_header = function(name,mid,type){
+	ans = {'name':name};
+	if(mid) ans['mid'] = mid
+	if(type) ans['type'] = type
+	return ans
     }
 
-    this.m_send = function(name,msg,port){
-	console.log('sending',name,msg,port)
-	header = self.make_header(name,port)
+    this.exit = function(header,args){
+	process.exit();
+    }
+
+    this.m_send = function(name,msg,mid,type){
+	console.log('sending',name,msg,mid)
+	header = self.make_header(name,mid,type)
 	self.dataflow.send(header,msg)
     }
     
-    this.iface.add_interface(process.env['NODE_PATH']+'/../node.yaml',{
-        'reg':self.reg, 'reply':self.reply, 'heartbeat':self.heartbeat
-    });
-    this.local_gateway = new Transport(server);
+    this.iface.add_interface(process.env['NODE_PATH']+'/../node.yaml',{'heartbeat':self.heartbeat,'exit':self.exit});
+    this.local_gateway = new Transport(server, this.route);
     var s = this.local_gateway.socket;
     this.dataflow = new Dataflow(self.iface, self.local_gateway, self.serialiser, self.dispatch, self.handle_error);
     s.on('message',function(data){ self.dataflow.recv(data); });
@@ -121,10 +116,12 @@ function Interface(){
     }
 }
 
-function Transport(target){
+function Transport(target, route){
     var self = this;
     this.target = target
+    this.route = route
     this.socket = zmq.socket("dealer");
+    this.socket.identity = this.route
     this.socket.connect(target);
     
     this.tx = function(data){
