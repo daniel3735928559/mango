@@ -8,6 +8,8 @@ from transport import *
 from libmango import m_node
 from lxml import etree
 from node import *
+from merge import *
+from split import *
 from node_type import *
 from route import *
 from group import *
@@ -143,15 +145,17 @@ class mc(m_node):
             name,resp_data = result
             resp_header = self.make_header(name)
             resp_header['src_node'] = 'mc'
-            data = self.serialiser.serialise(resp_header,resp_data)
-            self.mc_recv(resp_header, resp_data, data, bytes(self.route,'ascii'))
+            self.mc_recv(resp_header, resp_data, bytes(self.route,'ascii'))
             #self.dataflow.send(resp_header,resp_data,route)
         
     def remote_recv(self,h,c,raw,route,dataflow):
         pass
     
-    def mc_recv(self,h,c,raw,route):
-        self.debug_print("MC got",h,c,raw,route)
+    def mc_recv(self,h,c,route):
+        if not 'mid' in h:
+            print("MC adding MID")
+            h['mid'] = self.gen_route_key()+"_"+str(time.time())
+        self.debug_print("MC got",h,c,route)
         nodes = self.index.query("nodes","route",[route.decode('ascii')])
         print("nodes",route.decode('ascii'),nodes)
         #print(self.index.multiindex)
@@ -160,17 +164,21 @@ class mc(m_node):
                 self.mc_system_dispatch(h,c,route.decode('ascii'))
             else:
                 src_node = nodes[0]
-                h['src_node'] = src_node.node_id
-                print("passing along",h,c,raw,src_node)
-                routes = self.index.query("routes","src",[str(src_node)])
-                print("RS",routes)
-                for r in routes:
-                    print("SENDING ON",str(r))
-                    r.send(raw,h,c)
-            #src_node.emit(raw,h,c)
+                self.node_send(src_node, h, c)
         else:
-            print("Received message from non-existent or ambiguous node",h,c,raw,route)
+            print("Received message from non-existent or ambiguous node",h,c,route)
 
+    def node_send(self, n, h, c):
+        h['src_node'] = n.node_id
+        print("passing along",h,c,n)
+        routes = self.index.query("routes","src",[str(n)])
+        print("RS",routes)
+        for r in routes:
+            print("SENDING ON",str(r))
+            raw = self.serialiser.serialise(h,c)
+            r.send(raw,h,c)
+        
+                
     ## Helper functions
 
     def load_types(self, base, spec):
@@ -273,6 +281,14 @@ class mc(m_node):
         if len(nodes) == 0:
             raise Exception("No such node: {}/{}".format(group, name))
         return nodes[0]
+
+    def add_merge(self, name, group, args):
+        n = Merge(name, group, self.gen_route_key(), self.mc_recv, args)
+        self.index.add("nodes",n)
+        
+    def add_split(self, name, group, args):
+        n = Split(name, group, self.gen_route_key(), self.mc_recv, args)
+        self.index.add("nodes",n)
     
     def add_node(self, name, group, node_type, route, dataflow, iface):
         n = Node(name, group, node_type, self.gen_key(), dataflow, route, iface)
@@ -288,24 +304,27 @@ class mc(m_node):
     def create_routes(self, route_spec, group):
         print("CR",route_spec)
         grp = self.find_group(group)
-        #new_routes = []
         for r in self.transform_parser.parse(route_spec):
             src_name,src_group = r[0][1]['name'],r[0][1].get('group',group)
             print(src_name, src_group)
             if "/" in src_name: src_group,src_name = src_name.split("/")
             src = self.get_node(src_name, src_group)
-
+            
             dst_name,dst_group = r[-1][1]['name'],r[-1][1].get('group',group)
             if "/" in dst_name: dst_group,dst_name = dst_name.split("/")
             dest = self.get_node(dst_name, dst_group)
 
+            print("R",r)
+            if src.node_type == 'merge':
+                src.add_mergeset(r[0][1]['args'])
+            if dest.node_type == 'merge':
+                dest.add_mergepoint(r[-1][1]['args'][0])
+                dest = Mergepoint(dest, r[-1][1]['args'][0])
+            
             print("new route",src,dest)
             
             new_route = {"src":src, "dest":dest, "route":Route(grp.rt_id(), src, [Transform(t) for t in r[1:-1]], dest, group, route_spec)}
             self.index.add("routes",new_route['route'])
-            #new_routes += [new_route]
-            
-        #return new_routes
 
     def emp(self, header, args):
         return self.mp(args['mp'], args['group'])
@@ -361,7 +380,7 @@ class mc(m_node):
                         new_node['args'][m.group(1)] = m.group(2)
                     else:
                         print("Malformed argument: {}".format(a))
-                
+
                 self.launch_node(new_node['type'], new_node['node'], new_node['group'], new_node['args'])
                 #new_nodes.append(new_node)
             
@@ -382,6 +401,12 @@ class mc(m_node):
     
     def launch_node(self, node_type, node_id, node_group, env):
         n = node_type
+        if n == 'merge':
+            self.add_merge(node_id, node_group, env)
+            return
+        if n == 'split':
+            self.add_split(node_id, node_group, env)
+            return
         nid = node_id
         base_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../')
         lib_base_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../../libmango')

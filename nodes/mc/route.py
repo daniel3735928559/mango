@@ -16,9 +16,9 @@ class Route:
         self.group = group
         self.transforms = transforms
 
-    def apply(self,message,header,args):
+    def apply(self,raw,header,args):
         data = args
-        env = {"raw":message,"name":header["name"]}
+        env = {"raw":raw,"name":header["name"]}
         
         for t in self.transforms:
             if t.kind == 'filter':
@@ -27,10 +27,9 @@ class Route:
             else:
                 data = t.evaluate(env, data)
                 env = t.env
-                if env['raw'] != message:
+                if env['raw'] != raw:
                     return env['raw'],None,None
-        new_message = message
-        new_header = {"name":env.get('name','')}
+        new_header = {"name":env.get('name',''),'mid':header['mid']}
         new_args = data
         return None, new_header, new_args
 

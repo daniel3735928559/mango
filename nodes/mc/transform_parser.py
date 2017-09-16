@@ -4,7 +4,7 @@ import sys,re,json,copy
 
 class transform_lexer:
       def __init__(self):
-            self.tokens = ['NAME','FLOAT','INT','F','E','R','FE','FR','TRUE','FALSE','POP','STRING','REGEX','GE','EQ','LE','EXP','AND','OR','PE','ME','TE','DE','RE','BI','ID']
+            self.tokens = ['NAME','FLOAT','INT','F','E','R','FE','FR','SPLIT','MERGE','TRUE','FALSE','POP','STRING','REGEX','GE','EQ','LE','EXP','AND','OR','PE','ME','TE','DE','RE','BI','ID']
             self.literals = ['<','>',';','+','-','{','}','[',']','(',')','=','!','&','|','~',',',':','*','/','?']
             self.t_RE = '~='
             self.t_PE = '\+='
@@ -40,6 +40,8 @@ class transform_lexer:
                   'r' : 'R',
                   'fe' : 'FE',
                   'fr' : 'FR',
+                  'split' : 'SPLIT',
+                  'merge' : 'MERGE',
                   'true' : 'TRUE',
                   'false' : 'FALSE',
                   'pop' : 'POP'
@@ -143,7 +145,21 @@ class transform_parser:
       def p_node_group(self,p):
             ''' node : NAME '/' NAME'''
             p[0] = ('node',{'group':p[1],'name':p[3]})
-
+            
+      def p_node_args(self,p):
+            ''' node : node args'''
+            p[1][1].update({'args':p[2]})
+            print("P1",p[1])
+            p[0] = p[1]
+            
+      def p_args_name(self,p):
+            ''' args : NAME '''
+            p[0] = [p[1]]
+            
+      def p_args(self,p):
+            ''' args : NAME args '''
+            p[0] = [p[1]] + p[2]
+            
       def p_transform_filter(self,p):
             ''' transform : F filter'''
             p[0] = [p[2]]

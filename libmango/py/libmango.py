@@ -43,7 +43,8 @@ class m_node:
         try:
            result = self.interface.get_function(header['name'])(header,args)
            if not result is None:
-               self.m_send(result[0],result[1])
+               print("sending with MID",header.get('mid',None))
+               self.m_send(result[0],result[1],mid=header.get('mid',None))
         except Exception as exc:
            self.handle_error(header['src_node'],traceback.format_exc())
 
@@ -69,8 +70,9 @@ class m_node:
     #     self.debug_print(self.node_id)
     #     self.debug_print("registered as " + self.node_id)
 
-    def make_header(self,name,msg_type=None):
+    def make_header(self,name,msg_type=None,mid=None):
         header = {'name':name}
+        if mid: header['mid'] = mid
         if msg_type: header['type'] = msg_type
         self.debug_print("H",header)
         return header
@@ -78,9 +80,9 @@ class m_node:
     def mc_send(self,name,msg):
         self.dataflow.send(self.make_header(name,'system'),msg)
         
-    def m_send(self,name,msg):
+    def m_send(self,name,msg,mid=None):
         self.debug_print('sending',msg)
-        self.dataflow.send(self.make_header(name),msg)
+        self.dataflow.send(self.make_header(name,mid=mid),msg)
 
     def debug_print(self,*args):
         if self.debug: print("[{} DEBUG] ".format(self.node_id),*args)

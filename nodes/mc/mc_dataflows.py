@@ -29,7 +29,7 @@ class mc_router_dataflow():
         route = self.transport.rx()
         data = self.transport.rx()
         header,args = self.serialiser.deserialise(data)
-        self.dispatch_cb(header,args,data,route)
+        self.dispatch_cb(header,args,route)
 
     def send(self,header,msg,route):
         print(type(route),route)
