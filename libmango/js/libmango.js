@@ -40,7 +40,7 @@ function MNode(debug){
     }
 
     this.heartbeat = function(header,args){
-	this.m_send("alive",{},undefined,"system");
+	self.m_send("alive",{},undefined,"system");
     }
 
     this.make_header = function(name,mid,type){

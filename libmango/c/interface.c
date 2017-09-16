@@ -110,7 +110,7 @@ void m_interface_load(m_interface_t *i, char *filename){
   cJSON_AddItemToObject(i->interface, name, new_if);
 }
 
-int m_interface_handle(m_interface_t *i, char *fn_name, cJSON *handler(m_node_t *node, cJSON *header, cJSON *args)){
+int m_interface_handle(m_interface_t *i, char *fn_name, cJSON *handler(m_node_t *node, cJSON *header, cJSON *args, m_result_t *result)){
   //int present = cJSON_HasObjectItem(i->interface, fn_name);
   void *fn = m_dict_get(i->handlers, fn_name);
   //if(!present) return -1; // Function not in interface
@@ -124,7 +124,7 @@ int m_interface_validate(m_interface_t *i, char *fn_name){
   return m_dict_get(i->handlers, fn_name) == NULL ? 0 : 1;
 }
 
-cJSON *(*m_interface_handler(m_interface_t *i, char *fn_name))(struct m_node *, cJSON *, cJSON *){
+cJSON *(*m_interface_handler(m_interface_t *i, char *fn_name))(struct m_node *, cJSON *, cJSON *, m_result_t *result){
   return m_dict_get(i->handlers, fn_name);
 }
 

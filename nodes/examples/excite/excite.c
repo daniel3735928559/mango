@@ -10,12 +10,12 @@ int main(int argc, char **argv){
   m_node_run(node);
 }
 
-cJSON *excite(m_node_t *node, cJSON *header, cJSON *args){
-  cJSON *ans = cJSON_CreateObject();
-  char *s = cJSON_GetObjectItem(args,"str")->valuestring;
-  unsigned long l = strlen(s);
-  char *excited = malloc(l+2);
-  sprintf(excited, "%s!",cJSON_GetObjectItem(args,"str")->valuestring);
-  cJSON_AddStringToObject(ans,"excited",excited);
-  return ans;
+cJSON *excite(m_node_t *node, cJSON *header, cJSON *args, m_result_t *result){
+  char *str = cJSON_GetObjectItem(args,"str")->valuestring;
+  unsigned long len = strlen(str);
+  char *excited = malloc(len+2);
+  snprintf(excited, len+2, "%s!",str);
+  cJSON_AddStringToObject(result->data,"str",excited);
+  result->name = "excited";
+  result->data = ans;
 }
