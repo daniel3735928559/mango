@@ -183,9 +183,20 @@ class mc(m_node):
 
     def load_types(self, base, spec):
         for t in spec:
-            iface_path = spec[t]['if']
-            with open(os.path.join(base, iface_path),'r') as f:
-                spec[t]['if'] = mc_if(yaml.load(f.read()))
+            if 'if' in spec[t]:
+                iface_path = spec[t]['if']
+                with open(os.path.join(base, iface_path),'r') as f:
+                    spec[t]['if'] = mc_if(yaml.load(f.read()))
+            elif 'dual_if' in spec[t]:
+                iface_path = spec[t]['dual_if']
+                with open(os.path.join(base, iface_path),'r') as f:
+                    iface = yaml.load(f.read())
+                    ins,outs = iface['inputs'],iface['outputs']
+                    iface['inputs'] = outs
+                    iface['outputs'] = ins
+                    spec[t]['if'] = mc_if(iface)
+            print("IFACE",spec[t]['if'])
+                
             spec[t]['dir'] = base
             self.index.add("types",NodeType(t,base,spec[t].get('run',''),spec[t]['if'],spec[t]['lang'],spec[t]))
             

@@ -1,10 +1,14 @@
 from lxml import etree
 from error import *
+import json
 import pijemont.verifier
 
 class mc_if:
     def __init__(self,iface):
         self.interface = iface
+
+    def __repr__(self):
+        return json.dumps(self.interface)
         
     def validate(self, function_name, args):
         """

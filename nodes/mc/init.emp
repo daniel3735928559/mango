@@ -2,7 +2,7 @@
 
 [nodes]
 mx shell
-excite_js ex
+excite_c ex
 excite_fe ex_fe --MU_HTTP_PORT=11702
 
 [routes]
