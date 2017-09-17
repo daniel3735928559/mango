@@ -1,0 +1,24 @@
+{
+  "name": "mango",
+  "version": "1.0.0",
+  "description": "ipc routing library",
+  "main": "libmango/js/libmango.js",
+  "dependencies": {
+    "js-yaml": "^3.7.0",
+    "zmq": "^2.15.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daniel3735928559/mango.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/daniel3735928559/mango/issues"
+  },
+  "homepage": "https://github.com/daniel3735928559/mango#readme"
+}
