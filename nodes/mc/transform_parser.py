@@ -4,7 +4,7 @@ import sys,re,json,copy
 
 class transform_lexer:
       def __init__(self):
-            self.tokens = ['NAME','FLOAT','INT','F','E','R','FE','FR','SPLIT','MERGE','TRUE','FALSE','POP','STRING','REGEX','GE','EQ','LE','EXP','AND','OR','PE','ME','TE','DE','RE','BI','ID']
+            self.tokens = ['NAME','FLOAT','INT','F','E','R','FE','FR','TRUE','FALSE','POP','STRING','REGEX','GE','EQ','LE','EXP','AND','OR','PE','ME','TE','DE','RE','BI','ID']
             self.literals = ['<','>',';','+','-','{','}','[',']','(',')','=','!','&','|','~',',',':','*','/','?']
             self.t_RE = '~='
             self.t_PE = '\+='
@@ -40,8 +40,6 @@ class transform_lexer:
                   'r' : 'R',
                   'fe' : 'FE',
                   'fr' : 'FR',
-                  'split' : 'SPLIT',
-                  'merge' : 'MERGE',
                   'true' : 'TRUE',
                   'false' : 'FALSE',
                   'pop' : 'POP'
