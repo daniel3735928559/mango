@@ -40,6 +40,8 @@ m_node_t *m_node_new(char debug){
   free(node_if_path);
   n->local_gateway = m_transport_new(n->server_addr, n->zmq_context, n->route);
   n->dataflow = m_dataflow_new(n, n->local_gateway, n->serialiser, n->interface, m_node_dispatch, m_node_handle_error);
+  m_node_handle(n, "heartbeat", m_node_heartbeat);
+  m_debug_print(n,"HELLO",NULL);
   return n;
 }
 
@@ -53,6 +55,7 @@ int m_node_handle(m_node_t *node, char *fn_name, cJSON *(*handler)(m_node_t *, c
 
 void m_node_dispatch(m_node_t *node, cJSON *header, cJSON *args){
   m_result_t *result = (m_result_t *)malloc(sizeof(m_result_t));
+  m_debug_print(node, "RX", cJSON_GetObjectItem(header,"name")->valuestring);
   result->name = NULL;
   result->data = cJSON_CreateObject();
   m_interface_handler(node->interface, cJSON_GetObjectItem(header,"name")->valuestring)(node, header, args, result);
@@ -75,16 +78,10 @@ void m_node_handle_error(m_node_t *node, char *src, char *err){
   free(args);
 }
 
-cJSON *m_node_reg(m_node_t *node, cJSON *header, cJSON *args){
-  if(strcmp(cJSON_GetObjectItem(header,"src_node")->valuestring,"mc")){
-    return NULL;
-  }
-  node->node_id = strdup(cJSON_GetObjectItem(args,"id")->valuestring);
-  return NULL;
-}
-
 cJSON *m_node_heartbeat(m_node_t *node, cJSON *header, cJSON *args, m_result_t *result){
-  m_node_send(node,"alive",cJSON_CreateObject(),NULL,"system");
+  m_debug_print(node, "HB", NULL);
+  m_node_send(node,"alive",cJSON_CreateObject(),cJSON_GetObjectItem(header,"mid")->valuestring,"system");
+  return NULL;
 }
 
 cJSON *m_node_make_header(m_node_t *node, char *name, char *mid, char *type){
@@ -96,8 +93,13 @@ cJSON *m_node_make_header(m_node_t *node, char *name, char *mid, char *type){
 }
 
 void m_node_send(m_node_t *node, char *name, cJSON *msg, char *mid, char *type){
+  m_debug_print(node, "SENDING", name);
   cJSON *header = m_node_make_header(node,name,mid,type);
   m_dataflow_send(node->dataflow,header,msg);
+}
+
+void m_debug_print(m_node_t *node, char *tag, char *msg){
+  if(node->debug) printf("[%s DEBUG] %s %s\n", node->node_id, tag, msg);
 }
 
 void m_node_run(m_node_t *node){

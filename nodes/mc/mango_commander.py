@@ -121,13 +121,13 @@ class mc(m_node):
             for n in to_reap:
                 self.delete_node(n)
         else:
-            header = self.make_header("heartbeat")
+            header = self.make_header("heartbeat",mid=self.gen_mid())
             n = self.index.query("nodes","route",[node])[0]
             n.last_heartbeat_time = time.time()
             self.dataflow.send(header,{},n.route)
             
     def mc_error(self,header,args):
-        self.deubg_print("ERR",header,args)
+        self.debug_print("ERR",header,args)
 
     def mc_system_dispatch(self,header,args,route):
         self.debug_print("MC SYSTEM DISPATCH",header,args, route)
@@ -150,11 +150,14 @@ class mc(m_node):
         
     def remote_recv(self,h,c,raw,route,dataflow):
         pass
+
+    def gen_mid(self):
+        return self.gen_route_key()+"_"+str(time.time());
     
     def mc_recv(self,h,c,route):
         if not 'mid' in h:
             print("MC adding MID")
-            h['mid'] = self.gen_route_key()+"_"+str(time.time())
+            h['mid'] = self.gen_mid()
         self.debug_print("MC got",h,c,route)
         nodes = self.index.query("nodes","route",[route.decode('ascii')])
         print("nodes",route.decode('ascii'),nodes)

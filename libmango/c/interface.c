@@ -40,19 +40,19 @@ cJSON *m_interface_process_yaml(yaml_parser_t *parser){
     if (event.type == YAML_SCALAR_EVENT) {
       if(storage){
 	//printf("STORE EV=%s key=%s, CUR=%s\n", event.data.scalar.value, current_key, cJSON_Print(current));
-	cJSON *o = cJSON_CreateString(event.data.scalar.value);
+	cJSON *o = cJSON_CreateString((char *)event.data.scalar.value);
 	cJSON_AddItemToObject(current, current_key, o);
       }
       else{
 	//printf("MAP EV=%s\n", event.data.scalar.value);
-	current_key = strdup(event.data.scalar.value);
+	current_key = strdup((char *)event.data.scalar.value);
       }
       storage ^= VAL;
     }
     
     else if (event.type == YAML_SEQUENCE_START_EVENT){
       cJSON *arr = cJSON_CreateArray();
-      cJSON_AddItemToObject(current, event.data.scalar.value, arr);
+      cJSON_AddItemToObject(current, (char *)event.data.scalar.value, arr);
       storage = SEQ;
     }
 

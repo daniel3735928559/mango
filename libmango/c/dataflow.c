@@ -41,11 +41,17 @@ void m_dataflow_recv(m_dataflow_t *d){
   cJSON *m = m_serialiser_deserialise(d->serialiser,data);
   cJSON *header = cJSON_GetObjectItem(m,"header");
   cJSON *args = cJSON_GetObjectItem(m,"args");
-  
-  if(!m_interface_validate(d->interface, cJSON_GetObjectItem(header,"name")->valuestring)){
-    d->error(d->node, cJSON_GetObjectItem(header,"src_port")->valuestring, "Unkown message");
+
+  if(!cJSON_HasObjectItem(header,"name")){
+    m_debug_print(d->node, "ERROR", "No name");
+    d->error(d->node, "no name", "Invalid header");
+  }  
+  else if(!m_interface_validate(d->interface, cJSON_GetObjectItem(header,"name")->valuestring)){
+    m_debug_print(d->node, "ERROR", cJSON_GetObjectItem(header,"name")->valuestring);
+    d->error(d->node, cJSON_GetObjectItem(header,"name")->valuestring, "Unknown message");
     return;
   }
+  m_debug_print(d->node, "DISPATCH", cJSON_GetObjectItem(header,"name")->valuestring);
   d->dispatch(d->node, header, args);
   free(data);
   cJSON_Delete(m);

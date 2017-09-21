@@ -29,6 +29,7 @@ cJSON *m_node_make_header(m_node_t *node, char *command, char *mid, char *type);
 void m_node_send(m_node_t *node, char *command, cJSON *msg, char *mid, char *type);
 void m_node_add_interface(m_node_t *node, char *filename);
 int m_node_handle(m_node_t *node, char *fn_name, cJSON *(*handler)(m_node_t *, cJSON *, cJSON *, m_result_t *result));
+void m_debug_print(m_node_t *node, char *tag, char *msg);
 void m_node_run(m_node_t *node);
 
 #endif
