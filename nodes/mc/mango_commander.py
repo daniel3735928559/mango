@@ -20,8 +20,8 @@ import yaml
 
 class mc(m_node):
     
-    def __init__(self):
-        super().__init__(debug=True)
+    def __init__(self,debug=False):
+        super().__init__(debug=debug)
         self.transform_parser = transform_parser()
         
         # Now read xml file to get list of nodes and shell commands to spin them up.  
@@ -102,7 +102,7 @@ class mc(m_node):
         self.reaper_thread.start()
         self.too_old = 200
         with open("./init.emp","r") as f:
-            print(self.mp(f.read(), "system"))
+            self.debug_print(self.mp(f.read(), "system"))
         self.run()
 
     ## Internal functions
@@ -156,12 +156,9 @@ class mc(m_node):
     
     def mc_recv(self,h,c,route):
         if not 'mid' in h:
-            print("MC adding MID")
             h['mid'] = self.gen_mid()
         self.debug_print("MC got",h,c,route)
         nodes = self.index.query("nodes","route",[route.decode('ascii')])
-        print("nodes",route.decode('ascii'),nodes)
-        #print(self.index.multiindex)
         if len(nodes) == 1:
             if h.get('type','') == 'system':
                 self.mc_system_dispatch(h,c,route.decode('ascii'))
@@ -169,15 +166,15 @@ class mc(m_node):
                 src_node = nodes[0]
                 self.node_send(src_node, h, c)
         else:
-            print("Received message from non-existent or ambiguous node",h,c,route)
+            self.debug_print("Received message from non-existent or ambiguous node",h,c,route)
 
     def node_send(self, n, h, c):
         h['src_node'] = n.node_id
-        print("passing along",h,c,n)
+        self.debug_print("passing along",h,c,n)
         routes = self.index.query("routes","src",[str(n)])
-        print("RS",routes)
+        self.debug_print("RS",routes)
         for r in routes:
-            print("SENDING ON",str(r))
+            self.debug_print("SENDING ON",str(r))
             raw = self.serialiser.serialise(h,c)
             r.send(raw,h,c)
         
@@ -198,7 +195,7 @@ class mc(m_node):
                     iface['inputs'] = outs
                     iface['outputs'] = ins
                     spec[t]['if'] = mc_if(iface)
-            print("IFACE",spec[t]['if'])
+            self.debug_print("IFACE",spec[t]['if'])
                 
             spec[t]['dir'] = base
             self.index.add("types",NodeType(t,base,spec[t].get('run',''),spec[t]['if'],spec[t]['lang'],spec[t]))
@@ -208,15 +205,13 @@ class mc(m_node):
         manifest_path = manifest_dir+'/config.yaml'
         with open(manifest_path) as f:
             manifest = yaml.load(f.read())
-        print("M",manifest)
+        self.debug_print("M",manifest)
         dirs = manifest.get('nodes',[])
         self.langs = manifest.get('langs',{})
         for d in dirs:
-            print("D",d)
             node_path = os.path.join(manifest_dir,d)
             with open(os.path.join(node_path,'mango.yaml')) as f:
                 node_spec = yaml.load(f.read())
-                print("S",node_spec)
                 self.load_types(node_path, node_spec)
     ### Remove objects
     
@@ -256,13 +251,13 @@ class mc(m_node):
     def delete_group(self, group):
         # Delete all nodes
         nodes = self.index.query("nodes","group",[group])
-        print("DELETING NODES: ",nodes)
+        self.debug_print("DELETING NODES: ",nodes)
         for n in nodes:
             self.delete_node(n)
 
         # Delete all routes
         routes = self.index.query("routes","group",[group])
-        print("DELETING ROUTES: ",nodes)
+        self.debug_print("DELETING ROUTES: ",nodes)
         for r in routes:
             self.delete_route(r)
 
@@ -276,11 +271,11 @@ class mc(m_node):
     #     # Generate ID based on requested name ID and a key, make a
     #     # Node object based on this, add it to the list, and return
     #     # the ID and key
-    #     print("HELLO from")
-    #     print(header["source"])
-    #     print(args)
+    #     self.debug_print("HELLO from")
+    #     self.debug_print(header["source"])
+    #     self.debug_print(args)
     #     n = Node(self.gen_id(args["id_request"]),self.gen_key(),self.ports["stdio"],self.nodes["mc"]) # replace local_gateway with the actual socket that the command came in on
-    #     print("New node: "+n.node_id)
+    #     self.debug_print("New node: "+n.node_id)
     #     self.nodes[n.node_id] = n
     #     return {"node_id":n.node_id,"key":n.key}
 
@@ -290,7 +285,7 @@ class mc(m_node):
         return len(self.index.query("nodes","group_name", [group, name])) > 0
     
     def get_node(self, name, group="system"):
-        print('GN',name, group)
+        self.debug_print('GN',name, group)
         nodes = self.index.query("nodes","group_name", [group, name])
         if len(nodes) == 0:
             raise Exception("No such node: {}/{}".format(group, name))
@@ -316,11 +311,11 @@ class mc(m_node):
         self.index.add("groups",Group(name))
 
     def create_routes(self, route_spec, group):
-        print("CR",route_spec)
+        self.debug_print("CR",route_spec)
         grp = self.find_group(group)
         for r in self.transform_parser.parse(route_spec):
             src_name,src_group = r[0][1]['name'],r[0][1].get('group',group)
-            print(src_name, src_group)
+            self.debug_print(src_name, src_group)
             if "/" in src_name: src_group,src_name = src_name.split("/")
             src = self.get_node(src_name, src_group)
             
@@ -328,14 +323,14 @@ class mc(m_node):
             if "/" in dst_name: dst_group,dst_name = dst_name.split("/")
             dest = self.get_node(dst_name, dst_group)
 
-            print("R",r)
+            self.debug_print("R",r)
             if src.node_type == 'merge':
                 src.add_mergeset(r[0][1]['args'])
             if dest.node_type == 'merge':
                 dest.add_mergepoint(r[-1][1]['args'][0])
                 dest = Mergepoint(dest, r[-1][1]['args'][0])
             
-            print("new route",src,dest)
+            self.debug_print("new route",src,dest)
             
             new_route = {"src":src, "dest":dest, "route":Route(grp.rt_id(), src, [Transform(t) for t in r[1:-1]], dest, group, route_spec)}
             self.index.add("routes",new_route['route'])
@@ -367,11 +362,11 @@ class mc(m_node):
                     section = l[1:-1]
                     prog[section] = []
                 elif section is None:
-                    print("Line without section header!")
+                    self.debug_print("Line without section header!")
                 elif l != "":
                     prog[section] += [l]
             
-            print(prog)
+            self.debug_print(prog)
             # Config lines are of the form:
             # name = value
             
@@ -386,14 +381,14 @@ class mc(m_node):
             # [group/]node --arg1=value1 --arg2=value2 ...
             for l in prog.get('nodes',[]):
                 ll = shlex.split(l)
-                print(ll)
+                self.debug_print(ll)
                 new_node = {"group": group, "node": ll[1], "args":{}, "type": ll[0]}
                 for a in ll[2:]:
                     m = re.match('--([a-zA-Z_][a-zA-Z_0-9]*)=(.*)',a)
                     if m:
                         new_node['args'][m.group(1)] = m.group(2)
                     else:
-                        print("Malformed argument: {}".format(a))
+                        self.debug_print("Malformed argument: {}".format(a))
 
                 self.launch_node(new_node['type'], new_node['node'], new_node['group'], new_node['args'])
                 #new_nodes.append(new_node)
@@ -402,7 +397,7 @@ class mc(m_node):
             for l in prog.get('routes',[]):
                 self.create_routes(l.strip(),group)
             
-            print("Starting", group)
+            self.debug_print("Starting", group)
             
         except Exception as e:
             # If there was an exception, tear down the whole group we just created:
@@ -425,7 +420,7 @@ class mc(m_node):
         base_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../')
         lib_base_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../../libmango')
         t = self.index.query("types","name",[n])[0]
-        print("T",t)
+        self.debug_print("T",t)
         lang = t.lang
         node_base = t.wd
         lib_path = os.path.join(lib_base_path,lang)
@@ -437,13 +432,13 @@ class mc(m_node):
         self.add_node(node_id, node_group, n, new_route, self.dataflow, t.iface)
         if lang == "mu":
             mu_path = os.path.join(base_path, 'mu/mu.py')
-            print(mu_path)
+            self.debug_print(mu_path)
             lib_path = os.path.join(lib_base_path,"py")
             nenv[self.langs["py"]['pathvar']] = lib_path
-            print("nb",node_base,nenv,mu_path,shlex.split("python " + mu_path))
+            self.debug_print("nb",node_base,nenv,mu_path,shlex.split("python " + mu_path))
             subprocess.Popen(shlex.split("python " + mu_path), cwd=node_base, env=nenv)
         else:
-            print("E",nenv,"B",node_base,"R",t.run)
+            self.debug_print("E",nenv,"B",node_base,"R",t.run)
             subprocess.Popen(shlex.split(t.run), cwd=node_base, env=nenv)
         return "success",{}
         return "error",{'message':'no such node type: {}'.format(n)}
@@ -502,7 +497,7 @@ class mc(m_node):
             return self.success(False,"no such node")
 
     def addroute(self,header,args):
-        print("BUILDING ROUTE",header,args)
+        self.debug_print("BUILDING ROUTE",header,args)
         try:
             self.create_routes(args['spec'],args['group'])
             return self.success()
@@ -544,4 +539,4 @@ class mc(m_node):
         return "doc",{"doc":pijemont.doc.doc_gen(to_doc)}
 
 os.environ["MANGO_ID"] = "mc"
-m = mc()
+m = mc(debug=True)
