@@ -7,13 +7,13 @@ echo "MID" $MANGO_ID
 python mx_agent.py &
 export MX_PID=$!
 echo $MX_PID
-while [[ ! -f .run/$MX_PID && ! -p .run/"$MX_PID"_out ]]; do
-  [[ -f .run/"$MX_PID"_out ]] && echo hello;
-  [[ ! -f .run/"$MX_PID"_out ]] && echo hello2;
+while [[ ! -f .run/"$MX_PID"_init.tmp && ! -p .run/"$MX_PID"_out.tmp ]]; do
+  [[ -f .run/"$MX_PID"_out.tmp ]] && echo hello;
+  [[ ! -f .run/"$MX_PID"_out.tmp ]] && echo hello2;
   printf '.';
   sleep 1;
   done
-bash --init-file .run/$MX_PID
+bash --init-file .run/"$MX_PID"_init.tmp
 #XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/home/zoom/.Xauthority DISPLAY=:0 terminator -e "bash --init-file .run/$MX_PID"
 #screen -c screenrc
 

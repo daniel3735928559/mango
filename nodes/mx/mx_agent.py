@@ -60,7 +60,7 @@ class mx_agent(m_node):
 
             self.handlers = {'print':self.print_handler,'file':self.file_handler,'nop':self.nop_handler}
             #os.mkfifo('.run/'+str(self.pid)+'_out')
-            self.sh_init = open('.run/'+str(self.pid),'w')
+            self.sh_init = open('.run/'+str(self.pid)+'_init.tmp','w')
             with open('.init','r') as f:
                   sh_init_base = f.read()
             self.sh_init.write(sh_init_base.format(pid=os.getpid(),port=self.fc.transport.port))
@@ -70,7 +70,7 @@ class mx_agent(m_node):
                   f.close()
             self.sh_init.flush()
             #print("asd")
-            self.output = open('.run/'+str(self.pid)+'_out','w')#os.open('.run/'+str(self.pid)+'_out',os.O_WRONLY)
+            self.output = open('.run/'+str(self.pid)+'_out.tmp','w')#os.open('.run/'+str(self.pid)+'_out',os.O_WRONLY)
             self.output.write("asd2\n")
             self.output.flush()
             #print("asd3")
