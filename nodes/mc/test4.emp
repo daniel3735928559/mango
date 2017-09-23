@@ -2,8 +2,9 @@
 
 [nodes]
 mx shell
-excite_js ex
+excite_c ex
 excite_fe ex_fe --MU_HTTP_PORT=11702
+guppy maths --MU_HTTP_PORT=9876
 
 [routes]
 shell <> mc

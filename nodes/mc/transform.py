@@ -3,12 +3,13 @@ import sys,re,json,copy
 class Transform:
       def __init__(self, ast):
             self.ast = ast
-            print("AST",ast)
+            #print("AST",ast)
             self.kind = self.ast[0];
             self.env = {}
             self.node_types = ['add','and','div','edit','eq','filter','ge','gt','le','like','list','lt','map','mul','exp','neg','not','or','replace','re_sub','re_subi','script','sub','ternary','test','value','var','var_value','pop','assign']
             self.operand_types = ['list','num','bytes','map','bool']
             self.evals = {}
+            self.strs = {}
             self.checks = {}
             self.operation_args_types = {
                   'add':[('list','list'), ('num','num'), ('bytes','bytes')],
@@ -17,9 +18,10 @@ class Transform:
             }
             for x in self.node_types:
                   self.evals[x] = getattr(self,'eval_'+x)
+                  self.strs[x] = getattr(self,'str_'+x)
 
       def __repr__(self):
-            return str(self.ast)
+            return self.s(self.ast)
                   
       def eval_add(self, n, d):
             return self.e(n[1], d) + self.e(n[2], d)
@@ -148,13 +150,126 @@ class Transform:
       
       def e(self, n, d):
             #print('NODE: ',n)
+            #print('DATA: ',d)
+            #print('ENV: ',self.env)
             ans = self.evals[n[0]](n, d)
             #print('ANS: ',ans,n)
             return ans
-      
+
       def evaluate(self, env, d):
             self.env = env
             return self.e(self.ast, d)
+
+      def s(self, n):
+            #print("S",n)
+            return self.strs[n[0]](n)
+
+      def str_add(self, n):
+            return "{} + {}".format(self.s(n[1]), self.s(n[2]))
+
+      def str_and(self, n):
+            return "{} && {}".format(self.s(n[1]), self.s(n[2]))
+
+      def str_div(self, n):
+            return "{} / {}".format(self.s(n[1]), self.s(n[2]))
+
+      def str_edit(self, n):
+            ans = ""
+            sep = ""
+            if 'newname' in n[1]: ans,sep = "name={}".format(n[1]['newname']),", "
+            if 'script' in n[1]: ans += "{}{}".format(sep,self.s(n[1]['script']))
+            ans = "edit({})".format(ans)
+            if 'name' in n[1]: ans = "if name=={}: {}".format(n[1]['name'],ans)
+            return ans
+      
+      def str_eq(self, n):
+            return "{} = {}".format(self.s(n[1]), self.s(n[2]))
+
+      def str_filter(self, n):
+            ans,sep = "",""
+            if 'name' in n[1]: ans,sep = 'name == {}'.format(n[1]['name']),' and '
+            if 'test' in n[1]: ans += "{}{}".format(sep, self.s(n[1]['test']))
+            return "filter({})".format(ans)
+
+      def str_ge(self, n):
+            return "{} >= {}".format(self.s(n[1]), self.s(n[2]))
+
+      def str_gt(self, n):
+            return "{} > {}".format(self.s(n[1]), self.s(n[2]))
+
+      def str_le(self, n):
+            return "{} <= {}".format(self.s(n[1]), self.s(n[2]))
+
+      def str_like(self, n):
+            return "{} ~ {}".format(self.s(n[1]), self.s(n[2]))
+
+      def str_list(self, n):
+            ans = ", ".join([self.s(x) for x in n[1]])
+            return "[{}]".format(ans)
+
+      def str_lt(self, n):
+            return "{} < {}".format(self.s(n[1]), self.s(n[2]))
+
+      def str_map(self, n):
+            return "{" + ",".join(["{}:{}".format(x['key'],self.s(x['value'])) for x in n[1]]) + "}"
+
+      def str_mul(self, n):
+            return "{} * {}".format(self.s(n[1]), self.s(n[2]))
+
+      def str_exp(self, n):
+            return "{}^{}".format(self.s(n[1]), self.s(n[2]))
+
+      def str_neg(self, n):
+            return "-{}".format(self.s(n[1]))
+
+      def str_not(self, n):
+            return "not({})".format(self.s(n[1]), self.s(n[2]))
+
+      def str_or(self, n):
+            return "{} || {}".format(self.s(n[1]), self.s(n[2]))
+
+      def str_replace(self, n):
+            ans,sep = "",""
+            if 'newname' in n[1]: ans,sep = "name={}".format(n[1]['newname']),', '
+            if 'map' in n[1]: ans += "{}{}".format(sep, self.s(n[1]['map']))
+            ans = "replace({})".format(ans)
+            if 'name' in n[1]: ans = "if name=={}: {}".format(n[1]['name'],ans)
+            return ans
+
+      def str_re_sub(self, n):
+            return "s/{}/{}/".format(self.s(n[1]), self.s(n[2]))
+
+      def str_re_subi(self, n):
+            return "s/{}/{}/i".format(self.s(n[1]), self.s(n[2]))
+
+      def str_script(self, n):
+            return ";".join([self.s(x) for x in n[1]])
+
+      def str_sub(self, n):
+            return "{} - {}".format(self.s(n[1]), self.s(n[2]))
+
+      def str_ternary(self, n):
+            return "{} ? {} : {}".format(self.s(n[1]), self.s(n[2]), self.s(n[3]))
+
+      def str_test(self, n):
+            return "test()".format(self.s(n[1]))
+
+      def str_value(self, n):
+            return "{}".format(n[1])
+
+      def str_var(self, n):
+            return "{}".format(n[1])
+
+      def str_var_value(self, n):
+            return "{}".format(n[1])
+
+      def str_pop(self, n):
+            return "pop {}".format(self.s(n[1]))
+
+      def str_assign(self, n):
+            return "{} = {}".format(self.s(n[1]), self.s(n[2]))
+
+
       
 if __name__ == "__main__":
       import transform_parser
@@ -169,12 +284,17 @@ if __name__ == "__main__":
       name = "hello"
       data = {'x':2, 'y':'asda', 'z':[1,2,3,4], 'w':{'a':'blah'}}
       for t in routes[0][1:-1]:
-            if t[0] == 'filter':
-                  if t[1].evaluate(name, data):
+            t = t[1]
+            t.env['name'] = name
+            print("APPLYING",t)
+            #print("STR",t.s(t.ast))
+            if t.kind == 'filter':
+                  if t.evaluate(t.env, data):
                         continue
                   else:
                         print("FILTERED")
+                        break
             else:
-                  data = t[1].evaluate(name, data)
-                  name = t[1].env.get('name','')
+                  data = t.evaluate(t.env, data)
+                  name = t.env.get('name','')
       print(name,data)
