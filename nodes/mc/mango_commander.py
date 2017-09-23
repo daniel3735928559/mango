@@ -56,7 +56,7 @@ class mc(m_node):
             "routes":{
                 "src":["src_name","dst_name"],
                 "dst":["dst_name","src_name"],
-                "group":["group"],
+                "group":["group","edits"],
                 "group_src":["group","src_name","dst_name"],
                 "group_id":["group","route_id"],
                 "group_dst":["group","dst_name","src_name"]
@@ -476,14 +476,19 @@ class mc(m_node):
         ans = {s:self.index.search(s+'s',args[s]) for s in ['type','group','node','route'] if s+'s' in args}
             
         if len(list(ans.keys())) == 0:
-            ns = self.index.search("nodes")
-            rs = self.index.search("routes")
+            ns = self.index.get_all("nodes")
+            rs = self.index.get_all("routes")
             gs = self.index.search("groups")
             ts = self.index.search("types")
-            ans = {"nodes":[str(x) for x in ns],
-                   "routes":[str(x) for x in rs],
+            ans = {"nodes":ns,
+                   "routes":rs,
                    "groups":[str(x) for x in gs],
                    "types":[str(x) for x in ts]}
+            # ans = {"nodes":[str(x) for x in ns],
+            #        "routes":[str(x) for x in rs],
+            #        "groups":[str(x) for x in gs],
+            #        "types":[str(x) for x in ts]}
+            print("ANS",ans)
         return "info",ans
 
     def delnode(self,header,args):

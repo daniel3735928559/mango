@@ -5,6 +5,7 @@
   "main": "libmango/js/libmango.js",
   "dependencies": {
     "js-yaml": "^3.7.0",
+    "vis": "^4.20.1",
     "zmq": "^2.15.3"
   },
   "devDependencies": {},

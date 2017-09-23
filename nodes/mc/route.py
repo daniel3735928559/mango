@@ -15,6 +15,7 @@ class Route:
         self.dst_name = str(end)
         self.group = group
         self.transforms = transforms
+        self.edits = self.transform_spec()
 
     def apply(self,raw,header,args):
         data = args
@@ -50,10 +51,13 @@ class Route:
             print("R SEND RAW",self.dst,self.dst.dataflow)
             self.dst.dataflow.send_raw(m,bytearray(self.dst.node_id,'utf-8'))
 
+    def transform_spec(self):
+        return " > ".join([str(t) for t in self.transforms])
+            
     def __repr__(self):
         name = "{}/{}".format(self.group, self.route_id)
         if len(self.transforms) > 0:
-            spec = "{} > {} > {}".format(str(self.src), str(self.transforms), str(self.dst))
+            spec = "{} > {} > {}".format(str(self.src), self.transform_spec(), str(self.dst))
         else:
             spec = "{} > {}".format(str(self.src), str(self.dst))
         return "{}: {}".format(name, spec)

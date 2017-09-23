@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <script type="text/javascript" src="/mangojs/reconnecting-websocket.min.js"></script>
+    <script type="text/javascript" src="/mangojs/mu.js"></script>
+    <link href="/vis-network.min.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="/vis.min.js"></script>
+    <!-- <script type="text/javascript" src="/vis-network.min.js"></script> -->
+    <title>MU TEST</title>
+    <script type="text/javascript">
+      var mango;
+     window.onload = function(){
+	 var info_cb = function(header, args){
+	     console.log("INFO", header, args);
+	     var ns = args['nodes'];
+	     var nodes = [];
+	     var name_to_id = {}
+	     for(var i = 0; i < ns.length; i++){
+		 name = ns[i]['group'] + '/' + ns[i]['node_id']
+		 nodes.push({"id":i, "label":name})
+		 name_to_id[name] = i;
+	     }
+	     var rs = args['routes']
+	     var edges = [];
+	     
+	     for(var i = 0; i < rs.length; i++){
+		 edges.push({"from":name_to_id[rs[i]['src_name']],"to":name_to_id[rs[i]['dst_name']],"label":rs[i]['edits']});
+	     }
+	     console.log("NE",JSON.stringify(nodes),JSON.stringify(edges));
+	     var data = {
+		 nodes: nodes,
+		 edges: edges
+	     };
+	     var options = {
+		 edges: {
+		     font: {
+			 size: 12
+		     }
+		 },
+		 nodes: {
+		     shape: 'box',
+		     margin: 10
+		 },
+		 physics: {
+		     enabled: false
+		 }
+	     };
+	     
+	    var network = new vis.Network(document.getElementById('mynetwork'), data, options);
+	     
+	 }
+         mango = new Mango({"info":info_cb,"dostuff":function(header,args){console.log("DOING STUFF",header,args);}});
+     };
+     var test = function(){
+        mango.m_send("excite",{"str":document.getElementById('tosend').value});
+      }
+    </script>
+  </head>
+  <body>
+    <div id="mynetwork" style="width:800px"></div>
+
+
+    <textarea id="tosend"></textarea><br />
+    <a href="#" onclick="test(document)">hello</a>
+    <script type="text/javascript">
+     /* var nodes = [{"id":0,"label":"system/mc","x":0,"y":100},
+	{"id":1,"label":"system/shell","x":100,"y":100},
+	{"id":2,"label":"system/s1","x":200,"y":100},
+	{"id":3,"label":"system/m1","x":300,"y":100},
+	{"id":4,"label":"system/ex","x":400,"y":100},
+	{"id":5,"label":"system/ex_fe","x":500,"y":100},
+	{"id":6,"label":"system/mc_fe","x":600,"y":100}];
+      * var edges = [{"from":1,"to":0,"label":""},
+	{"from":0,"to":1,"label":""},
+	{"from":0,"to":6,"label":""},
+	{"from":5,"to":2,"label":""},
+	{"from":2,"to":4,"label":""},
+	{"from":2,"to":3,"label":""},
+	{"from":4,"to":3,"label":""},
+	{"from":3,"to":5,"label":"replace(name=excited, {str:excited.str + | + unexcited.str})"}];*/
+     /* var nodes = [
+	{ id: 100, label: 'This node has no fixed, minimum or maximum width or height', x: -50, y: -300 },
+	{ id: 210, widthConstraint: { minimum: 120 }, label: 'This node has a mimimum width', x: -400, y: -200 },
+	{ id: 211, widthConstraint: { minimum: 120 }, label: '...so does this', x: -500, y: -50 },
+	{ id: 220, widthConstraint: { maximum: 170 }, label: 'This node has a maximum width and breaks have been automatically inserted into the label', x: -150, y: -150 },
+	{ id: 221, widthConstraint: { maximum: 170 }, label: '...this too', x: -100, y: 0 },
+	{ id: 200, font: { multi: true }, widthConstraint: 150, label: '<b>This</b> node has a fixed width and breaks have been automatically inserted into the label', x: -300, y: 50 },
+	{ id: 201, widthConstraint: 150, label: '...this as well', x: -300, y: 200 },
+	{ id: 300, heightConstraint: { minimum: 70 }, label: 'This node\nhas a\nminimum\nheight', x: 100, y: -150 },
+	{ id: 301, heightConstraint: { minimum: 70 }, label: '...this one here too', x: 100, y: 0 },
+	{ id: 400, heightConstraint: { minimum: 100, valign: 'top' }, label: 'Minimum height\nvertical alignment\nmay be top', x: 300, y: -200 },
+	{ id: 401, heightConstraint: { minimum: 100, valign: 'middle' }, label: 'Minimum height\nvertical alignment\nmay be middle\n(default)', x: 300, y: 0 },
+	{ id: 402, heightConstraint: { minimum: 100, valign: 'bottom' }, label: 'Minimum height\nvertical alignment\nmay be bottom', x: 300, y: 200 }
+      * ];
+
+      * var edges = [
+	{ from: 100, to: 210, label: "unconstrained to minimum width"},
+	{ from: 210, to: 211, label: "more minimum width"},
+	{ from: 100, to: 220, label: "unconstrained to maximum width"},
+	{ from: 220, to: 221, label: "more maximum width"},
+	{ from: 210, to: 200, label: "minimum width to fixed width"},
+	{ from: 220, to: 200, label: "maximum width to fixed width"},
+	{ from: 200, to: 201, label: "more fixed width"},
+	{ from: 100, to: 300, label: "unconstrained to minimum height"},
+	{ from: 300, to: 301, label: "more minimum height"},
+	{ from: 100, to: 400, label: "unconstrained to top valign"},
+	{ from: 400, to: 401, label: "top valign to middle valign"},
+	{ from: 401, to: 402, widthConstraint: { maximum: 150 }, label: "middle valign to bottom valign"},
+      * ];*/
+     /* 
+      *      var container = document.getElementById('mynetwork');
+      *      var data = {
+      * 	 nodes: nodes,
+      * 	 edges: edges
+      *      };
+      *      var options = {
+      * 	 edges: {
+      * 	     font: {
+      * 		 size: 12
+      * 	     }
+      * 	     widthConstraint: {
+      * 		 maximum: 90
+      * 	     }
+      * 	 },
+      * 	 nodes: {
+      * 	     shape: 'box',
+      * 	     margin: 10
+      * 	     widthConstraint: {
+      * 		 maximum: 200
+      * 	     }
+      * 	 },
+      * 	 physics: {
+      * 	     enabled: false
+      * 	 }
+      *      };
+      *      var network = new vis.Network(container, data, options);*/
+</script>
+
+    </body>
+</html>

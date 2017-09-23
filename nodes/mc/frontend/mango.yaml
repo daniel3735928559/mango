@@ -1,0 +1,3 @@
+mc_fe:
+  lang: mu
+  dual_if: ../mc.yaml

@@ -9,6 +9,10 @@ class multiindex:
       def __init__(self, indices):
             """ indices = {group_name: {index1_name: [index1 property, subindex1 property, ...], index2_name: [index2 property, ...], ...}}"""
             self.indices = indices
+            self.properties = {g:set() for g in self.indices}
+            for g in self.indices:
+                  for i in self.indices[g]:
+                        self.properties[g] = self.properties[g].union(set(self.indices[g][i]))
             self.multiindex = {x:{n:{} for n in self.indices[x]} for x in self.indices}
             self.flat = set()
             
@@ -47,6 +51,10 @@ class multiindex:
             for index_name in self.indices[group_name]:
                   self.idx_add(group_name, index_name, obj)
 
+      def get_all(self, group_name):
+            nodes = self.query(group_name)
+            return [{p:getattr(x,p) for p in self.properties[group_name]} for x in nodes]
+      
       def search(self, group_name, props=[]):
             ans = self.query(group_name)
             for p in props:
