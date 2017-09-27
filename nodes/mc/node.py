@@ -29,6 +29,9 @@ class Node:
         self.last_heartbeat_time = time.time()
         self.last_alive_time = self.last_heartbeat_time
         self.routes = {}
+
+    def get_id(self):
+        return str(self)
         
     def __repr__(self):
         return "{}/{}".format(self.group, self.node_id)

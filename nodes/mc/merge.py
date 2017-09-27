@@ -8,7 +8,10 @@ class Merge:
         self.group = group
         self.route = route
         self.send_fn = send_fn
-        
+
+    def get_id(self):
+        return str(self)
+    
     def __repr__(self):
         return "{}/{}".format(self.group, self.node_id)
 
@@ -40,6 +43,12 @@ class Mergepoint:
         self.name = self.node_id
         self.merge_node = merge_node
         self.name = name
+        self.group = self.merge_node.group
+        self.node_type = self.merge_node.node_type
+        
+    def get_id(self):
+        return str(self.merge_node)
+    
     def __repr__(self):
         return str(self.merge_node)
     

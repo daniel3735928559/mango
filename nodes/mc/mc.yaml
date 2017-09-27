@@ -59,6 +59,8 @@ inputs:
           type: string
         group:
           type: string
+        type:
+          type: string
         
     route:
       type: dict
@@ -73,6 +75,8 @@ inputs:
       type: dict
       values:
         name:
+          type: string
+        lang:
           type: string
         
     group:

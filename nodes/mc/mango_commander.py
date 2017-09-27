@@ -14,6 +14,8 @@ from node_type import *
 from route import *
 from group import *
 from transform_parser import *
+from query_parser import *
+from query import *
 import pijemont.doc
 from index import multiindex
 import yaml
@@ -473,22 +475,21 @@ class mc(m_node):
         return self.launch_node(args['node'], args.get('name', args['node']), args['group'], json.loads(args.get('env',"{}")))
 
     def query(self,header,args):
-        ans = {s:self.index.search(s+'s',args[s]) for s in ['type','group','node','route'] if s+'s' in args}
-            
-        if len(list(ans.keys())) == 0:
-            ns = self.index.get_all("nodes")
-            rs = self.index.get_all("routes")
-            gs = self.index.search("groups")
-            ts = self.index.search("types")
-            ans = {"nodes":ns,
-                   "routes":rs,
-                   "groups":[str(x) for x in gs],
-                   "types":[str(x) for x in ts]}
-            # ans = {"nodes":[str(x) for x in ns],
-            #        "routes":[str(x) for x in rs],
-            #        "groups":[str(x) for x in gs],
-            #        "types":[str(x) for x in ts]}
-            print("ANS",ans)
+        nprops = {"name":str, "group":str, "node_type":str}
+        summary = {
+            "nodes":self.index.summary("nodes", nprops),
+            "routes":self.index.summary("routes", {"name":str, "group":str, "src":nprops, "dst":nprops}),
+            "groups":self.index.summary("groups", {"name":str}),
+            "types":self.index.summary("types", {"name":str})
+        }
+
+        ans = {}
+        for x in summary:
+            if x in args:
+                q = Query(query_parser().parse(args[x]))
+                print("SUMMARY",x,summary[x])
+                ans[x] = q.evaluate(summary[x])
+
         return "info",ans
 
     def delnode(self,header,args):

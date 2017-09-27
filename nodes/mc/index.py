@@ -14,7 +14,7 @@ class multiindex:
                   for i in self.indices[g]:
                         self.properties[g] = self.properties[g].union(set(self.indices[g][i]))
             self.multiindex = {x:{n:{} for n in self.indices[x]} for x in self.indices}
-            self.flat = set()
+            self.flat = {g:set() for g in self.indices}
             
       # internal methods
       
@@ -32,12 +32,26 @@ class multiindex:
 
       # external methods
 
+      # props = {"prop1":str, "prop2":str, "prop3":{"subprop1":str, "subprop2":str}}
+      def summary(self, group_name, props):
+            ans = {}
+            def prop_dict(x, props):
+                  d = {p:getattr(x,p) for p in props if props[p] == str}
+                  d.update({p:prop_dict(getattr(x,p), props[p]) for p in props if type(props[p]) == dict})
+                  return d
+            
+            for x in self.flat[group_name]:
+                  i = x.get_id()
+                  ans[i] = prop_dict(x, props)
+                  
+            return ans
+      
       def exists(self, group_name, obj):
-            return obj in self.flat
+            return obj in self.flat[group_name]
             
       def remove(self, group_name, obj):
-            if obj in self.flat:
-                  self.flat.remove(obj)
+            if obj in self.flat[group_name]:
+                  self.flat[group_name].remove(obj)
                   for index_name in self.indices[group_name]:
                         index = self.idx_find(group_name, index_name, obj)
                         del index[obj]
@@ -45,9 +59,9 @@ class multiindex:
             return False
       
       def add(self, group_name, obj):
-            if obj in self.flat:
+            if obj in self.flat[group_name]:
                   return False
-            self.flat.add(obj)
+            self.flat[group_name].add(obj)
             for index_name in self.indices[group_name]:
                   self.idx_add(group_name, index_name, obj)
 

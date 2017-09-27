@@ -6,6 +6,9 @@ class Split:
         self.group = group
         self.route = route
         self.send_fn = send_fn
+
+    def get_id(self):
+        return str(self)
         
     def __repr__(self):
         return "{}/{}".format(self.group, self.node_id)

@@ -8,6 +8,7 @@ from libmango import m_node
 class Route:
     def __init__(self, route_id, start, transforms, end, group, source_code):
         self.route_id = route_id
+        self.name = route_id
         self.source_code = source_code
         self.src = start
         self.dst = end
@@ -17,6 +18,9 @@ class Route:
         self.transforms = transforms
         self.edits = self.transform_spec()
 
+    def get_id(self):
+        return "{}/{}".format(self.group, self.route_id)
+        
     def apply(self,raw,header,args):
         data = args
         env = {"raw":raw,"name":header["name"]}
