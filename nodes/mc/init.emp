@@ -11,7 +11,7 @@ mc_fe mc_fe --MU_HTTP_PORT=11703
 [routes]
 shell <> mc
 ex_fe > s1
-mc > mc_fe
+mc <> mc_fe
 s1 > ex > m1 excited
 s1 > m1 unexcited
 m1 excited unexcited > r excited {str:excited.str + "|" + unexcited.str} > ex_fe

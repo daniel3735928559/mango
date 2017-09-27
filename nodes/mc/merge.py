@@ -42,7 +42,7 @@ class Mergepoint:
         self.node_id = merge_node.node_id
         self.name = self.node_id
         self.merge_node = merge_node
-        self.name = name
+        self.merge_name = name
         self.group = self.merge_node.group
         self.node_type = self.merge_node.node_type
         
@@ -54,4 +54,4 @@ class Mergepoint:
     
     def handle(self, header, args, route=None):
         print("MP handling",header,args)
-        self.merge_node.recv(header,args,self.name)
+        self.merge_node.recv(header,args,self.merge_name)

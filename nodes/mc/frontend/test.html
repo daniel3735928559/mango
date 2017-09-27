@@ -1,71 +1,73 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <script type="text/javascript" src="/mangojs/reconnecting-websocket.min.js"></script>
-    <script type="text/javascript" src="/mangojs/mu.js"></script>
-    <link href="/vis-network.min.css" rel="stylesheet" type="text/css" />
-    <script type="text/javascript" src="/vis.min.js"></script>
-    <!-- <script type="text/javascript" src="/vis-network.min.js"></script> -->
-    <title>MU TEST</title>
-    <script type="text/javascript">
-     var mango;
-     window.onload = function(){
-	 var info_cb = function(header, args){
-	     console.log("INFO", header, args);
-	     var ns = args['nodes'];
-	     var nodes = [];
-	     var name_to_id = {}
-	     id = 0;
-	     for(var i = 0; i < ns.length; i++){
-		 name = ns[i]['group'] + '/' + ns[i]['node_id']
-		 nodes.push({"id":id, "label":name})
-		 name_to_id[name] = id;
-		 id++;
-	     }
-	     var rs = args['routes']
-	     var edges = [];
-	     
-	     for(var i = 0; i < rs.length; i++){
-		 if(rs[i]['edits'].length > 0){
-		     nodes.push({"id":id, "label":rs[i]['edits'], "color":"#f99"})
-		     edges.push({"from":name_to_id[rs[i]['src_name']],"to":id});
-		     edges.push({"from":id,"to":name_to_id[rs[i]['dst_name']]});
-		 }
-		 else edges.push({"from":name_to_id[rs[i]['src_name']],"to":name_to_id[rs[i]['dst_name']]});
-		 id++;
-	     }
-	     console.log("NE",JSON.stringify(nodes),JSON.stringify(edges));
-	     var data = {
-		 nodes: nodes,
-		 edges: edges
-	     };
-	     var options = {
-		 height: '100%',
-		 width: '100%',
-		 edges: { arrows: "from;to", font: { size: 12 }, smooth: false },
-		 nodes: { shape: 'box', margin: 10 },
-		 physics: { enabled: false }
-	     };
-	     
-	    var network = new vis.Network(document.getElementById('mynetwork'), data, options);
-	     
+    <head>
+	<script type="text/javascript" src="/mangojs/reconnecting-websocket.min.js"></script>
+	<script type="text/javascript" src="/mangojs/mu.js"></script>
+	<link href="/vis-network.min.css" rel="stylesheet" type="text/css" />
+	<script type="text/javascript" src="/vis.min.js"></script>
+	<!-- <script type="text/javascript" src="/vis-network.min.js"></script> -->
+	<title>MU TEST</title>
+	<script type="text/javascript">
+	 var mango;
+	 var test = function(){
+             mango.m_send("query",{"nodes":"","routes":""});
 	 }
-         mango = new Mango({"info":info_cb});
-     };
-     var test = function(){
-        mango.m_send("query",{});
-      }
-    </script>
-  </head>
-  <body>
-    <div id="mynetwork" style="width:100%;height:500px;"></div>
+	 window.onload = function(){
+	     var info_cb = function(header, args){
+		 console.log("INFO", header, args);
+		 var ns = args['nodes'];
+		 var nodes = [];
+		 var name_to_id = {}
+		 id = 0;
+		 for(var i in ns){
+		     name = ns[i]['group'] + '/' + ns[i]['name']
+		     nodes.push({"id":id, "label":name,"mass":2})
+		     name_to_id[name] = id;
+		     id++;
+		 }
+		 var rs = args['routes']
+		 var edges = [];
+		 
+		 for(var i in rs){
+		     var src_name = rs[i]['src']['group']+'/'+rs[i]['src']['name'];
+		     var dst_name = rs[i]['dst']['group']+'/'+rs[i]['dst']['name'];
+		     if(rs[i]['edits'].length > 0){
+			 nodes.push({"id":id, "label":rs[i]['edits'], "shape":"dot","size":"5","mass":2})
+			 edges.push({"from":name_to_id[src_name],"to":id});
+			 edges.push({"from":id,"to":name_to_id[dst_name]});
+		     }
+		     else edges.push({"from":name_to_id[src_name],"to":name_to_id[dst_name]});
+		     id++;
+		 }
+		 console.log("NE",JSON.stringify(nodes),JSON.stringify(edges));
+		 var data = {
+		     nodes: nodes,
+		     edges: edges
+		 };
+		 var options = {
+		     height: '100%',
+		     width: '100%',
+		     edges: { arrows: "to", font: { size: 12 }, smooth: false },
+		     nodes: { shape: 'box', margin: 10 },
+		     physics: { enabled: true }
+		 };
+		 
+		 var network = new vis.Network(document.getElementById('mynetwork'), data, options);
+		 
+	     }
+             mango = new Mango({"info":info_cb});
+	     var x = setInterval(function(){test();clearInterval(x);},1000);
+	 };
+	</script>
+    </head>
+    <body>
+	<div id="mynetwork" style="width:100%;height:500px;"></div>
 
+	<textarea id="tosend"></textarea><br />
+	<a href="#" onclick="test(document)">hello</a>
+	<script type="text/javascript">
 
-    <textarea id="tosend"></textarea><br />
-    <a href="#" onclick="test(document)">hello</a>
-    <script type="text/javascript">
-
-</script>
+	</script>
 
     </body>
 </html>

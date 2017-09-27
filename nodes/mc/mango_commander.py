@@ -478,7 +478,7 @@ class mc(m_node):
         nprops = {"name":str, "group":str, "node_type":str}
         summary = {
             "nodes":self.index.summary("nodes", nprops),
-            "routes":self.index.summary("routes", {"name":str, "group":str, "src":nprops, "dst":nprops}),
+            "routes":self.index.summary("routes", {"name":str, "edits":str, "group":str, "src":nprops, "dst":nprops}),
             "groups":self.index.summary("groups", {"name":str}),
             "types":self.index.summary("types", {"name":str})
         }
@@ -486,9 +486,12 @@ class mc(m_node):
         ans = {}
         for x in summary:
             if x in args:
-                q = Query(query_parser().parse(args[x]))
-                print("SUMMARY",x,summary[x])
-                ans[x] = q.evaluate(summary[x])
+                if args[x] == "":
+                    ans[x] = summary[x]
+                else:
+                    q = Query(query_parser().parse(args[x]))
+                    print("SUMMARY",x,summary[x])
+                    ans[x] = q.evaluate(summary[x])
 
         return "info",ans
 
