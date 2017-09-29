@@ -16,6 +16,7 @@ from framework.group import *
 from framework.query import *
 from parsers.transform_parser import *
 from parsers.query_parser import *
+from parsers.emp_parser import *
 import pijemont.doc
 from framework.index import multiindex
 import yaml
@@ -25,6 +26,8 @@ class mc(m_node):
     def __init__(self,debug=False):
         super().__init__(debug=debug)
         self.transform_parser = transform_parser()
+        self.query_parser = query_parser()
+        self.emp_parser = emp_parser()
         
         # Now read xml file to get list of nodes and shell commands to spin them up.  
         # for child in etree.parse("nodes.xml").getroot():
@@ -310,7 +313,7 @@ class mc(m_node):
         n.hb_thread.start()
     
     def add_group(self, name):
-        self.index.add("groups",Group(name))
+        return self.index.add("groups",Group(name))
 
     def create_routes(self, route_spec, group):
         self.debug_print("CR",route_spec)
@@ -341,63 +344,19 @@ class mc(m_node):
         return self.mp(args['mp'], args['group'])
     
     def mp(self, program, group):
-        prog_lines = program.split("\n")
-        prog = {}
-        var = {}
-        new_nodes = []
-        new_routes = []
-        section = None
 
-        if len(self.index.query("groups","name",[group])) > 0:
+        if not self.add_group(group):
             return {"success":False, "message":"Group already exists: {}".format(group)}
 
         # The group did not exist.  Add it: 
         
         try:
-            self.add_group(group)
+            prog = self.emp_parser.parse(program)
+            for n in prog.get('nodes',[]):
+                self.launch_node(n['type'], n['node'], group, n['args'])
             
-            for l in prog_lines:
-                l = l.strip()
-                if len(l) == 0: continue
-                m = re.match(r'^\[[a-zA-Z_][a-zA-Z0-9_]*\]$', l)
-                if m:
-                    section = l[1:-1]
-                    prog[section] = []
-                elif section is None:
-                    self.debug_print("Line without section header!")
-                elif l != "":
-                    prog[section] += [l]
-            
-            self.debug_print(prog)
-            # Config lines are of the form:
-            # name = value
-            
-            # Current config settings are:
-            # group: The name of the group under which these nodes will be added (will be created if doesn't exist)
-            
-            for l in prog.get('config',[]):
-                ll = l.split('=')
-                var[ll[0].strip()] = ll[1].strip()
-                
-            # Nodes are of the form:
-            # [group/]node --arg1=value1 --arg2=value2 ...
-            for l in prog.get('nodes',[]):
-                ll = shlex.split(l)
-                self.debug_print(ll)
-                new_node = {"group": group, "node": ll[1], "args":{}, "type": ll[0]}
-                for a in ll[2:]:
-                    m = re.match('--([a-zA-Z_][a-zA-Z_0-9]*)=(.*)',a)
-                    if m:
-                        new_node['args'][m.group(1)] = m.group(2)
-                    else:
-                        self.debug_print("Malformed argument: {}".format(a))
-
-                self.launch_node(new_node['type'], new_node['node'], new_node['group'], new_node['args'])
-                #new_nodes.append(new_node)
-            
-            # Routes are lines following the mc routing spec
-            for l in prog.get('routes',[]):
-                self.create_routes(l.strip(),group)
+            for r in prog.get('routes',[]):
+                self.create_routes(r,group)
             
             self.debug_print("Starting", group)
             
@@ -489,7 +448,7 @@ class mc(m_node):
                 if args[x] == "":
                     ans[x] = summary[x]
                 else:
-                    q = Query(query_parser().parse(args[x]))
+                    q = Query(self.query_parser.parse(args[x]))
                     print("SUMMARY",x,summary[x])
                     ans[x] = q.evaluate(summary[x])
 

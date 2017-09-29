@@ -64,6 +64,7 @@ class multiindex:
             self.flat[group_name].add(obj)
             for index_name in self.indices[group_name]:
                   self.idx_add(group_name, index_name, obj)
+            return True
 
       def get_all(self, group_name):
             nodes = self.query(group_name)
