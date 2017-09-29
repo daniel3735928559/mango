@@ -7,17 +7,17 @@ from dataflow import m_dataflow
 from transport import *
 from libmango import m_node
 from lxml import etree
-from node import *
-from merge import *
-from split import *
-from node_type import *
-from route import *
-from group import *
-from transform_parser import *
-from query_parser import *
-from query import *
+from framework.node import *
+from framework.merge import *
+from framework.split import *
+from framework.node_type import *
+from framework.route import *
+from framework.group import *
+from framework.query import *
+from parsers.transform_parser import *
+from parsers.query_parser import *
 import pijemont.doc
-from index import multiindex
+from framework.index import multiindex
 import yaml
 
 class mc(m_node):
