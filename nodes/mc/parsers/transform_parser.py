@@ -103,39 +103,74 @@ class transform_parser:
       # parses to: 
       # [[node1, node2], [node2, node3]]
             
-      def p_route_node_node(self,p):
-            ''' route : node '>' node'''
-            p[0] = [[p[1], p[3]]]
+      def p_route_rt(self,p):
+            ''' route : rt'''
+            p[0] = ('route',p[1])
             
-      def p_route_trans_node(self,p):
-            ''' route : transform '>' node'''
-            p[0] = [p[1] + [p[3]]]
+      def p_route_pipeline(self,p):
+            ''' route : pipeline'''
+            p[0] = ('pipeline',p[1])
             
-      def p_route_node_route(self,p):
-            ''' route : node '>' route'''
-            if p[3][0][0][0] == 'node':
-                  p[0] = [[p[1],p[3][0][0]]] + p[3]
-            else:
-                  p[0] = [[p[1]]+p[3][0]]+p[3][1:]
+      def p_rt_node(self,p):
+            ''' rt : node '>' rt'''
+            start = [p[1],p[3][0][0]]
+            rest = [p[3][0]] + p[3][1:]
+            p[0] = [start] + rest
             
-      def p_route_trans_route(self,p):
-            ''' route : transform '>' route'''
-            if p[3][0][0][0] == 'node':
-                  p[0] = [p[1]+[p[3][0][0]]] + p[3]
-            else:
-                  p[0] = [p[1]+p[3][0]]+p[3][1:]
+      def p_rt_bi_rt(self,p):
+            ''' rt : node BI rt'''
+            forwards = [p[1],p[3][0][0]]
+            backwards = [p[3][0][0],p[1]]
+            rest = [p[3][0]] + p[3][1:]
+            p[0] = [forwards,backwards] + rest
+            
+      def p_rt_bi_node(self,p):
+            ''' rt : node BI node'''
+            forwards = [p[1],p[3]]
+            backwards = [p[3],p[1]]
+            p[0] = [forwards,backwards]
+            
+      def p_rt_rt_end(self,p):
+            ''' rt : node '>' rt_end'''
+            start = [p[1]]+p[3][0]
+            rest = p[3][1:]
+            p[0] = [start] + rest
 
-      def p_route_bidirectional(self,p):
-            ''' route : node BI node'''
-            p[0] = [[p[1], p[3]], [p[3], p[1]]]
+      def p_rt_end_node(self,p):
+            ''' rt_end : node'''
+            p[0] = [[p[1]]]
+            print("C",p[0])
             
-      def p_route_bidirectional_mode(self,p):
-            ''' route : node BI route'''
-            if p[3][0][0][0] == 'node':
-                  p[0] = [[p[1],p[3][0][0]], [p[3][0][0]],p[1]] + p[3]
-            else:
-                  raise ParseError
+      def p_rt_end_transform_rt(self,p):
+            ''' rt_end : transform '>' rt'''
+            first = [p[1],p[3][0][0]]
+            rest = [p[3][0]] + p[3][1:]
+            p[0] = [first] + rest
+            print("A",p[0])
+            
+      def p_rt_end_transform_rt_end(self,p):
+            ''' rt_end : transform '>' rt_end'''
+            first = p[1]+p[3][0]
+            rest = p[3][1:]
+            p[0] = [first]+rest
+            print("B",p[0])
 
+      def p_pipeline_node(self,p):
+            ''' pipeline : node '|' pipeline_end'''
+            p[0] = [p[1]]+p[3]
+            
+      def p_pipeline_end_node(self,p):
+            ''' pipeline_end : node'''
+            p[0] = [p[1]]
+            
+      def p_pipeline_end_node_pipeline_end(self,p):
+            ''' pipeline_end : node '|' pipeline_end'''
+            p[0] = [p[1]]+p[3]
+            
+      def p_pipeline_end_transform_pipeline_end(self,p):
+            ''' pipeline_end : transform '|' pipeline_end'''
+            p[0] = [p[1]]+p[3]
+            
       def p_node(self,p):
             ''' node : NAME'''
             p[0] = ('node',{'name':p[1]})

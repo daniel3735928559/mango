@@ -1,11 +1,11 @@
 import io, re, socketserver, socket, threading, time, signal, os, sys, random, zmq, subprocess, shlex, json, traceback
-from . transform import *
+from transform import *
 from mc_dataflows import *
 from dataflow import m_dataflow
 from transport import *
 from libmango import m_node
 
-class Route:
+class Pipeline:
     def __init__(self, route_id, start, transforms, end, group, source_code):
         self.route_id = route_id
         self.name = route_id

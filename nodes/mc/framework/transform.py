@@ -178,8 +178,8 @@ class Transform:
             sep = ""
             if 'newname' in n[1]: ans,sep = "name={}".format(n[1]['newname']),", "
             if 'script' in n[1]: ans += "{}{}".format(sep,self.s(n[1]['script']))
-            ans = "edit({})".format(ans)
-            if 'name' in n[1]: ans = "if name=={}: {}".format(n[1]['name'],ans)
+            if 'name' in n[1]: ans = "{} {}".format(n[1]['name'],ans)
+            ans = "e {}".format(ans)
             return ans
       
       def str_eq(self, n):
@@ -189,7 +189,7 @@ class Transform:
             ans,sep = "",""
             if 'name' in n[1]: ans,sep = 'name == {}'.format(n[1]['name']),' and '
             if 'test' in n[1]: ans += "{}{}".format(sep, self.s(n[1]['test']))
-            return "filter({})".format(ans)
+            return "f {}".format(ans)
 
       def str_ge(self, n):
             return "{} >= {}".format(self.s(n[1]), self.s(n[2]))
@@ -232,8 +232,8 @@ class Transform:
             ans,sep = "",""
             if 'newname' in n[1]: ans,sep = "name={}".format(n[1]['newname']),', '
             if 'map' in n[1]: ans += "{}{}".format(sep, self.s(n[1]['map']))
-            ans = "replace({})".format(ans)
-            if 'name' in n[1]: ans = "if name=={}: {}".format(n[1]['name'],ans)
+            if 'name' in n[1]: ans = "{} {}".format(n[1]['name'],ans)
+            ans = "r {}".format(ans)
             return ans
 
       def str_re_sub(self, n):
@@ -272,10 +272,21 @@ class Transform:
 
       
 if __name__ == "__main__":
+      sys.path.append('../parsers')
       import transform_parser
       tp = transform_parser.transform_parser()
       routes = tp.parse(sys.argv[1])
+      print("PARSED ROUTES")
+      if routes[0] == 'route':
+            for x in routes[1]:
+                  print("R",x)
+      elif routes[0] == 'pipeline':
+            print("P",routes[1])
+      else:
+            print("WAT")
+            print(routes)
       ok = True
+      routes = routes[1]
       for route in routes:
             for i in range(len(route)):
                   if route[i][0] in ['edit','replace','filter']:
