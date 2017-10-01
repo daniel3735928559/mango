@@ -12,6 +12,7 @@ from framework.merge import *
 from framework.split import *
 from framework.node_type import *
 from framework.route import *
+from framework.pipeline import *
 from framework.group import *
 from framework.query import *
 from parsers.transform_parser import *
@@ -59,6 +60,14 @@ class mc(m_node):
         self.poller.register(s,zmq.POLLIN)
         self.index = multiindex({
             "routes":{
+                "src":["src_name","dst_name"],
+                "dst":["dst_name","src_name"],
+                "group":["group","edits"],
+                "group_src":["group","src_name","dst_name"],
+                "group_id":["group","route_id"],
+                "group_dst":["group","dst_name","src_name"]
+            },
+            "pipelines":{
                 "src":["src_name","dst_name"],
                 "dst":["dst_name","src_name"],
                 "group":["group","edits"],
@@ -177,11 +186,23 @@ class mc(m_node):
         h['src_node'] = n.node_id
         self.debug_print("passing along",h,c,n)
         routes = self.index.query("routes","src",[str(n)])
+        
+        pipes = self.index.search("pipelines")
+        self.debug_print("SEARCHING PIPELINES",pipes,"FOR",n)
+        pipelines = [p for p in pipes if p.has_src(n)]
+        self.debug_print("FOUND",pipelines)
+        
         self.debug_print("RS",routes)
+        self.debug_print("PS",pipelines)
         for r in routes:
-            self.debug_print("SENDING ON",str(r))
+            self.debug_print("SENDING ON RT",str(r))
             raw = self.serialiser.serialise(h,c)
             r.send(raw,h,c)
+        for p in pipelines:
+            self.debug_print("SENDING ON PL",str(p))
+            raw = self.serialiser.serialise(h,c)
+            p.send(n,raw,h,c)
+            
         
                 
     ## Helper functions
@@ -319,17 +340,12 @@ class mc(m_node):
         self.debug_print("CR",route_spec)
         grp = self.find_group(group)
         parsed = self.transform_parser.parse(route_spec)
+        self.debug_print("PARSED",parsed)
         if parsed[0] == 'route':
             routes = parsed[1]
             for r in routes:
-                src_name,src_group = r[0][1]['name'],r[0][1].get('group',group)
-                self.debug_print(src_name, src_group)
-                if "/" in src_name: src_group,src_name = src_name.split("/")
-                src = self.get_node(src_name, src_group)
-                
-                dst_name,dst_group = r[-1][1]['name'],r[-1][1].get('group',group)
-                if "/" in dst_name: dst_group,dst_name = dst_name.split("/")
-                dest = self.get_node(dst_name, dst_group)
+                src = self.get_node(r[0][1]['name'], r[0][1].get('group',group))
+                dest = self.get_node(r[-1][1]['name'], r[-1][1].get('group',group))
             
                 self.debug_print("R",r)
                 if src.node_type == 'merge':
@@ -340,10 +356,21 @@ class mc(m_node):
                 
                 self.debug_print("new route",src,dest)
                 
-                new_route = {"src":src, "dest":dest, "route":Route(grp.rt_id(), src, [Transform(t) for t in r[1:-1]], dest, group, route_spec)}
-                self.index.add("routes",new_route['route'])
-        elif parsed[1] == 'pipeline':
-            raise NotImplementedError("Pipelines not yet supported")
+                new_route = Route(grp.rt_id(), src, [Transform(t) for t in r[1:-1]], dest, group, route_spec)
+                self.index.add("routes",new_route)
+        elif parsed[0] == 'pipeline':
+            pipeline = parsed[1]
+            self.debug_print("PIPETIME",pipeline)
+            seq = []
+            for e in pipeline:
+                if e[0] == 'node':
+                    n = self.get_node(e[1]['name'], e[1].get('group',group))
+                    seq.append(('node',n))
+                else:
+                    t = Transform(e)
+                    seq.append(('edit',t))
+            new_pipeline = Pipeline(grp.rt_id(), seq[0], seq[-1], group, route_spec, seq)
+            self.index.add("pipelines",new_pipeline)
 
     def emp(self, header, args):
         return self.mp(args['mp'], args['group'])
@@ -369,7 +396,6 @@ class mc(m_node):
             # If there was an exception, tear down the whole group we just created:
             traceback.print_exc()
             self.delete_group(group)
-
 
     def gen_route_key(self):
         return str(random.randint(0,2**64))

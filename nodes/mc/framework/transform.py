@@ -174,9 +174,8 @@ class Transform:
             return "{} / {}".format(self.s(n[1]), self.s(n[2]))
 
       def str_edit(self, n):
-            ans = ""
-            sep = ""
-            if 'newname' in n[1]: ans,sep = "name={}".format(n[1]['newname']),", "
+            ans,sep = "",""
+            if 'newname' in n[1]: ans,sep = "{}".format(n[1]['newname'])," "
             if 'script' in n[1]: ans += "{}{}".format(sep,self.s(n[1]['script']))
             if 'name' in n[1]: ans = "{} {}".format(n[1]['name'],ans)
             ans = "e {}".format(ans)
@@ -187,7 +186,7 @@ class Transform:
 
       def str_filter(self, n):
             ans,sep = "",""
-            if 'name' in n[1]: ans,sep = 'name == {}'.format(n[1]['name']),' and '
+            if 'name' in n[1]: ans,sep = '{}'.format(n[1]['name']),' and '
             if 'test' in n[1]: ans += "{}{}".format(sep, self.s(n[1]['test']))
             return "f {}".format(ans)
 
@@ -230,7 +229,7 @@ class Transform:
 
       def str_replace(self, n):
             ans,sep = "",""
-            if 'newname' in n[1]: ans,sep = "name={}".format(n[1]['newname']),', '
+            if 'newname' in n[1]: ans,sep = "{}".format(n[1]['newname']),' '
             if 'map' in n[1]: ans += "{}{}".format(sep, self.s(n[1]['map']))
             if 'name' in n[1]: ans = "{} {}".format(n[1]['name'],ans)
             ans = "r {}".format(ans)

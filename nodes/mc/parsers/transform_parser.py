@@ -169,7 +169,7 @@ class transform_parser:
             
       def p_pipeline_end_transform_pipeline_end(self,p):
             ''' pipeline_end : transform '|' pipeline_end'''
-            p[0] = [p[1]]+p[3]
+            p[0] = p[1]+p[3]
             
       def p_node(self,p):
             ''' node : NAME'''
