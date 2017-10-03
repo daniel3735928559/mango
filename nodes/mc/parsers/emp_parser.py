@@ -15,7 +15,7 @@ class emp_parser:
         prog_lines = program.split("\n")
         for l in prog_lines:
             l = l.strip()
-            if len(l) == 0: continue
+            if len(l) == 0 or l[0] == "#": continue
             m = re.match(r'^\[[a-zA-Z_][a-zA-Z0-9_]*\]$', l)
             if m:
                 section = l[1:-1]

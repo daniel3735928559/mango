@@ -33,11 +33,15 @@ class Pipeline(Route):
         mid = header['mid']
         if not mid in self.outstanding and src == self.routes[0]['src']:
             # We haven't seen this message before--start a new pipeline:
+            print("STARTING NEW PIPELINE")
             self.outstanding[mid] = 0
+            print("OUTSTANDING",self.outstanding)
         elif mid in self.outstanding and src == self.routes[self.outstanding[mid]]['src']:
+            print("ON ITS WAY")
             # This message is in the middle of a pipeline
             pass
         else:
+            print("NOT A PIPELINE MESSAGE")
             # This message isn't actually part of the current
             # pipeline, but may be part of other routes, so just
             # return
@@ -52,7 +56,9 @@ class Pipeline(Route):
                     continue
                 else:
                     # Message got filtered; drop it from pipeline
+                    print("PIPELINE FILTERED")
                     del self.outstanding[mid]
+                    return
             else:
                 data = t.evaluate(env, data)
                 env = t.env
@@ -60,7 +66,7 @@ class Pipeline(Route):
         header = {"name":env.get('name',''),'mid':header['mid']}
         args = data
         
-        print("PIPELINE send",route['dst'].node_id)
+        print("PIPELINE send",route['dst'].node_id,mid,self.outstanding,self.routes)
         route['dst'].handle(header,args)
 
         self.outstanding[mid] += 1
