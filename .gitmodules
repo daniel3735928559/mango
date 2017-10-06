@@ -4,3 +4,6 @@
 [submodule "nodes/peel"]
 	path = nodes/peel
 	url = https://github.com/daniel3735928559/peel.git
+[submodule "nodes/mc/pijemont"]
+	path = nodes/mc/pijemont
+	url = https://github.com/daniel3735928559/pijemont
