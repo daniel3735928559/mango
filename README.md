@@ -20,3 +20,30 @@ messages between mango programs, meaning that you can with equal ease
 a GUI, shell, other program, or over the network, and that you can
 readily chain together functions from disparate programs when needed,
 in the style of a UNIX pipeline.
+
+## Example
+
+
+
+## Nodes
+
+### Currently available:
+
+* `jam`: A wrapper for libpurple
+
+* `otto`: A node for auto-responding to chat messages
+
+* `guppy`: A WYSIWYG program for writing mathematical expressions
+
+* `category`: A node for organising snippets of data into concept graphs
+
+* `curt`: A node for basic encryption tasks
+
+* `elm`: A node for various binary exploitation related tasks
+
+* `email`: A node for handling emails
+
+* `t3`: Super tic-tac-toe game
+
+### Planned
+

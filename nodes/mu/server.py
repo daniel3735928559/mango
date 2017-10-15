@@ -29,7 +29,6 @@ def get_data(ws):
     socket = context.socket(zmq.DEALER)
     socket.connect('tcp://localhost:{PORT}'.format(PORT=m_port))
     socket.send_string("tx")
-    print('helloing')
     while not ws.closed:
         data = ws.receive()
         print("D",data)
@@ -40,17 +39,13 @@ def get_data(ws):
 def send_data(ws):
     while not ws.closed:
         socket = context.socket(zmq.DEALER)
-        print("connecting")
         socket.connect('tcp://localhost:{PORT}'.format(PORT=m_port))
         socket.send_string("rx")
         gevent.sleep()
         while not ws.closed:
-
-            print("rxing")
             data = socket.recv()
             ws.send(data)
             gevent.sleep()
-        print("DEADED")
 
 if __name__ == '__main__':
     from gevent import pywsgi

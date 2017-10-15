@@ -417,7 +417,10 @@ class mc(m_node):
         node_base = t.wd
         lib_path = os.path.join(lib_base_path,lang)
         new_route = self.gen_route_key()
-        nenv = {'MC_ADDR':self.mc_target,'MANGO_ID':nid,'MANGO_ROUTE':new_route}
+        nenv = os.environ
+        if 'PWD' in nenv: del nenv['PWD']
+        if 'PATH' in nenv: del nenv['PATH']
+        nenv.update({'MC_ADDR':self.mc_target,'MANGO_ID':nid,'MANGO_ROUTE':new_route})
         if 'pathvar' in self.langs.get(lang, {}):
             nenv[self.langs[lang]['pathvar']] = lib_path
         nenv.update(env)

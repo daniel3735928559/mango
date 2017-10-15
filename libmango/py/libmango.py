@@ -13,20 +13,17 @@ class m_node:
         self.context = zmq.Context()
         self.poller = zmq.Poller()
         self.serialiser = m_serialiser(self.version)
-        self.interface = m_if(default_handler=self.reply)
+        self.interface = m_if(default_handler=self.default)
         self.dataflows = {}
         self.route = os.getenv('MANGO_ROUTE')
         self.node_id = os.getenv('MANGO_ID')
         self.group_id = os.getenv('MANGO_GROUP','root')
         self.interface.add_interface(os.path.join(os.getenv('PYTHONPATH'),'../node.yaml'),{
-#            'reg':self.reg,
-#            'reply':self.reply,
             'heartbeat':self.heartbeat,
             'exit':self.end
         })
         self.flags = {}
         self.server = os.getenv('MC_ADDR',None)
-        print(self.server,os.environ)
         if not self.server is None:
             self.local_gateway = m_ZMQ_transport(self.server,self.context,self.poller,self.route)
             s = self.local_gateway.socket
@@ -34,6 +31,13 @@ class m_node:
             self.dataflows[s] = self.dataflow
             self.poller.register(s,zmq.POLLIN)
 
+    def add_socket(self, sock, recv_cb, err_cb):
+        dataflow = lambda: None
+        dataflow.recv = recv_cb
+        dataflow.die = err_cb
+        self.poller.register(sock, zmq.POLLIN)
+        self.dataflows[sock] = dataflow
+            
     def ready(self):
         iface = self.interface.get_spec()
         self.debug_print("IF",iface)
@@ -43,10 +47,9 @@ class m_node:
         try:
            result = self.interface.get_function(header['name'])(header,args)
            if not result is None:
-               print("sending with MID",header.get('mid',None))
                self.m_send(result[0],result[1],mid=header.get('mid',None))
         except Exception as exc:
-           self.handle_error(header['src_node'],traceback.format_exc())
+           self.handle_error("unknown",traceback.format_exc())
 
     def heartbeat(self,header,args):
         self.mc_send('alive',{})
@@ -54,21 +57,12 @@ class m_node:
     def end(self,header,args):
         exit(0)
             
-    def reply(self,header,args):
-        print("REPLY",header,args)
+    def default(self,header,args):
+        self.debug_print("UNHANDLED",header,args)
 
     def handle_error(self,src,err):
         self.debug_print('OOPS',src,err)
         self.mc_send('error',{'source':src,'message':err})
-
-    # def reg(self,header,args):
-    #     if header['src_node'] != 'mc':
-    #         print('only accepts reg from mc',header,args)
-    #         return
-    #     self.node_id = args["id"]
-    #     self.debug_print('my new node id')
-    #     self.debug_print(self.node_id)
-    #     self.debug_print("registered as " + self.node_id)
 
     def make_header(self,name,msg_type=None,mid=None):
         header = {'name':name}
@@ -92,9 +86,7 @@ class m_node:
             self.ready()
         while True:
             socks = dict(self.poller.poll(1000*1000))
-            #self.local_gateway.socket.send()
             for s in socks:
-                #self.debug_print(s,socks[s])
                 if socks[s] == zmq.POLLIN:
                     self.debug_print("RX",s,self.dataflows[s])
                     self.dataflows[s].recv()
