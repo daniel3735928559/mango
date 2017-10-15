@@ -1,11 +1,11 @@
 source ~/.bashrc
 export PS1="(mx) $PS1";
 export MX_PID={pid};
-export MX_PORT={port};
+export MX_IPC_PATH="{ipc}";
 export PATH="$PATH:$(pwd)";
 alias mx="$(pwd)/mx send"
 alias mr="$(pwd)/mx raw"
 alias emp="$(pwd)/emp"
 function load_if {{ mx load_if $1; source .run/{pid}; }}
-function cleanup {{ echo "Goodbye"; kill {pid}; rm .run/{pid}_out.tmp .run/{pid}_init.tmp; exit; }}
+function cleanup {{ echo "Goodbye"; kill {pid}; screen -X -S {pid} quit; rm .run/{pid}_ipc.tmp .run/{pid}_out.tmp .run/{pid}_init.tmp; exit; }}
 trap cleanup EXIT

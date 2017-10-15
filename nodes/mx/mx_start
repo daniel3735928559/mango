@@ -1,9 +1,7 @@
 #!/bin/bash
-#export MC_ADDR='tcp://localhost:'"$1"
 export PYTHONPATH="$(realpath $( dirname "${BASH_SOURCE[0]}" )'/../../libmango/py' )"
 echo $PYTHONPATH
 echo "MID" $MANGO_ID
-#export MANGO_ID=$2
 python mx_agent.py &
 export MX_PID=$!
 echo $MX_PID
@@ -13,7 +11,4 @@ while [[ ! -f .run/"$MX_PID"_init.tmp && ! -p .run/"$MX_PID"_out.tmp ]]; do
   printf '.';
   sleep 1;
   done
-bash --init-file .run/"$MX_PID"_init.tmp
-#XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/home/zoom/.Xauthority DISPLAY=:0 terminator -e "bash --init-file .run/$MX_PID"
-#screen -c screenrc
-
+screen -S "$MANGO_ID" -c screenrc
