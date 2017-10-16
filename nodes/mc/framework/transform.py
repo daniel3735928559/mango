@@ -161,7 +161,7 @@ class Transform:
             return self.e(self.ast, d)
 
       def s(self, n):
-            #print("S",n)
+            print("S",n,n[0])
             return self.strs[n[0]](n)
 
       def str_add(self, n):
@@ -200,7 +200,7 @@ class Transform:
             return "{} <= {}".format(self.s(n[1]), self.s(n[2]))
 
       def str_like(self, n):
-            return "{} ~ {}".format(self.s(n[1]), self.s(n[2]))
+            return "{} ~ {}".format(self.s(n[1]), str(n[2]))
 
       def str_list(self, n):
             ans = ", ".join([self.s(x) for x in n[1]])
@@ -297,7 +297,7 @@ if __name__ == "__main__":
             t = t[1]
             t.env['name'] = name
             print("APPLYING",t)
-            #print("STR",t.s(t.ast))
+            print("STR",str(t))
             if t.kind == 'filter':
                   if t.evaluate(t.env, data):
                         continue

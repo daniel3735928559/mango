@@ -5,6 +5,7 @@ from transport import *
 from interface import *
 from error import *
 import traceback
+from inspect import getframeinfo, stack
 
 class m_node: 
     def __init__(self,debug=False):
@@ -79,7 +80,9 @@ class m_node:
         self.dataflow.send(self.make_header(name,mid=mid),msg)
 
     def debug_print(self,*args):
-        if self.debug: print("[{} DEBUG] ".format(self.node_id),*args)
+        if self.debug:
+            caller = getframeinfo(stack()[1][0])
+            print("[{}:{} {} DEBUG] ".format(caller.filename, caller.lineno, self.node_id),*args)
     
     def run(self,f=None):
         if not self.server is None:

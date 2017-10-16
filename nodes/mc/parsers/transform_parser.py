@@ -110,18 +110,20 @@ class transform_parser:
       def p_route_pipeline(self,p):
             ''' route : pipeline'''
             p[0] = ('pipeline',p[1])
-            
+
+      # rt is a list of routes [[n1, t1, t2, n2], [n2, t3, t4, n3], ...]
       def p_rt_node(self,p):
             ''' rt : node '>' rt'''
             start = [p[1],p[3][0][0]]
-            rest = [p[3][0]] + p[3][1:]
+            rest = p[3]
             p[0] = [start] + rest
+            print("RT > RT",p[0])
             
       def p_rt_bi_rt(self,p):
             ''' rt : node BI rt'''
             forwards = [p[1],p[3][0][0]]
             backwards = [p[3][0][0],p[1]]
-            rest = [p[3][0]] + p[3][1:]
+            rest = p[3]
             p[0] = [forwards,backwards] + rest
             
       def p_rt_bi_node(self,p):
@@ -135,25 +137,27 @@ class transform_parser:
             start = [p[1]]+p[3][0]
             rest = p[3][1:]
             p[0] = [start] + rest
+            print("RT > RTEND",p[0])
 
+      # rt_end is a list of [[t1, t2, n2], [n2, t3, t4, n3], ...]
       def p_rt_end_node(self,p):
             ''' rt_end : node'''
             p[0] = [[p[1]]]
-            print("C",p[0])
+            print("RTEND > NODE",p[0])
             
       def p_rt_end_transform_rt(self,p):
             ''' rt_end : transform '>' rt'''
             first = [p[1],p[3][0][0]]
-            rest = [p[3][0]] + p[3][1:]
+            rest = p[3]
             p[0] = [first] + rest
-            print("A",p[0])
+            print("RTEND > RT",p[0])
             
       def p_rt_end_transform_rt_end(self,p):
             ''' rt_end : transform '>' rt_end'''
-            first = p[1]+p[3][0]
+            first = [p[1]]+p[3][0]
             rest = p[3][1:]
             p[0] = [first]+rest
-            print("B",p[0])
+            print("RTEND > RTEND",p[0])
 
       def p_pipeline_node(self,p):
             ''' pipeline : node '|' pipeline_end'''
@@ -169,7 +173,7 @@ class transform_parser:
             
       def p_pipeline_end_transform_pipeline_end(self,p):
             ''' pipeline_end : transform '|' pipeline_end'''
-            p[0] = p[1]+p[3]
+            p[0] = [p[1]]+p[3]
             
       def p_node(self,p):
             ''' node : NAME'''
@@ -195,15 +199,15 @@ class transform_parser:
             
       def p_transform_filter(self,p):
             ''' transform : F filter'''
-            p[0] = [p[2]]
+            p[0] = p[2]
 
       def p_transform_edit(self,p):
             ''' transform : E edit '''
-            p[0] = [p[2]]
+            p[0] = p[2]
             
       def p_transform_replace(self,p):
             ''' transform : R replace '''
-            p[0] = [p[2]]
+            p[0] = p[2]
             
       # def p_transform_filter_edit(self,p):
       #       ''' transform : FE filter edit '''
@@ -211,51 +215,51 @@ class transform_parser:
             
       def p_transform_filter_edit_name_script(self,p):
             ''' transform : FE NAME script '''
-            p[0] = [('filter',{'name':p[2]}), ('edit',{'script':p[3]})]
+            p[0] = ('filter',{'name':p[2]}), ('edit',{'script':p[3]})
             
       def p_transform_filter_edit_name_name(self,p):
             ''' transform : FE NAME NAME '''
-            p[0] = [('filter',{'name':p[2]}), ('edit',{'newname':p[3]})]
+            p[0] = ('filter',{'name':p[2]}), ('edit',{'newname':p[3]})
             
       def p_transform_filter_edit_name_name_script(self,p):
             ''' transform : FE NAME NAME script '''
-            p[0] = [('filter',{'name':p[2]}), ('edit',{'newname':p[3],'script':p[4]})]
+            p[0] = ('filter',{'name':p[2]}), ('edit',{'newname':p[3],'script':p[4]})
 
       def p_transform_filter_edit_name_test_script(self,p):
             ''' transform : FE NAME '{' test '}' script '''
-            p[0] = [('filter',{'name':p[2],'test':p[4]}), ('edit',{'script':p[6]})]
+            p[0] = ('filter',{'name':p[2],'test':p[4]}), ('edit',{'script':p[6]})
             
       def p_transform_filter_edit_name_test_name(self,p):
             ''' transform : FE NAME '{' test '}' NAME '''
-            p[0] = [('filter',{'name':p[2],'test':p[4]}), ('edit',{'newname':p[6]})]
+            p[0] = ('filter',{'name':p[2],'test':p[4]}), ('edit',{'newname':p[6]})
             
       def p_transform_filter_edit_name_test_name_script(self,p):
             ''' transform : FE NAME '{' test '}' NAME script '''
-            p[0] = [('filter',{'name':p[2],'test':p[4]}), ('edit',{'newname':p[6],'script':p[7]})]
+            p[0] = ('filter',{'name':p[2],'test':p[4]}), ('edit',{'newname':p[6],'script':p[7]})
 
       def p_transform_filter_edit_test_script(self,p):
             ''' transform : FE '{' test '}' script '''
-            p[0] = [('filter',{'test':p[3]}), ('edit',{'script':p[5]})]
+            p[0] = ('filter',{'test':p[3]}), ('edit',{'script':p[5]})
             
       def p_transform_filter_edit_test_name(self,p):
             ''' transform : FE '{' test '}' NAME '''
-            p[0] = [('filter',{'test':p[3]}), ('edit',{'newname':p[5]})]
+            p[0] = ('filter',{'test':p[3]}), ('edit',{'newname':p[5]})
             
       def p_transform_filter_edit_test_name_script(self,p):
             ''' transform : FE '{' test '}' NAME script '''
-            p[0] = [('filter',{'test':p[3]}), ('edit',{'newname':p[5],'script':p[6]})]
+            p[0] = ('filter',{'test':p[3]}), ('edit',{'newname':p[5],'script':p[6]})
             
       def p_transform_filter_replace_test(self,p):
             ''' transform : FR '{' test '}' NAME map '''
-            p[0] = [('filter',{'test':p[3]}), ('replace',{'newname':p[5],'map':p[6]})]
+            p[0] = ('filter',{'test':p[3]}), ('replace',{'newname':p[5],'map':p[6]})
             
       def p_transform_filter_replace_name(self,p):
             ''' transform : FR NAME NAME map '''
-            p[0] = [('filter',{'name':p[2]}), ('replace',{'newname':p[3],'map':p[4]})]
+            p[0] = ('filter',{'name':p[2]}), ('replace',{'newname':p[3],'map':p[4]})
             
       def p_transform_filter_replace_name_test(self,p):
             ''' transform : FR NAME '{' test '}' NAME map '''
-            p[0] = [('filter',{'name':p[2], 'test':p[4]}), ('replace',{'newname':p[6],'map':p[7]})]
+            p[0] = ('filter',{'name':p[2], 'test':p[4]}), ('replace',{'newname':p[6],'map':p[7]})
             
       def p_filter_name(self,p):
             ''' filter : NAME '''

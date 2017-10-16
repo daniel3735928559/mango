@@ -411,6 +411,8 @@ class mc(m_node):
         nid = node_id
         base_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../')
         lib_base_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__))+'/../../libmango')
+        self.debug_print("LAUNCHING",n)
+        self.debug_print("TYPES",self.index.multiindex['types'])
         t = self.index.query("types","name",[n])[0]
         self.debug_print("T",t)
         lang = t.lang

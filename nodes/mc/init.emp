@@ -14,7 +14,7 @@ otto otto
 #shell <> mc
 #shell | f excite | ex | shell
 shell <> j
-j > f {msg ~ /^!/} > otto > j
+j > f {message ~ /^!/} > otto > j
 ex_fe > s1
 mc <> mc_fe
 s1 > ex > m1 excited
