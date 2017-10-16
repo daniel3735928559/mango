@@ -2,6 +2,7 @@
 
 [nodes]
 mx shell
+mx chat
 split s1
 jam j
 merge m1
@@ -11,9 +12,9 @@ mc_fe mc_fe --MU_HTTP_PORT=11703
 otto otto
 
 [routes]
-#shell <> mc
+shell <> mc
 #shell | f excite | ex | shell
-shell <> j
+chat <> j
 j > f {message ~ /^!/} > otto > j
 ex_fe > s1
 mc <> mc_fe

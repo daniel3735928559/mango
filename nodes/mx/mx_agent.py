@@ -24,7 +24,7 @@ class mx_agent(m_node):
             self.sh_init = open(self.init_filename,'w')
             with open('.init','r') as f:
                   sh_init_base = f.read()
-            self.sh_init.write(sh_init_base.format(pid=os.getpid(), ipc=self.ipc_filename))
+            self.sh_init.write(sh_init_base.format(pid=os.getpid(), ipc=self.ipc_filename, mango_id=self.node_id))
             self.sh_init.close()
             self.output = open(self.output_filename,'w')
             self.shell_output()

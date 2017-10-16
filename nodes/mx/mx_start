@@ -11,4 +11,9 @@ while [[ ! -f .run/"$MX_PID"_init.tmp && ! -p .run/"$MX_PID"_out.tmp ]]; do
   printf '.';
   sleep 1;
   done
-screen -S "$MANGO_ID" -c screenrc
+#screen -d -m -S "$MANGO_ID" -c screenrc
+tmux new-session -d -s "$MANGO_ID" \; \
+     send-keys "tail -f -n +0 .run/${MX_PID}_out.tmp" C-m \; \
+     split-window -v \; \
+     send-keys "bash --init-file .run/${MX_PID}_init.tmp" C-m \; \
+     resize-pane -y 2 \;
