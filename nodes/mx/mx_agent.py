@@ -58,7 +58,7 @@ class mx_agent(m_node):
                   color = COLORS['GREEN'] if m['type'] == ">" else COLORS['YELLOW']
                   timestr = datetime.fromtimestamp(m['time']).strftime("%Y-%m-%d %H:%M:%S")
                   margs = " ".join(["--{}={}".format(x, m['args'][x]) for x in m['args']])
-                  self.output.write('{color}{type} [{timestr}] {name} {margs}{NORMAL}\n'.format(color=color, timestr=timestr, margs=margs, **m, **COLORS))
+                  self.output.write('{color}{type} [{timestr}]{NORMAL} {name} {margs}\n'.format(color=color, timestr=timestr, margs=margs, **m, **COLORS))
             self.output.flush()
 
 mx_agent()
