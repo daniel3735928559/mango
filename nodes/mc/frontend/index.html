@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>CAFE</title>
+    <link rel="stylesheet" href="css/cafe.css">
+    <link rel="stylesheet" href="css/cafe-light.css">
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="node_modules/vis/dist/vis-network.min.css">
+    <script type="text/javascript" src="/mangojs/reconnecting-websocket.min.js"></script>
+    <script type="text/javascript" src="/mangojs/mu.js"></script>
+    <script type="text/javascript" src="node_modules/vue/dist/vue.js"></script>
+    <script type="text/javascript" src="node_modules/sortablejs/Sortable.min.js"></script>
+    <script type="text/javascript" src="node_modules/vis/dist/vis.js"></script>
+    <script type="text/javascript" src="js/cafe.js"></script>
+  </head>
+  <body>
+    <div id="app" class="container-full-width">
+      <div id="main" class="row">
+	<div class="col-md-2 offset-md-1">
+	    <div id="modes">
+		<h4>View</h4>
+		<span v-for="m in ['nodes','graph','detail']" v-bind:class="{active: mode==m}" v-on:click="set_mode(m)">{{m}}</span>
+	    </div>
+	    <div v-if="mode == 'nodes'">
+		<h4>Nodes</h4>
+		<ul>
+		    <li v-for="(node,name) in nodes">
+			<a :href="'#'+name">{{name}}</a>
+		    </li>
+		</ul>
+	    </div>
+	</div>
+	<div class="col-md-6">
+	  <div id="main_col">
+	  <!-- list -->
+	  <div v-if="mode == 'nodes'" id="nodes">
+	      <div v-for="(node,name) in nodes">
+		  <a :name="name" />
+		  <h4>{{name}} ({{node.node_type}})</h4>
+		  <ul>
+		      <li v-for="r in node.routes"><a href="#" v-on:click="details(name)">{{r.src}}</a> <span v-if="r.edits">&gt; {{r.edits}}</span> &gt; <a href="#" v-on:click="details(name)">{{r.dst}}</a> <a href="#" v-on:click="delroute(r.src,r.dst,r.group)">[x]</a></li>
+		  </ul>
+	      </div>
+	  </div>
+	  
+	  <div v-if="mode == 'detail'" id="detail">
+	      <h4>Name: {{nodes[detail_node].name}}</h4>
+	      <h4>Group: {{nodes[detail_node].group}}</h4>
+	      <h4>Type: {{nodes[detail_node].node_type}}</h4>
+	      <h4>Routes:</h4>
+	      <ul>
+		  <li v-for="r in nodes[detail_node].routes">{{r.src}} <span v-if="r.edits">&gt; {{r.edits}}</span> &gt; <a href="#" v-on:click="details(name)">{{r.dst}}</a></li>
+	      </ul>
+	      <h4>Interface:</h4>
+	      </div>
+	  </div>
+	  
+	  <!-- graph -->
+	  <div id="graph" v-if="mode == 'graph'">
+	  </div>
+
+	
+	</div>
+	
+	<!-- sidebar -->
+	<div class="col-md-2">
+	    <div id="sidebar">
+		<div id="query">
+		    <h4>Controls</h4>
+		    Add route: <input type="text" id="new_route_input" v-model="new_route" v-on:keyup.enter="addroute" />
+		    <div id="query_results">
+			<span class="error">{{error}}</span>
+		    </div>
+		</div>
+	    </div>
+	</div>
+
+
+	
+      </div>
+    </div>
+  </body>
+</html>    

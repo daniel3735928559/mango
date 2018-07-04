@@ -56,7 +56,7 @@ class transform_lexer:
             return t
 
       def t_REGEX(self,t):
-            r'/(?:[^/\\]|\\.)*/(i|g|ig|gi)?[0-9]*'
+            r'%/(?:[^/\\]|\\.)*/(i|g|ig|gi)?[0-9]*'
             t.value = t.value[1:-1]
             return t
       

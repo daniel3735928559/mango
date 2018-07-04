@@ -3,6 +3,7 @@
 [nodes]
 mx shell
 mx chat
+mx eshell
 split s1
 jam j
 merge m1
@@ -10,14 +11,16 @@ excite_py ex
 excite_fe ex_fe --MU_HTTP_PORT=11702
 mc_fe mc_fe --MU_HTTP_PORT=11703
 otto otto
+emacs emx
 
 [routes]
 shell <> mc
+eshell <> emx
 #shell | f excite | ex | shell
 chat <> j
-j > f {message ~ /^!/} > otto > j
+j > f {message ~ %/^!/} > otto > j
 ex_fe > s1
 mc <> mc_fe
 s1 > ex > m1 excited
-s1 > m1 unexcited
+system/s1 > m1 unexcited
 m1 excited unexcited > r excited {str:excited.str + "|" + unexcited.str} > ex_fe

@@ -161,7 +161,6 @@ class Transform:
             return self.e(self.ast, d)
 
       def s(self, n):
-            print("S",n,n[0])
             return self.strs[n[0]](n)
 
       def str_add(self, n):

@@ -1,0 +1,83 @@
+#app{
+    margin-top: 5px;
+}
+
+#main{
+    height:100%;
+}
+
+#graph{
+    width: 100%;
+    height:100vh;
+    border: 1px solid black;
+}
+
+#query_input{
+    width:100%;
+}
+
+#main_col{
+    padding-top:5px;
+}
+
+#working_set{
+    padding-top:5px;
+    padding-left:5px;
+}
+
+#sidebar{
+    padding:5px;
+}
+
+#modes > span{
+    cursor: pointer;
+    border: 1px solid black;
+    border-radius: 3px;
+    padding: 0 5px;
+    margin-right:5px;
+}
+
+.snippet{
+    border-radius: 3px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+
+.snippet_content{
+    padding:5px;
+}
+
+.snippet_header{
+    padding: 5px;
+    width: 100%;
+}
+
+.snippet_title{
+    font-size: 20pt;
+}
+
+.snippet_content{
+    max-height: 400px;
+    overflow-y:scroll;
+    overflow-x:scroll;
+    margin-bottom:10px;
+}
+
+.edge_display{
+    border-top: 1px solid #ccc;
+    padding:5px;
+}
+
+.close_x{
+    float:right;
+    cursor: pointer;
+    height: 30px;
+    width: 30px;
+    border: 1px solid black;
+    border-radius: 3px;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 27px;
+    vertical-align: middle;
+    margin: 3px;
+}

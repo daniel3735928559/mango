@@ -97,7 +97,7 @@ class mc(m_node):
         if len(sys.argv) > 2:
             self.debug_print("Adding remote port: ",sys.argv[2])
             self.mc_remote_addr = "tcp://*:"+sys.argv[2]
-            self.remote_gateway = m_ZMQ_transport(self.mc_remote_addr,self.context,self.poller,True)
+            self.remote_gateway = m_ZMQ_transport(self.mc_remote_addr,self.context,self.poller,None,True)
             f = self.remote_gateway.socket
             self.dataflows[f] = mc_remote_dataflow(self.remote_gateway,self.serialiser,self.remote_recv)
             self.poller.register(f,zmq.POLLIN)
@@ -506,10 +506,16 @@ class mc(m_node):
             self.create_routes(args['spec'],args['group'])
             return self.success()
         except Exception:
+            print("CRE")
+            traceback.print_exc()
             return self.success(False,"Failed to create route")
     
     def delroute(self,header,args):
-        rs = self.index.search("routes",args)
+        args = [args['group'],args['src'],args['dst']]
+        self.debug_print("ARGS",args);
+        rs = self.index.query("routes","group_src",args)
+        self.debug_print("RTS",self.index.query("routes"))
+        self.debug_print("ERTS",rs)
         if len(rs) == 0:
             return self.success(False, "No such route")
         elif len(rs) > 1:
