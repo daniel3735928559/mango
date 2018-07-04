@@ -5,6 +5,7 @@ from error import *
 class m_if:
     def __init__(self, default_handler=None):
         self.interface = {}
+        self.spec = {}
         self.default_handler = default_handler
         self.loaders = {"yaml":m_YAML_if()}
 
@@ -35,6 +36,7 @@ class m_if:
             self.interface[name]["inputs"][f] = iface["inputs"].get(f,{})
         for f in iface.get("outputs",[]):
             self.interface[name]["outputs"][f] = iface["outputs"].get(f,{})
+        self.spec[name] = {"inputs":self.interface[name]["inputs"],"outputs":self.interface[name]["outputs"]}
 
     def get_spec(self):
         return {name:{c:self.interface[name][c] for c in self.interface[name] if c != 'handlers'} for name in self.interface}

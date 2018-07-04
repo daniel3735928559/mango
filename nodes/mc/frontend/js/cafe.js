@@ -13,7 +13,8 @@ window.onload = function(){
 		network: false,
 		mango: null,
 		new_route: "",
-		new_name: ""
+		new_node_name: "",
+		new_node_type: ""
 	    };
 	},
 	mounted: function(){
@@ -102,12 +103,12 @@ window.onload = function(){
 		this.mango.m_send("startemp",{"name":name,"group":"frontend"});
 	    },
 	    addnode: function(type){
-		if(this.new_name == ""){
+		if(this.new_node_name == "" || this.new_node_type == ""){
 		    this.error = "Please enter a name for the node";
 		}
 		else {
-		    this.mango.m_send("addnode",{"name":this.new_name,"node_type":type,"group":"frontend"});
-		    this.new_name = "";
+		    this.mango.m_send("addnode",{"name":this.new_node_name,"node_type":this.new_node_type,"group":"frontend"});
+		    this.new_node_name = "";
 		}
 	    },
 	    addroute: function(){
@@ -129,6 +130,8 @@ window.onload = function(){
 		    var name = ns[i]['group'] + '/' + ns[i]['name']
 		    this.nodes[name] = ns[i];
 		    this.nodes[name].routes = [];
+		    this.nodes[name]['interface'] = JSON.parse(ns[i]['interface']) || {};
+		    this.detail_node = this.detail_node || name;
 		}
 
 		var rs = args['routes']

@@ -36,8 +36,13 @@ class multiindex:
       def summary(self, group_name, props):
             ans = {}
             def prop_dict(x, props):
-                  d = {p:getattr(x,p) for p in props if props[p] == str}
-                  d.update({p:prop_dict(getattr(x,p), props[p]) for p in props if type(props[p]) == dict})
+                  d = {}
+                  for p in props:
+                       if props[p] in [str,float,int]: d[p] = getattr(x,p)
+                       elif type(props[p]) == dict: d[p] = prop_dict(getattr(x,p), props[p])
+                       else: d[p] = props[p](getattr(x,p))
+                  # d = {p:getattr(x,p) for p in props if props[p] == str or props[p] == float or props[p] == int}
+                  # d.update({p:prop_dict(getattr(x,p), props[p]) for p in props if type(props[p]) == dict})
                   return d
             
             for x in self.flat[group_name]:

@@ -6,6 +6,7 @@ class Split:
         self.group = group
         self.route = route
         self.send_fn = send_fn
+        self.interface = "{}"
         self.hb_stopper = None
 
     def get_id(self):

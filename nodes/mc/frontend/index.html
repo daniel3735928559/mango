@@ -57,14 +57,23 @@
 	      <ul>
 		  <li v-for="r in nodes[detail_node].routes">{{r.src}} <span v-if="r.edits">&gt; {{r.edits}}</span> &gt; <a href="#" v-on:click="details(name)">{{r.dst}}</a></li>
 	      </ul>
-	      <h4>Interface:</h4>
+	      <div v-if="nodes[detail_node].interface">
+		  <h4>Interface:</h4>
+		  Inputs:
+		  <ul>
+		      <li v-for="(spec,name) in nodes[detail_node].interface.inputs">{{name}} {{spec}}</li>
+		  </ul>
+		  Outputs:
+		  <ul>
+		      <li v-for="(spec,name) in nodes[detail_node].interface.outputs">{{name}} {{spec}}</li>
+		  </ul>
 	      </div>
 	  </div>
 
 	  <div v-if="mode == 'types'" id="types">
 	      <h4>Types: </h4>
 	      <ul>
-		  <li v-for="t in types"><a href="#" v-on:click="addnode(t.name)">{{t.name}}</a></li>
+		  <li v-for="t in types"><a href="#" v-on:click="new_node_type = t.name">{{t.name}}</a></li>
 	      </ul>
 	  </div>
 	  
@@ -81,20 +90,20 @@
 
 	
 	</div>
-	
+	</div>	
 	<!-- sidebar -->
 	<div class="col-md-2">
 	    <div id="sidebar">
 		<div id="query">
 		    <h4>Controls</h4>
-		    Status:
-		    <div id="query_results">
-			<span class="error">{{error}}</span>
-		    </div>
-		    
-		    Add route: <input type="text" id="new_route_input" v-model="new_route" v-on:keyup.enter="addroute" />
-		    
-		    Add node: <input type="text" id="new_name_input" v-model="new_name" />
+		    <b>Status:</b>
+		    <div id="query_results"><span class="error">{{error}}</span></div>
+		    <br /><br />
+		    <b>Add route: </b><input type="text" id="new_route_input" v-model="new_route" v-on:keyup.enter="addroute" />
+		    <br /><br />
+		    <b>Add node:</b><br />
+		    Type: <input type="text" id="new_type_input" v-model="new_node_type" />
+		    Name: <input type="text" id="new_name_input" v-model="new_node_name" bv-on:keyup.enter="addnode" />
 		</div>
 	    </div>
 	</div>

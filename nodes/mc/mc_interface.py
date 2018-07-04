@@ -8,6 +8,7 @@ class mc_if:
         self.interface = iface
 
     def __repr__(self):
+        print("repr",self.interface)
         return json.dumps(self.interface)
         
     def validate(self, function_name, args):

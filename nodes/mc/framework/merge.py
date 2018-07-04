@@ -8,6 +8,7 @@ class Merge:
         self.group = group
         self.route = route
         self.send_fn = send_fn
+        self.interface = "{}"
         self.hb_stopper = None
 
     def get_id(self):
@@ -52,6 +53,7 @@ class Mergepoint:
         self.name = self.node_id
         self.merge_node = merge_node
         self.merge_name = name
+        self.interface = "{}"
         self.group = self.merge_node.group
         self.node_type = self.merge_node.node_type
         

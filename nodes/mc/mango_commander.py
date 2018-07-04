@@ -95,7 +95,7 @@ class mc(m_node):
             }
         })
         self.initialise_types()
-        self.index.add("nodes",Node("mc", "system", "mc", 0, mc_loopback_dataflow(self.interface,self.serialiser,self.mc_dispatch,self.mc_recv), self.route, mc_if(self.interface.interface)))
+        self.index.add("nodes",Node("mc", "system", "mc", 0, mc_loopback_dataflow(self.interface,self.serialiser,self.mc_dispatch,self.mc_recv), self.route, mc_if(self.interface.spec)))
         #self.index.add("groups",Group("system"))
 
         # Remote listening stuff: 
@@ -497,13 +497,13 @@ class mc(m_node):
     def query(self,header,args):
         nprops = {"name":str, "group":str, "node_type":str}
         summary = {
-            "nodes":self.index.summary("nodes", nprops),
+            "nodes":self.index.summary("nodes", {"name":str, "group":str, "node_type":str, "interface":lambda x: print(x) or str(x) if x else "{}"}),
             "routes":self.index.summary("routes", {"name":str, "edits":str, "group":str, "src":nprops, "dst":nprops}),
             "groups":self.index.summary("groups", {"name":str}),
             "types":self.index.summary("types", {"name":str}),
             "emps":self.index.summary("emps", {"name":str,"path":str})
         }
-
+        print("SUMMARY",summary)
         ans = {}
         for x in summary:
             if x in args:
