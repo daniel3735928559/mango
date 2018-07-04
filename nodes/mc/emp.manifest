@@ -1,1 +1,4 @@
-init:./init.emp
+admin:./emp/system.emp
+comms:./emp/comms.emp
+excite:./emp/excite.emp
+emacs:./emp/emacs.emp

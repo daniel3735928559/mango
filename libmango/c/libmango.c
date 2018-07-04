@@ -66,7 +66,7 @@ void m_node_dispatch(m_node_t *node, cJSON *header, cJSON *args){
     return;
   }
   if(result->name != NULL){
-    m_node_send(node, result->name, result->data, NULL, NULL);
+    m_node_send(node, result->name, result->data, cJSON_GetObjectItem(header,"mid")->valuestring, NULL);
   }
 }
 

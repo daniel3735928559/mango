@@ -1,0 +1,8 @@
+[config]
+
+[nodes]
+mx eshell
+emacs editor
+
+[routes]
+eshell <> editor

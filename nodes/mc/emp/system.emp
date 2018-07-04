@@ -1,0 +1,9 @@
+[config]
+
+[nodes]
+mx shell
+mc_fe mc_fe --MU_HTTP_PORT=11703
+
+[routes]
+shell <> mc
+mc <> mc_fe

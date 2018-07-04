@@ -1,0 +1,10 @@
+[config]
+
+[nodes]
+mx chat
+jam j
+otto otto
+
+[routes]
+chat <> j
+j > f {message ~ %/^!/} > otto > j

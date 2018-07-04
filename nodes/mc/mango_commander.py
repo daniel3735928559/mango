@@ -122,8 +122,7 @@ class mc(m_node):
         self.too_old = 200
         self.emp_manifest = {}
         self.read_emp_manifest()
-        with open("./init.emp","r") as f:
-            self.debug_print(self.mp(f.read(), "system"))
+        self.runemp("admin","system")
         self.run()
 
     ## Internal functions
@@ -387,12 +386,15 @@ class mc(m_node):
             new_pipeline = Pipeline(grp.rt_id(), seq[0], seq[-1], group, route_spec, seq)
             self.index.add("pipelines",new_pipeline)
 
-    def startemp(self,header,args):
-        emps = index.query("emp","name",[args['name']])
+    def runemp(self,name,group):
+        emps = self.index.query("emps","name",[name])
         if len(emps) == 0:
-            return "error",{'message':'no such emp: {}'.format(args['name'])}
+            return "error",{'message':'no such emp: {}'.format(name)}
         with open(emps[0].path,"r") as f:
-            return self.mp(f.read(), args['group'])
+            return self.mp(f.read(), group)
+            
+    def startemp(self,header,args):
+        return self.runemp(args['name'],args['group'])
 
     def emp(self, header, args):
         return self.mp(args['mp'], args['group'])

@@ -1,4 +1,4 @@
-zmq = require('zmq');
+zmq = require('zeromq');
 jsyaml = require('js-yaml');
 fs = require('fs');
 

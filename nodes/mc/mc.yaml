@@ -12,7 +12,6 @@ inputs:
     message:
       type: string
 
-
   alive:
 
   doc:
