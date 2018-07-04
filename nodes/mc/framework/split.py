@@ -6,6 +6,7 @@ class Split:
         self.group = group
         self.route = route
         self.send_fn = send_fn
+        self.hb_stopper = None
 
     def get_id(self):
         return str(self)
@@ -14,4 +15,7 @@ class Split:
         return "{}/{}".format(self.group, self.node_id)
 
     def handle(self, header, args):
-        self.send_fn(header,args,bytes(self.route,'ascii')) 
+        if header['name'] != 'exit':
+            self.send_fn(header,args,bytes(self.route,'ascii'))
+        else:
+            print("Split goodbye")

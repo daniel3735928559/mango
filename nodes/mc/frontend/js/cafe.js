@@ -21,17 +21,17 @@ window.onload = function(){
             self.mango = new Mango({"info":self.info_cb,"success":self.success});
 	    console.log(self.mango);
 	    var x = 0;
-	    var init_query = function(){
+	    var init_group = function(){
 		self.mango.m_send("addgroup",{"name":"frontend"});
 		self.query();
 		clearInterval(x);
 	    }
-	    x = setInterval(init_query,1000);
+	    x = setInterval(init_group,1000);
+	    setInterval(self.query,10000);
 	},
 	methods: {
 	    sorted_nodes: function(){
 		ans = Object.keys(this.nodes);
-		console.log("A",ans);
 		ans.sort();
 		return ans;
 	    },

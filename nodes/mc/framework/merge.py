@@ -8,6 +8,7 @@ class Merge:
         self.group = group
         self.route = route
         self.send_fn = send_fn
+        self.hb_stopper = None
 
     def get_id(self):
         return str(self)
@@ -39,6 +40,12 @@ class Merge:
                     del self.mergepoints[mp][mid]
                 self.send_fn(h,a,bytes(self.route,'ascii')) 
 
+    def handle(self, header, args, route=None):
+        if header['name'] != 'exit':
+            print("Merge handling",header,args)
+        else:
+            print("Merge goodbye")
+            
 class Mergepoint:
     def __init__(self, merge_node, name):
         self.node_id = merge_node.node_id
@@ -52,7 +59,7 @@ class Mergepoint:
         return str(self.merge_node)
     
     def __repr__(self):
-        return "{} {}".format(str(self.merge_node), self.node_id)
+        return str(self.merge_node)
     
     def handle(self, header, args, route=None):
         print("MP handling",header,args)
