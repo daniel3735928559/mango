@@ -24,6 +24,13 @@ inputs:
       type: string
       optional: true
 
+  startemp:
+    returns: success
+    name:
+      type: string
+    group:
+      type: string
+    
   addgroup:
     returns: success
     name:
@@ -100,7 +107,7 @@ inputs:
     
   delnode:
     returns: success
-    spec:
+    node:
       type: string
 
   emp:

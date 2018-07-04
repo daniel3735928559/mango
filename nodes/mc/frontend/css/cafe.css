@@ -29,12 +29,13 @@
     padding:5px;
 }
 
-#modes > span{
+#modes > div{
     cursor: pointer;
     border: 1px solid black;
     border-radius: 3px;
     padding: 0 5px;
     margin-right:5px;
+    display:inline-block;
 }
 
 .snippet{

@@ -35,6 +35,8 @@ class Merge:
             if not (False in {mid in self.mergepoints[mp] for mp in s}):
                 h = {'name':self.name,'mid':mid}
                 a = {mp:self.mergepoints[mp][mid] for mp in s}
+                for mp in s:
+                    del self.mergepoints[mp][mid]
                 self.send_fn(h,a,bytes(self.route,'ascii')) 
 
 class Mergepoint:
@@ -50,7 +52,7 @@ class Mergepoint:
         return str(self.merge_node)
     
     def __repr__(self):
-        return str(self.merge_node)
+        return "{} {}".format(str(self.merge_node), self.node_id)
     
     def handle(self, header, args, route=None):
         print("MP handling",header,args)

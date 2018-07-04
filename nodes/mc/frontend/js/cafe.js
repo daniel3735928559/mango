@@ -6,11 +6,14 @@ window.onload = function(){
 		mode: 'nodes',
 		detail_node: null,
 		nodes: {},
+		types: {},
+		emps: {},
 		routes: {},
 		error: '',
 		network: false,
 		mango: null,
-		new_route: ""
+		new_route: "",
+		new_name: ""
 	    };
 	},
 	mounted: function(){
@@ -26,6 +29,12 @@ window.onload = function(){
 	    x = setInterval(init_query,1000);
 	},
 	methods: {
+	    sorted_nodes: function(){
+		ans = Object.keys(this.nodes);
+		console.log("A",ans);
+		ans.sort();
+		return ans;
+	    },
 	    graph_data: function(event) {
 		var ns = [], es = [], id = 0;
 		var name_to_id = {};
@@ -40,7 +49,6 @@ window.onload = function(){
 			var rt = this.nodes[n].routes[r];
 			if(rt.edits) {
 			    ns.push({"id":id, "label":rt.edits, "shape":"dot","size":"5","mass":2});
-			    
 			    es.push({"from":name_to_id[rt.src],"to":id});
 			    es.push({"from":id,"to":name_to_id[rt.dst]});
 			    id++;
@@ -84,17 +92,35 @@ window.onload = function(){
 		});
 	    },
 	    query: function(){
-		this.mango.m_send("query",{"nodes":"","routes":""});
+		this.mango.m_send("query",{"nodes":"","routes":"","types":"","emps":""});
 	    },
 	    details: function(name, event){
 		this.detail_node = name;
 		this.mode = 'detail';
+	    },
+	    startemp: function(name){
+		this.mango.m_send("startemp",{"name":name,"group":"frontend"});
+	    },
+	    addnode: function(type){
+		if(this.new_name == ""){
+		    this.error = "Please enter a name for the node";
+		}
+		else {
+		    this.mango.m_send("addnode",{"name":this.new_name,"node_type":type,"group":"frontend"});
+		    this.new_name = "";
+		}
 	    },
 	    addroute: function(){
 		this.mango.m_send("addroute",{"group":"frontend", "spec":this.new_route});
 	    },
 	    delroute: function(src,dst,group){
 		this.mango.m_send("delroute",{"src":src,"dst":dst,"group":group});
+	    },
+	    delnode: function(name){
+		this.mango.m_send("delnode",{"node":name});
+	    },
+	    editroute: function(code){
+		this.new_route = code;
 	    },
 	    info_cb: function(header, args, event){
 		this.nodes = {};
@@ -109,15 +135,22 @@ window.onload = function(){
 		for(var i in rs){
 		    var src_name = rs[i]['src']['group']+'/'+rs[i]['src']['name'];
 		    var dst_name = rs[i]['dst']['group']+'/'+rs[i]['dst']['name'];
-		    this.nodes[src_name].routes.push({"src":src_name,"dst":dst_name,"group":rs[i].group,"edits":rs[i].edits});
+		    this.nodes[src_name].routes.push({"src":src_name,"dst":dst_name,"group":rs[i].group,"edits":rs[i].edits,"name":rs[i].name});
 		}
+
+		this.types = args['types'];
+		this.emps = args['emps'];
+		
 		for(var n in this.nodes){
 		    console.log("N",n,this.nodes[n]);
 		}
 	    },
 	    success: function(header,args,event){
 		if(!args.success) this.error = args.message;
-		else this.error = "success";
+		else {
+		    this.error = "success";
+		    this.query();
+		}
 	    }
 	}
     });

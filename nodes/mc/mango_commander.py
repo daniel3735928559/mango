@@ -14,6 +14,7 @@ from framework.node_type import *
 from framework.route import *
 from framework.pipeline import *
 from framework.group import *
+from framework.emp import *
 from framework.query import *
 from parsers.transform_parser import *
 from parsers.query_parser import *
@@ -47,6 +48,7 @@ class mc(m_node):
                                          "alive":self.alive,
                                          "doc":self.doc,
                                          "emp":self.emp,
+                                         "startemp":self.startemp,
                                          "error":self.mc_error,
                                      })
         self.uuid = str(self.gen_key())
@@ -82,6 +84,9 @@ class mc(m_node):
                 "group_name":["group","node_id"],
                 "route":["route"]
             },
+            "emps":{
+                "name":["name"]
+            },
             "groups":{
                 "name":["name"]
             },
@@ -115,12 +120,22 @@ class mc(m_node):
         self.reaper_thread = threading.Thread(target=mc_heartbeat_worker, daemon=True, args=("mc",self.mc_hb_addr,self.reap_time,threading.Event(),self.context))
         self.reaper_thread.start()
         self.too_old = 200
+        self.emp_manifest = {}
+        self.read_emp_manifest()
         with open("./init.emp","r") as f:
             self.debug_print(self.mp(f.read(), "system"))
         self.run()
 
     ## Internal functions
-        
+
+    def read_emp_manifest(self):
+        with open("./emp.manifest","r") as f:
+            for l in f:
+                if ":" in l:
+                    name,path = l.split(":")
+                    self.index.add("emps",EMP(name.strip(),path.strip()))
+                    
+    
     def do_heartbeat(self,node):
         node = node.decode()
         self.debug_print("HB",node)
@@ -372,20 +387,29 @@ class mc(m_node):
             new_pipeline = Pipeline(grp.rt_id(), seq[0], seq[-1], group, route_spec, seq)
             self.index.add("pipelines",new_pipeline)
 
+    def startemp(self,header,args):
+        emps = index.query("emp","name",[args['name']])
+        if len(emps) == 0:
+            return "error",{'message':'no such emp: {}'.format(args['name'])}
+        with open(emps[0].path,"r") as f:
+            return self.mp(f.read(), args['group'])
+
     def emp(self, header, args):
         return self.mp(args['mp'], args['group'])
     
     def mp(self, program, group):
-
+        new_emp = True
         if not self.add_group(group):
-            return {"success":False, "message":"Group already exists: {}".format(group)}
+            new_emp = False
+            #return {"success":False, "message":"Group already exists: {}".format(group)}
 
         # The group did not exist.  Add it: 
         
         try:
             prog = self.emp_parser.parse(program)
             for n in prog.get('nodes',[]):
-                self.launch_node(n['type'], n['node'], group, n['args'])
+                if new_emp or ((not new_emp) and len(self.index.query("nodes","group_name",[group,n['node']])) == 0):
+                    self.launch_node(n['type'], n['node'], group, n['args'])
             
             for r in prog.get('routes',[]):
                 self.create_routes(r,group)
@@ -402,6 +426,7 @@ class mc(m_node):
     
     def launch_node(self, node_type, node_id, node_group, env):
         n = node_type
+        self.debug_print("TYPE",n)
         if n == 'merge':
             self.add_merge(node_id, node_group, env)
             return
@@ -467,7 +492,7 @@ class mc(m_node):
             
 
     def addnode(self,header,args):
-        return self.launch_node(args['node'], args.get('name', args['node']), args['group'], json.loads(args.get('env',"{}")))
+        return self.launch_node(args['node_type'], args['name'], args['group'], json.loads(args.get('env',"{}")))
 
     def query(self,header,args):
         nprops = {"name":str, "group":str, "node_type":str}
@@ -475,7 +500,8 @@ class mc(m_node):
             "nodes":self.index.summary("nodes", nprops),
             "routes":self.index.summary("routes", {"name":str, "edits":str, "group":str, "src":nprops, "dst":nprops}),
             "groups":self.index.summary("groups", {"name":str}),
-            "types":self.index.summary("types", {"name":str})
+            "types":self.index.summary("types", {"name":str}),
+            "emps":self.index.summary("emps", {"name":str,"path":str})
         }
 
         ans = {}
