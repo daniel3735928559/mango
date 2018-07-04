@@ -387,6 +387,7 @@ class mc(m_node):
             self.index.add("pipelines",new_pipeline)
 
     def runemp(self,name,group):
+        self.debug_print("REMP",name,group)
         emps = self.index.query("emps","name",[name])
         if len(emps) == 0:
             return "error",{'message':'no such emp: {}'.format(name)}

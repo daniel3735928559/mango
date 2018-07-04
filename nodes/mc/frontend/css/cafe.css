@@ -16,7 +16,15 @@
     width:100%;
 }
 
+#command_entry{
+    height: 20%;
+    min-height: 200px;
+    padding-top:5px;
+}
+
 #main_col{
+    min-height: 70%;
+    max-height: 70%;
     padding-top:5px;
 }
 
@@ -81,4 +89,13 @@
     line-height: 27px;
     vertical-align: middle;
     margin: 3px;
+}
+
+#cmd_input {
+    font-family:Courier;
+    width:100%;
+    color: #CCCCCC;
+    background: #000000;
+    border: 3px double #CCCCCC;
+    padding: 10px;
 }

@@ -9,12 +9,22 @@ window.onload = function(){
 		types: {},
 		emps: {},
 		routes: {},
+		id_to_name: {},
 		error: '',
 		network: false,
 		mango: null,
-		new_route: "",
-		new_node_name: "",
-		new_node_type: ""
+		cmd: "",
+		cmd_history_index: -1,
+		cmd_result: "",
+		cmd_history: [],
+		commands: {
+		    "help":["cmd"],
+		    "addroute":["spec"],
+		    "addnode":["type", "name", "group"],
+		    "delnode":["name"],
+		    "delroute":["src","dst","group"],
+		    "startemp":["name", "group"]
+		}
 	    };
 	},
 	mounted: function(){
@@ -39,9 +49,11 @@ window.onload = function(){
 	    graph_data: function(event) {
 		var ns = [], es = [], id = 0;
 		var name_to_id = {};
+		this.id_to_name = {};
 		for(var n in this.nodes){
 		    ns.push({"id":id, "label":n, "mass":2});
 		    name_to_id[n] = id;
+		    this.id_to_name[id] = n;
 		    id++;
 		}
 		console.log("N2I",name_to_id);
@@ -49,6 +61,7 @@ window.onload = function(){
 		    for(var r in this.nodes[n].routes){
 			var rt = this.nodes[n].routes[r];
 			if(rt.edits) {
+			    console.log("EDIT NODE",rt.edits,id);
 			    ns.push({"id":id, "label":rt.edits, "shape":"dot","size":"5","mass":2});
 			    es.push({"from":name_to_id[rt.src],"to":id});
 			    es.push({"from":id,"to":name_to_id[rt.dst]});
@@ -83,13 +96,20 @@ window.onload = function(){
 		    var container = document.getElementById('graph');
 		    self.network = new vis.Network(container,
 						   self.graph_data(),
-						   {});
-		    // self.network.on("doubleClick", function(params){
-		    // 	if(params.nodes.length > 0){
-		    // 	    self.open_snippet(params.nodes[0]);
-		    // 	    self.set_mode('doc');
-		    // 	}
-		    // });
+						   {
+						       height: '100%',
+						       width: '100%',
+						       edges: { arrows: "to", font: { size: 12 } },
+						       nodes: { shape: 'box', margin: 10 },
+						       layout: { hierarchical: { direction: "UD", sortMethod: "directed", parentCentralization: false } },
+						       physics: { enabled: false }
+						   });
+		    
+		    self.network.on("doubleClick", function(params){
+		    	if(params.nodes.length > 0 && params.nodes[0] in self.id_to_name){
+		    	    self.details(self.id_to_name[params.nodes[0]]);
+		    	}
+		    });
 		});
 	    },
 	    query: function(){
@@ -97,31 +117,112 @@ window.onload = function(){
 	    },
 	    details: function(name, event){
 		this.detail_node = name;
-		this.mode = 'detail';
+		this.set_mode('detail');
 	    },
-	    startemp: function(name){
-		this.mango.m_send("startemp",{"name":name,"group":"frontend"});
+	    startemp: function(args){
+		this.mango.m_send("startemp",{"name":args.name,"group":args.group});
 	    },
-	    addnode: function(type){
-		if(this.new_node_name == "" || this.new_node_type == ""){
-		    this.error = "Please enter a name for the node";
-		}
-		else {
-		    this.mango.m_send("addnode",{"name":this.new_node_name,"node_type":this.new_node_type,"group":"frontend"});
-		    this.new_node_name = "";
-		}
+	    addnode: function(args){
+		this.mango.m_send("addnode",{"name":args.name,"node_type":args.type,"group":args.group});
 	    },
-	    addroute: function(){
-		this.mango.m_send("addroute",{"group":"frontend", "spec":this.new_route});
+	    addroute: function(args){
+		this.mango.m_send("addroute",{"group":args.group, "spec":args.spec});
 	    },
-	    delroute: function(src,dst,group){
-		this.mango.m_send("delroute",{"src":src,"dst":dst,"group":group});
+	    delroute: function(args){
+		this.mango.m_send("delroute",{"src":args.src,"dst":args.dst,"group":args.group});
 	    },
-	    delnode: function(name){
-		this.mango.m_send("delnode",{"node":name});
+	    delnode: function(args){
+		this.mango.m_send("delnode",{"node":args.name});
 	    },
 	    editroute: function(code){
-		this.new_route = code;
+		this.cmd = "addroute " + code;
+	    },
+	    populatecmd: function(input){
+		var tokens = input.split(" ");
+		var c = tokens[0].trim()
+		if(c in this.commands){
+		    var start = input.length;
+		    var runnable = tokens.length - 1 >= this.commands[c].length;
+		    for(var i = tokens.length - 1; i < this.commands[c].length; i++){
+			input += " <" + this.commands[c][i] + ">";
+		    }
+		    this.cmd = input;
+		    if(runnable) this.runcommand();
+		    else{
+			Vue.nextTick(function() {
+			    document.getElementById("cmd_input").select();
+			    document.getElementById("cmd_input").setSelectionRange(start+1,input.length);
+			});
+		    }
+		}
+	    },
+	    help: function(args){
+		if(args && args.cmd in this.commands){
+		    this.cmd_result = args.cmd;
+		    for(var i = 0; i < this.commands[args.cmd].length; i++){
+			this.cmd_result += " <" + this.commands[args.cmd][i] + ">";
+		    }
+		}
+		else{
+		    this.cmd_result = "";
+		    for(var cmd in this.commands){
+			this.cmd_result += cmd;
+			for(var i = 0; i < this.commands[cmd].length; i++){
+			    this.cmd_result += " <" + this.commands[cmd][i] + ">";
+			}
+			this.cmd_result += "\n";
+		    }
+		}
+	    },
+	    addhistory: function(){
+		this.cmd_history.push(this.cmd);
+		this.cmd_history_index = this.cmd_history.length;
+		this.cmd = "";
+	    },
+	    runcommand: function(){
+		var tokens = this.cmd.split(" ");
+		console.log("RC",this.cmd,tokens.length);
+		var c = tokens[0].trim();
+		tokens = tokens.slice(1);
+		
+		if(c in this.commands) {
+		    var nargs = this.commands[c].length
+		    console.log(nargs,tokens.length);
+		    if(nargs > tokens.length) {
+			this.addhistory();
+			this.help(c);
+			return;
+		    }
+		    if(nargs < tokens.length){
+			tokens[nargs-1] = tokens.slice(nargs-1).join(" ")
+			tokens = tokens.slice(0,nargs)
+		    }
+		    var args = {}
+		    for(var i = 0; i < nargs; i++){
+			args[this.commands[c][i]] = tokens[i].trim();
+		    }
+		    console.log("RUN",c,args);
+		    this.addhistory();
+		    this[c](args);
+		}
+		else{
+		    this.addhistory();
+		    this.help();
+		}
+	    },
+	    cmd_up: function(){
+		console.log("CHI",this.cmd_history_index);
+		if(this.cmd_history_index-1 < 0) return;
+		this.cmd = this.cmd_history[--this.cmd_history_index];
+	    },
+	    cmd_down: function(){
+		console.log("CHI",this.cmd_history_index);
+		if(this.cmd_history_index > this.cmd_history.length-1) return;
+		else if(this.cmd_history_index == this.cmd_history.length-1){
+		    this.cmd_history_index++;
+		    this.cmd = "";
+		}
+		else this.cmd = this.cmd_history[++this.cmd_history_index];
 	    },
 	    info_cb: function(header, args, event){
 		this.nodes = {};
