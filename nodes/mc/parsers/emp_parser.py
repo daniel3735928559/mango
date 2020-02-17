@@ -6,7 +6,7 @@ class emp_parser:
 
     # returns: 
     def parse(self, program, args=None):
-        ans = {'nodes':[],'routes':[]}
+        ans = {'nodes':[],'routes':[],'vars':{}}
         prog = {}
         var = {}
         new_nodes = []
@@ -33,9 +33,11 @@ class emp_parser:
         # group: The name of the group under which these nodes will be added (will be created if doesn't exist)
         
         for l in prog.get('config',[]):
-            ll = l.split('=')
+            ll = l.split(':')
             var[ll[0].strip()] = ll[1].strip()
             
+        ans['vars'] = var
+        
         # Nodes are of the form:
         # [group/]node --arg1=value1 --arg2=value2 ...
         for l in prog.get('nodes',[]):
@@ -53,5 +55,5 @@ class emp_parser:
         # Routes are lines following the mc routing spec
         for l in prog.get('routes',[]):
             ans['routes'].append(l.strip())
-        
+            
         return ans

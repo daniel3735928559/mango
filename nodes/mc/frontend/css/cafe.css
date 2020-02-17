@@ -16,10 +16,33 @@
     width:100%;
 }
 
-#command_entry{
-    height: 20%;
-    min-height: 200px;
+.command_entry{
+    height: 100vh;
+    min-height: 100vh;
     padding-top:5px;
+}
+
+
+.command_history {
+    font-family:Courier;
+    width:100%;
+    white-space: pre;
+    color: #CCCCCC;
+    background: #000000;
+    border: 3px double #CCCCCC;
+    padding: 10px;
+    height: 80vh;
+    overflow: scroll;
+}
+
+.cmd_input {
+    font-family:Courier;
+    width:100%;
+    height:7vh;
+    color: #CCCCCC;
+    background: #000000;
+    border: 3px double #CCCCCC;
+    padding: 10px;
 }
 
 #main_col{
@@ -89,13 +112,4 @@
     line-height: 27px;
     vertical-align: middle;
     margin: 3px;
-}
-
-#cmd_input {
-    font-family:Courier;
-    width:100%;
-    color: #CCCCCC;
-    background: #000000;
-    border: 3px double #CCCCCC;
-    padding: 10px;
 }

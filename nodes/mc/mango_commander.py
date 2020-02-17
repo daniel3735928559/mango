@@ -36,21 +36,20 @@ class mc(m_node):
         #     self.node_types[child.get("name")] = NodeType(child.get("name"),child.get("wd"),child.get("runner"))
 
         self.route = self.gen_route_key()
-        self.interface.add_interface("mc.yaml",
-                                     {
-                                         "addgroup":self.addgroup,
-                                         "delgroup":self.delgroup,
-                                         "addroute":self.addroute,
-                                         "delroute":self.delroute,
-                                         "query":self.query,
-                                         "addnode":self.addnode,
-                                         "delnode":self.delnode,
-                                         "alive":self.alive,
-                                         "doc":self.doc,
-                                         "emp":self.emp,
-                                         "startemp":self.startemp,
-                                         "error":self.mc_error,
-                                     })
+        self.interface.add_interface("mc.yaml", {
+            "addgroup":self.addgroup,
+            "delgroup":self.delgroup,
+            "addroute":self.addroute,
+            "delroute":self.delroute,
+            "query":self.query,
+            "addnode":self.addnode,
+            "delnode":self.delnode,
+            "alive":self.alive,
+            "doc":self.doc,
+            "emp":self.emp,
+            "startemp":self.startemp,
+            "error":self.mc_error,
+        })
         self.uuid = str(self.gen_key())
 
         self.mc_addr = "tcp://*:"+sys.argv[1]
@@ -238,7 +237,7 @@ class mc(m_node):
             self.debug_print("IFACE",spec[t]['if'])
                 
             spec[t]['dir'] = base
-            self.index.add("types",NodeType(t,base,spec[t].get('run',''),spec[t]['if'],spec[t]['lang'],spec[t]))
+            self.index.add("types",NodeType(t,base,spec[t].get('run',''),spec[t]['if'],spec[t]['lang'],spec[t].get('desc',''),spec[t]))
             
     def initialise_types(self):
         manifest_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..'))
@@ -503,7 +502,7 @@ class mc(m_node):
             "nodes":self.index.summary("nodes", {"name":str, "group":str, "node_type":str, "interface":lambda x: print(x) or str(x) if x else "{}"}),
             "routes":self.index.summary("routes", {"name":str, "edits":str, "group":str, "src":nprops, "dst":nprops}),
             "groups":self.index.summary("groups", {"name":str}),
-            "types":self.index.summary("types", {"name":str}),
+            "types":self.index.summary("types", {"name":str,"desc":str}),
             "emps":self.index.summary("emps", {"name":str,"path":str})
         }
         print("SUMMARY",summary)

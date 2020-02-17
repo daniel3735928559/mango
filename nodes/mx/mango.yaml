@@ -1,4 +1,5 @@
 mx:
+  desc: Command line interface for mango nodes
   run: mx_start
   lang: py
   if: mx.yaml

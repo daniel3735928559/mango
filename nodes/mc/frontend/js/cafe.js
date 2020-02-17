@@ -1,4 +1,78 @@
 window.onload = function(){
+    
+    Vue.component('simple-shell', {
+	template: `<div class="command_entry">
+			<div class="command_history">{{cmd_result}}</div>
+			<div class="command_modeline">{{connection}}: </div>
+			<input type="text" class="cmd_input" v-bind:value="value" v-on:input="$emit('input', $event.target.value)" v-on:keyup.up="cmd_up" v-on:keyup.down="cmd_down" v-on:keyup.enter="runcommand" />
+		   </div>`,
+	data() {
+	    return {
+		cmd: "",
+		connection: "",
+		cmd_history_index: -1,
+		cmd_result: "",
+		cmd_history: []
+	    }
+	},
+	props: ["commands", "run_cb", "value"],
+	methods: {
+	    populate: function(c, args, run){
+		var arglist = [c];
+		for(var a in args){
+		    arglist.push('-'+a);
+		    arglist.push(args[a]);
+		}
+		this.cmd = shellquote.quote(arglist);
+		if(run) this.runcmd();
+		else Vue.nextTick(function() {
+		    document.getElementById("cmd_input").select();
+		    document.getElementById("cmd_input").setSelectionRange(start+1,input.length);
+		});
+	    },
+	    addhistory: function(){
+		this.cmd_history.push(this.cmd);
+		this.cmd_history_index = this.cmd_history.length;
+		this.cmd = "";
+	    },
+	    runcmd: function(){
+		var tokens = shellquote.parse(this.cmd);
+		var c = tokens[0];
+		tokens = tokens.slice(1);
+		var args = {};
+		while(tokens.length > 1){
+		    var arg = tokens[0];
+		    if(arg[0] != '-'){
+			return;
+		    }
+		    arg = arg.slice(1);
+		    args[arg] = tokens[1];
+		    tokens = tokens.slice(2);
+		}
+		if(tokens.length > 0){
+		    return;
+		}
+		console.log("RUN",c,args);
+		this.addhistory();
+		if(c == "help") this.help(args);
+		else this.run_cb(c, args);
+	    },
+	    cmd_up: function(){
+		if(this.cmd_history_index-1 < 0) return;
+		this.cmd = this.cmd_history[--this.cmd_history_index];
+	    },
+	    cmd_down: function(){
+		if(this.cmd_history_index > this.cmd_history.length-1) return;
+		else if(this.cmd_history_index == this.cmd_history.length-1){
+		    this.cmd_history_index++;
+		    this.cmd = "";
+		}
+		else this.cmd = this.cmd_history[++this.cmd_history_index];
+	    }	    
+	}
+    });
+
+    
     var app = new Vue({
 	el: '#app',
 	data() {
@@ -6,6 +80,7 @@ window.onload = function(){
 		mode: 'nodes',
 		detail_node: null,
 		nodes: {},
+		groups: {},
 		types: {},
 		emps: {},
 		routes: {},
@@ -13,12 +88,10 @@ window.onload = function(){
 		error: '',
 		network: false,
 		mango: null,
-		cmd: "",
-		cmd_history_index: -1,
-		cmd_result: "",
-		cmd_history: [],
-		commands: {
+		cmd: "hello",
+		shell_commands: {
 		    "help":["cmd"],
+		    "test_cmd":["test_arg"],
 		    "addroute":["spec"],
 		    "addnode":["type", "name", "group"],
 		    "delnode":["name"],
@@ -38,7 +111,7 @@ window.onload = function(){
 		clearInterval(x);
 	    }
 	    x = setInterval(init_group,1000);
-	    setInterval(self.query,10000);
+	    //setInterval(self.query,10000);
 	},
 	methods: {
 	    sorted_nodes: function(){
@@ -128,6 +201,10 @@ window.onload = function(){
 	    addroute: function(args){
 		this.mango.m_send("addroute",{"group":args.group, "spec":args.spec});
 	    },
+	    connect: function(node){
+		
+		this.mango.m_send("addroute",{"group":"frontend", "spec":"system/mx_fe > fe forward {env.name = forward_cmd; del forward_cmd;} > " + node});
+	    },
 	    delroute: function(args){
 		this.mango.m_send("delroute",{"src":args.src,"dst":args.dst,"group":args.group});
 	    },
@@ -137,98 +214,18 @@ window.onload = function(){
 	    editroute: function(code){
 		this.cmd = "addroute " + code;
 	    },
-	    populatecmd: function(input){
-		var tokens = input.split(" ");
-		var c = tokens[0].trim()
-		if(c in this.commands){
-		    var start = input.length;
-		    var runnable = tokens.length - 1 >= this.commands[c].length;
-		    for(var i = tokens.length - 1; i < this.commands[c].length; i++){
-			input += " <" + this.commands[c][i] + ">";
-		    }
-		    this.cmd = input;
-		    if(runnable) this.runcommand();
-		    else{
-			Vue.nextTick(function() {
-			    document.getElementById("cmd_input").select();
-			    document.getElementById("cmd_input").setSelectionRange(start+1,input.length);
-			});
-		    }
-		}
-	    },
-	    help: function(args){
-		if(args && args.cmd in this.commands){
-		    this.cmd_result = args.cmd;
-		    for(var i = 0; i < this.commands[args.cmd].length; i++){
-			this.cmd_result += " <" + this.commands[args.cmd][i] + ">";
-		    }
-		}
-		else{
-		    this.cmd_result = "";
-		    for(var cmd in this.commands){
-			this.cmd_result += cmd;
-			for(var i = 0; i < this.commands[cmd].length; i++){
-			    this.cmd_result += " <" + this.commands[cmd][i] + ">";
-			}
-			this.cmd_result += "\n";
-		    }
-		}
-	    },
-	    addhistory: function(){
-		this.cmd_history.push(this.cmd);
-		this.cmd_history_index = this.cmd_history.length;
-		this.cmd = "";
-	    },
-	    runcommand: function(){
-		var tokens = this.cmd.split(" ");
-		console.log("RC",this.cmd,tokens.length);
-		var c = tokens[0].trim();
-		tokens = tokens.slice(1);
-		
-		if(c in this.commands) {
-		    var nargs = this.commands[c].length
-		    console.log(nargs,tokens.length);
-		    if(nargs > tokens.length) {
-			this.addhistory();
-			this.help(c);
-			return;
-		    }
-		    if(nargs < tokens.length){
-			tokens[nargs-1] = tokens.slice(nargs-1).join(" ")
-			tokens = tokens.slice(0,nargs)
-		    }
-		    var args = {}
-		    for(var i = 0; i < nargs; i++){
-			args[this.commands[c][i]] = tokens[i].trim();
-		    }
-		    console.log("RUN",c,args);
-		    this.addhistory();
-		    this[c](args);
-		}
-		else{
-		    this.addhistory();
-		    this.help();
-		}
-	    },
-	    cmd_up: function(){
-		console.log("CHI",this.cmd_history_index);
-		if(this.cmd_history_index-1 < 0) return;
-		this.cmd = this.cmd_history[--this.cmd_history_index];
-	    },
-	    cmd_down: function(){
-		console.log("CHI",this.cmd_history_index);
-		if(this.cmd_history_index > this.cmd_history.length-1) return;
-		else if(this.cmd_history_index == this.cmd_history.length-1){
-		    this.cmd_history_index++;
-		    this.cmd = "";
-		}
-		else this.cmd = this.cmd_history[++this.cmd_history_index];
-	    },
 	    info_cb: function(header, args, event){
 		this.nodes = {};
+		this.groups = {};
 		var ns = args['nodes'];
 		for(var i in ns){
-		    var name = ns[i]['group'] + '/' + ns[i]['name']
+		    var group = ns[i]['group'];
+		    var nid = ns[i]['name'];
+		    console.log("G",group);
+		    if(group in this.groups) this.groups[group].push(nid);
+		    else this.groups[group] = [nid];
+		    
+		    var name = group + '/' + nid;
 		    this.nodes[name] = ns[i];
 		    this.nodes[name].routes = [];
 		    this.nodes[name]['interface'] = JSON.parse(ns[i]['interface']) || {};
@@ -248,6 +245,12 @@ window.onload = function(){
 		for(var n in this.nodes){
 		    console.log("N",n,this.nodes[n]);
 		}
+	    },
+	    run_cmd: function(cmd, args){
+		return this[cmd](args);
+	    },
+	    test_cmd: function(args){
+		console.log("TEST",args);
 	    },
 	    success: function(header,args,event){
 		if(!args.success) this.error = args.message;

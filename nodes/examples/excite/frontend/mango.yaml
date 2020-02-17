@@ -1,3 +1,4 @@
 excite_fe:
+  desc: Example MU frontend
   lang: mu
   dual_if: ../excite.yaml

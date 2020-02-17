@@ -1,3 +1,4 @@
 mu: 
   run: python mu.py
   lang: py
+  desc: Mango bridge for web frontends
