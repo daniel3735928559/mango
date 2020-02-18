@@ -1,7 +1,7 @@
 package router
 
 import (
-	"fmt"
+	//"fmt"
 )
 
 const (
@@ -9,9 +9,22 @@ const (
 	UNKNOWN = 0
 )
 
-var keywords = map[string]int{
-	"var": VAR,
-}
+var (
+	keywords = map[string]int{"var": VAR}
+	syms = map[string]int{
+		"==":EQ,
+		"<=":LE,
+		">=":GE,
+		"+=":PE,
+		"-=":ME,
+		"*=":TE,
+		"/=":DE,
+		"%=":RE,
+		"^=":XE,
+		"~=":SUB,
+		"&&":AND,
+		"||":OR}
+)
 
 type Position struct {
 	Line   int
@@ -44,10 +57,10 @@ func (s *RouteScanner) Scan() (tok int, lit string, pos Position) {
 		tok, lit = NUMBER, s.scanNumber()
 	case ch == '"':
 		tok, lit = STRING, s.scanString()
-		fmt.Println("STRING",lit)
+		//fmt.Println("STRING",lit)
 	case ch == '=' || ch == '<' || ch == '>':
 		tok, lit = s.scanTest()
-		fmt.Println("TEST",tok,lit)
+		//fmt.Println("TEST",tok,lit)
 	default:
 		switch ch {
 		case -1:
@@ -120,7 +133,7 @@ func (s *RouteScanner) scanTest() (int, string) {
 	fc := s.peek()
 	if fc == '=' || fc == '<' || fc == '>' {
 		s.next()
-		fmt.Printf("peek, fc:%s,p:%s\n",string(fc),string(s.peek()))
+		//fmt.Printf("peek, fc:%s,p:%s\n",string(fc),string(s.peek()))
 		if s.peek() == '=' {
 			s.next()
 			return EQ, "=="
