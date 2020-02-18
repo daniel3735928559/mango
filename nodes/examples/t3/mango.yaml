@@ -1,0 +1,14 @@
+excite_py:
+  run: python excite.py
+  lang: py
+  if: excite.yaml
+
+excite_js:
+  run: node excite.js
+  lang: js
+  if: excite.yaml
+
+excite_c:
+  run: a.out
+  lang: c
+  if: excite.yaml
