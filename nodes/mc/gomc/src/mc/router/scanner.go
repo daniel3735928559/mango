@@ -1,4 +1,4 @@
-package routeparser
+package router
 
 import (
 	"fmt"

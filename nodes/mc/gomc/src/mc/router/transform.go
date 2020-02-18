@@ -1,5 +1,13 @@
 package router
 
-func Add(v1, v2 *MCValue) {
-	
+type Transform struct {
+	Type string
+	Condition *Expression
+	Script *Script
+	Source string
+}
+
+
+func (t *Transform) ToString() string {
+	return t.Type
 }

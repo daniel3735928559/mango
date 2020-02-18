@@ -42,6 +42,3 @@ func (v *MCValue) GetDictElement(key string) *MCValue {
 	return v.Value.(map[string]*MCValue)[key]
 }
 
-func (v *MCValue) GetDictElement(key string) *MCValue {
-	return v.Value.(map[string]*MCValue)[key]
-}

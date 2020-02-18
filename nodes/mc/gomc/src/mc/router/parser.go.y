@@ -1,5 +1,5 @@
 %{
-	package routeparser
+	package router
 	import (
 		"strconv"
 		"fmt"
@@ -9,27 +9,8 @@
 		literal string
 		position Position
 	}
-	type Node struct {
-		Name string
-	}
-	type Route struct {
-		Source string
-		Transforms []*Transform
-		Dest string
-	}
 	type RouteList struct {
 		Routes []*Route
-	}
-	type Transform struct {
-		Type string
-		Condition *Expression
-		Script *Script
-		Source string
-	}
-	type Expression struct {
-		Operation string
-		Args []*Expression
-		Value *Value
 	}
 	type Script struct {
 		Statements []*Statement
@@ -38,32 +19,11 @@
 		Operation string
 		Args []*Value
 	}
-	type Value struct {
-		Type string
-		NameVal string
-		IntVal int
-		FloatVal float64
-		StringVal string
-		ExprVal *Expression
-	}
-
-	// type Transform struct {
-	// 	Type FILTER|EDIT|REPLACE|FILTEREDIT|FILTERREPLACE
-	// }
-	// type Operation struct {
-	// 	Op string
-	// 	Args []Operation
-	// 	Kwargs map[string]Operation
-	// 	Execute Script
-	// }
-	// type Script struct {
-	// 	Ops []Op
-	// }
 %}
 %union{
 	token Token
 	routes []*Route
-	transforms []*Transform
+	transforms *Route
 	transform *Transform
 	expression *Expression
 	script []*Statement
@@ -72,6 +32,7 @@
 }
 %type<routes> route
 %type<node> node
+%type<transforms> transforms
 %type<transform> transform
 %type<script> script
 %type<statement> stmt
@@ -90,7 +51,7 @@ route   : node '>' node
 	fmt.Println("C")
 	$$ = nil
 	if l, ok := yylex.(*RouteLexer); ok {
-		l.result = RouteList{Routes:[]*Route{&Route{Source: $1.Name, Dest: $3.Name}}}
+		l.result = []*Route{&Route{Source: $1.Name, Dest: $3.Name}}
 	}
 }
 | node '<' node
@@ -98,25 +59,29 @@ route   : node '>' node
 	fmt.Println("B")
 	$$ = nil
 	if l, ok := yylex.(*RouteLexer); ok {
-		l.result = RouteList{Routes:[]*Route{&Route{Source: $3.Name, Dest: $1.Name}}}
+		l.result = []*Route{&Route{Source: $3.Name, Dest: $1.Name}}
 	}
 }
 | node '<' '>' node
 {
 	$$ = nil
 	if l, ok := yylex.(*RouteLexer); ok {
-		l.result = RouteList{Routes: []*Route{
+		l.result = []*Route{
 			&Route{Source: $1.Name, Dest: $4.Name},
-			&Route{Source: $4.Name, Dest: $1.Name}}}
+			&Route{Source: $4.Name, Dest: $1.Name}}
 	}
 }
-| node '>' transform '>' node
+| node '>' transforms
 {
 	$$ = nil
 	fmt.Println("A")
 	if l, ok := yylex.(*RouteLexer); ok {
-		l.result = RouteList{Routes:[]*Route{&Route{Source: $1.Name, Dest: $5.Name, Transforms: []*Transform{$3}}}}
-	}
+		l.result = []*Route{
+				    &Route{
+				    Source: $1.Name,
+				    Dest: $3.Dest,
+				    Transforms: $3.Transforms}}
+}
 }
 ;
 node    : IDENT
@@ -125,17 +90,35 @@ node    : IDENT
 	$$ = &Node{Name: $1.literal}
 }
 ;
+transforms : transform '>' node
+{
+	$$ = &Route{
+		Dest: $3.Name,
+		Transforms: []*Transform{$1}}
+}
+| transform '>' transforms
+{
+	$$ = &Route{
+		Dest: $3.Dest,
+		Transforms: append([]*Transform{$1}, $3.Transforms...)}
+}
+;
 transform : '?' '{' expr '}'
 {
-	$$ = &Transform{Source: $1.literal}
+	$$ = &Transform{
+		Type: "filter",
+		Source: $3.ToString()}
 }
 | '%' '{' script '}'
 {
-	$$ = &Transform{Source: $1.literal}
+	$$ = &Transform{
+		Type: "map"}
 }
 | '=' '{' IDENT ':' expr '}'
 {
-	$$ = &Transform{Source: $1.literal}
+	$$ = &Transform{
+		Type: "replace",
+		Source: $5.ToString()}
 }
 ;
 script
@@ -254,29 +237,11 @@ expr : NUMBER
 }
 ;
 %%
-type RouteLexer struct {
-	s *RouteScanner
-	Nodes map[string]string
-	result RouteList
+func (v *Value) ToString() string {
+	return v.Type
 }
-func (l *RouteLexer) Lex(lval *yySymType) int {
-	tok, lit, pos := l.s.Scan()
-	if tok == EOF {
-		return 0
-	}
-	lval.token = Token{token: tok, literal: lit, position: pos}
-	fmt.Println("Lexed",tok,lit,pos)
-	return tok
-}
-func (l *RouteLexer) Error(e string) {
-	fmt.Println("ERROR",e)
-}
-func (r *Route) ToString() string {
-	return fmt.Sprintf("%s > %s", r.Source, r.Dest)
-}
-func Parse(exp string, nodes map[string]string) RouteList {
+func Parse(exp string) []*Route {
 	l := new(RouteLexer)
-	l.Nodes = nodes
 	l.s = new(RouteScanner)
 	l.s.Init(exp)
 	//l.Init(strings.NewReader(exp))
