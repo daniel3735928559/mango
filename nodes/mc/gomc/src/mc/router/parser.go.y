@@ -9,13 +9,6 @@
 		literal string
 		position Position
 	}
-	type Script struct {
-		Statements []*Statement
-	}
-	type Statement struct {
-		Name string
-		Val *Expression 
-	}
 %}
 %union{
 	token Token
@@ -23,7 +16,9 @@
 	transforms *Route
 	transform *Transform
 	expression *Expression
-	script []*Expression
+	statement *Statement
+	writeable WriteableValue
+	script []*Statement
 	node *Node
 }
 %type<routes> route
@@ -31,19 +26,20 @@
 %type<transforms> transforms
 %type<transform> transform
 %type<script> script
+%type<writeable> dstexpr
 %type<expression> varexpr
-%type<expression> stmt
+%type<statement> stmt
 %type<expression> expr
 %type<expression> mapexprs
 %type<expression> listexprs
-%token<token> IDENT VAR NAME NUMBER STRING AND OR EQ LE GE PE ME TE DE RE XE SUB '?' '%' '=' '{' '}' '[' ']' '<' '>' ':' '+' '-' '*' '/' '&' '|', '^'
+%token<token> IDENT VAR NUMBER STRING THIS AND OR EQ NE LE GE PE ME TE DE RE XE SUB '?' '%' '=' '{' '}' '[' ']' '<' '>' ':' '+' '-' '*' '/' '&' '|', '^', '!', '~'
 
 %right UNARY
 %left IS
 %left GE LE
 %left AND
 %left OR
-%right NOT
+%right '!'
 %%
 route   : node '>' node
 {
@@ -85,8 +81,11 @@ route   : node '>' node
 ;
 node    : IDENT
 {
-	// fmt.Println("NODE",$1.literal)
 	$$ = &Node{Name: $1.literal}
+}
+| IDENT '/' IDENT
+{
+	$$ = &Node{Group: $1.literal, Name: $3.literal}
 }
 ;
 transforms : transform '>' node
@@ -105,91 +104,51 @@ transforms : transform '>' node
 transform : '?' '{' expr '}'
 {
 	$$ = &Transform{
-		Type: "filter",
-		Source: $3.ToString()}
+		Type: TR_FILTER,
+		Condition: $3}
 }
 | '%' '{' script '}'
 {
 	$$ = &Transform{
-		Type: "map"}
+		Type: TR_EDIT,
+		Script: $3}
 }
-| '=' '{' IDENT ':' expr '}'
+| '=' '{' mapexprs '}'
 {
 	$$ = &Transform{
-		Type: "replace",
-		Source: $5.ToString()}
+		Type: TR_REPLACE,
+		Replace: $3}
+}
+| '?' '{' expr '}' '%' '{' script '}'
+{
+	$$ = &Transform{
+		Type: TR_COND_EDIT,
+		Condition: $3,
+		Script: $7}
+}
+| '?' '{' expr '}' '=' '{' mapexprs '}'
+{
+	$$ = &Transform{
+		Type: TR_COND_REPLACE,
+		Condition: $3,
+		Replace: $7}
 }
 ;
 script
 : stmt
 {
-	$$ = []*Expression{$1}
+	$$ = []*Statement{$1}
 }
 | stmt script
 {
-	$$ = append([]*Expression{$1}, $2...)
+	$$ = append([]*Statement{$1}, $2...)
 }
 
-stmt : expr ';'
+stmt : dstexpr '=' expr ';'
 {
-	$$ = $1
+	$$ = MakeAssignment($1, $3)
 }
-| varexpr '=' expr ';'
-{
-	$$ = &Expression{
-		Operation: OP_ASSIGN,
-		Args: []*Expression{$1,$3}}
-}
-| varexpr PE expr ';'
-{
-	$$ = &Expression{
-		Operation: OP_ASSIGN,
-		Args: []*Expression{
-			$1,
-			&Expression{
-				Operation: OP_PLUS,
-				Args: []*Expression{$1, $3}}}}
-}
-| varexpr ME expr ';'
-{
-	$$ = &Expression{
-		Operation: OP_ASSIGN,
-		Args: []*Expression{
-			$1,
-			&Expression{
-				Operation: OP_MINUS,
-				Args: []*Expression{$1, $3}}}}
-}
-| varexpr TE expr ';'
-{
-	$$ = &Expression{
-		Operation: OP_ASSIGN,
-		Args: []*Expression{
-			$1,
-			&Expression{
-				Operation: OP_MUL,
-				Args: []*Expression{$1, $3}}}}
-}
-| varexpr DE expr ';'
-{
-	$$ = &Expression{
-		Operation: OP_ASSIGN,
-		Args: []*Expression{
-			$1,
-			&Expression{
-				Operation: OP_DIV,
-				Args: []*Expression{$1, $3}}}}
-}
-| varexpr RE expr ';'
-{
-	$$ = &Expression{
-		Operation: OP_ASSIGN,
-		Args: []*Expression{
-			$1,
-			&Expression{
-				Operation: OP_MOD,
-				Args: []*Expression{$1, $3}}}}
-}
+
 expr : NUMBER
 {
 	x, _ := strconv.Atoi($1.literal)
@@ -257,6 +216,24 @@ expr : NUMBER
 		Operation: OP_DIV,
 		Args: []*Expression{$1, $3}}
 }
+| expr '&' expr
+{
+	$$ = &Expression{
+		Operation: OP_BITWISEAND,
+		Args: []*Expression{$1, $3}}
+}
+| expr '|' expr
+{
+	$$ = &Expression{
+		Operation: OP_BITWISEOR,
+		Args: []*Expression{$1, $3}}
+}
+| expr '^' expr
+{
+	$$ = &Expression{
+		Operation: OP_BITWISEXOR,
+		Args: []*Expression{$1, $3}}
+}
 | expr '%' expr
 {
 	$$ = &Expression{
@@ -267,6 +244,12 @@ expr : NUMBER
 {
 	$$ = &Expression{
 		Operation: OP_EQ,
+		Args: []*Expression{$1, $3}}
+}
+| expr NE expr
+{
+	$$ = &Expression{
+		Operation: OP_NE,
 		Args: []*Expression{$1, $3}}
 }
 | expr GE expr
@@ -280,6 +263,24 @@ expr : NUMBER
 	$$ = &Expression{
 		Operation: OP_LE,
 		Args: []*Expression{$1, $3}}
+}
+| expr AND expr
+{
+	$$ = &Expression{
+		Operation: OP_AND,
+		Args: []*Expression{$1, $3}}
+}
+| expr OR expr
+{
+	$$ = &Expression{
+		Operation: OP_OR,
+		Args: []*Expression{$1, $3}}
+}
+| '!' expr
+{
+	$$ = &Expression{
+		Operation: OP_NOT,
+		Args: []*Expression{$2}}
 }
 | expr '>' expr
 {
@@ -344,7 +345,30 @@ varexpr : expr '.' IDENT
 {
 	$$ = &Expression{
 		Operation: OP_VAR,
-		Value: &Value{Type: VAL_NAME, NameVal: $1.literal}}
+		Args: []*Expression{MakeNameExpression($1.literal)}}
+}
+;
+dstexpr : IDENT
+{
+	$$ = WriteableValue {
+		Base: $1.literal,
+		Path: []PathEntry{}}
+}
+| THIS
+{
+	$$ = WriteableValue {
+		Base: "this",
+		Path: []PathEntry{}}
+}
+| dstexpr '[' expr ']'
+{
+	$1.Path = append($1.Path, PathEntry{Type:PATH_LIST,ListIndex:$3})
+	$$ = $1
+}
+| dstexpr '.' IDENT
+{
+	$1.Path = append($1.Path, PathEntry{Type:PATH_MAP,MapKey:$3.literal})
+	$$ = $1
 }
 ;
 %%

@@ -13,6 +13,7 @@ var (
 	keywords = map[string]int{"var": VAR}
 	syms = map[string]int{
 		"==":EQ,
+		"!=":NE,
 		"<=":LE,
 		">=":GE,
 		"+=":PE,
@@ -23,7 +24,31 @@ var (
 		"^=":XE,
 		"~=":SUB,
 		"&&":AND,
-		"||":OR}
+		"||":OR,
+		"$_":THIS}
+	charsyms = map[rune]int {
+		'.':'.',
+		',':',',
+		'{':'{',
+		'}':'}',
+		'[':'[',
+		']':']',
+		'(':'(',
+		')':')',
+		';':';',
+		':':':',
+		'+':'+',
+		'-':'-',
+		'*':'*',
+		'/':'/',
+		'%':'%',
+		'?':'?',
+		'~':'~',
+		'!':'!',
+		'&':'&',
+		'|':'|',
+		'^':'^',
+		'$':-1} // -1 means this is a prefix of a longer symbol
 )
 
 type Position struct {
@@ -62,14 +87,7 @@ func (s *RouteScanner) Scan() (tok int, lit string, pos Position) {
 		tok, lit = s.scanTest()
 		//fmt.Println("TEST",tok,lit)
 	default:
-		switch ch {
-		case -1:
-			tok = EOF
-		case '{', '}', '(', ')', ';', ':', '+', '-', '*', '/', '%', '?':
-			tok = int(ch)
-			lit = string(ch)
-		}
-		s.next()
+		tok, lit = s.scanSym()
 	}
 	return
 }
@@ -129,6 +147,24 @@ func (s *RouteScanner) scanIdentifier() string {
 	return string(ret)
 }
 
+
+func (s *RouteScanner) scanSym() (int, string) {
+	fc := s.peek()
+	if fc == -1 {
+		return EOF, ""
+	} else if tok, ok := charsyms[fc]; ok {
+		s.next()
+		lit := string(fc)
+		long_lit := lit + string(s.peek())
+		if long_tok, long_ok := syms[long_lit]; long_ok {
+			s.next()
+			return long_tok, long_lit
+		}
+		return tok, lit
+	}
+	return -1, "error"
+}
+
 func (s *RouteScanner) scanTest() (int, string) {
 	fc := s.peek()
 	if fc == '=' || fc == '<' || fc == '>' {
@@ -144,8 +180,12 @@ func (s *RouteScanner) scanTest() (int, string) {
 	
 func (s *RouteScanner) scanNumber() string {
 	var ret []rune
-	for isDigit(s.peek()) {
+	hasDecimal := false
+	for isDigit(s.peek()) || (s.peek() == '.' && !hasDecimal) {
 		ret = append(ret, s.peek())
+		if s.peek() == '.' {
+			hasDecimal = true
+		}
 		s.next()
 	}
 	return string(ret)

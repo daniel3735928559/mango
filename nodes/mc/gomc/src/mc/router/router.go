@@ -29,3 +29,17 @@ func (r *Router) AddRoute(rt *Route) {
 	r.Routes = append(r.Routes, rt)
 }
 
+func (r *Router) Send(src_node string, header map[string]string, args map[string]interface{}) {
+	for _, rt := range r.Routes {
+		if rt.Source == src_node {
+			output, err := rt.Send(args)
+			if err != nil {
+				fmt.Println("ERROR SENDING ON",rt.ToString(), err)
+			} else {
+				fmt.Println("SENDING",output,"TO",r.Nodes[rt.Dest].Name)
+				// Send the result to the destination
+				r.Nodes[rt.Dest].Handle(header, output)
+			}
+		}
+	}
+}

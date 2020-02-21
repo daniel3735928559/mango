@@ -5,21 +5,34 @@ import (
 	"errors"
 )
 
-func AssignHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func AssignHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, map[string]*Value, error) {
 	// if variable, ok := (*vars)[args[0].NameVal]; !ok {
 	// 	return nil, errors.New(fmt.Sprintf("No such variable: %s", args[0].NameVal))
 	// }
 	// if args[0].PathVal != nil && len(args[0].PathVal) > 0 {
 	// 	v := ResolvePathValue(variable, args[0].PathVal)
 	// }
-	return nil, nil
+	ans := this.Clone()
+	if args[0].Type == VAL_NAME {
+		name := args[0].NameVal
+		if this.Type == VAL_MAP {
+			if _, ok := this.MapVal[name]; ok {
+				this.MapVal[name] = args[1]
+			} else {
+				local_vars[name] = args[1]
+			}
+		} else {
+			local_vars[name] = args[1]
+		}
+	}
+	return ans, local_vars, nil
 }
-func CallHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func CallHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	// TODO: error if called function does not exist
 	fmt.Println("CALL",args[0].NameVal)
-	return nil, nil
+	return this.Clone(), nil
 }
-func MapHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func MapHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	// TODO: Error if odd number of args or if keys are not Type:"name"
 	mapval := make(map[string]*Value)
 	for i := 0; i < len(args); i += 2 {
@@ -29,17 +42,17 @@ func MapHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
 		Type:VAL_MAP,
 		MapVal: mapval}, nil
 }
-func ListHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func ListHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return &Value{
 		Type:VAL_LIST,
 		ListVal: args}, nil
 }
-func MapGetHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func MapGetHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	// TODO: error if key does not exist
 	item := args[1].NameVal
 	return args[0].MapVal[item], nil
 }
-func ListGetHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func ListGetHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	// TODO: error if index out of bounds
 	idx := uint(args[1].NumVal)
 	if idx > uint(len(args[0].ListVal)) {
@@ -47,28 +60,46 @@ func ListGetHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
 	}
 	return args[0].ListVal[idx], nil
 }
-func ExprHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
-	return nil, nil
+// func ExprHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
+// 	return nil, nil, nil
+// }
+// func ValHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
+// 	return nil, nil, nil
+// }
+func VarHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
+	fmt.Println("VAR Handler ARGS",args)
+	if this.Type == VAL_MAP {
+		if v, ok := this.MapVal[args[0].NameVal]; ok {
+			return v, nil
+		}
+	}
+	if v, ok := local_vars[args[0].NameVal]; ok {
+		return v, nil
+	}
+	return nil, errors.New(fmt.Sprintf("No such variable: %s",args[0].NameVal))
 }
-func ValHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
-	return nil, nil
+func NumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
+	return MakeFloatValue(0), nil
 }
-func UnaryMinusNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func StringHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
+	return MakeStringValue("a"), nil
+}
+func UnaryMinusNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeFloatValue(-args[0].NumVal), nil
 }
-func AddNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func AddNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeFloatValue(args[0].NumVal + args[1].NumVal), nil
 }
-func AddStringHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func AddStringHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeStringValue(args[0].StringVal + args[1].StringVal), nil
 }
-func SubNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func SubNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeFloatValue(args[0].NumVal - args[1].NumVal), nil
 }
-func MulNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func MulNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeFloatValue(args[0].NumVal * args[1].NumVal), nil
 }
-func MulStringNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func MulStringNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	ans := args[0].StringVal
 	// TODO: error if count < 0 or count is not int
 	for i := 0; uint(i) < uint(args[1].NumVal); i++ {
@@ -76,58 +107,58 @@ func MulStringNumHandler(args []*Value, vars *map[string]*Value) (*Value, error)
 	}
 	return MakeStringValue(ans), nil
 }
-func DivNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func DivNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	// TODO: error arg[1] == 0
 	return MakeFloatValue(args[0].NumVal / args[1].NumVal), nil
 }
-func ModNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func ModNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeFloatValue(float64(int(args[0].NumVal) % int(args[1].NumVal))), nil
 }
-func XorNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func XorNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeFloatValue(float64(int(args[0].NumVal) ^ int(args[1].NumVal))), nil
 }
-func AndNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func AndNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeFloatValue(float64(int(args[0].NumVal) & int(args[1].NumVal))), nil
 }
-func OrNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func OrNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeFloatValue(float64(int(args[0].NumVal) | int(args[1].NumVal))), nil
 }
-func LtNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func LtNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeBoolValue(args[0].NumVal < args[1].NumVal), nil
 }
-func LtStringHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func LtStringHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeBoolValue(args[0].StringVal < args[1].StringVal), nil
 }
-func GtNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func GtNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeBoolValue(args[0].NumVal > args[1].NumVal), nil
 }
-func GtStringHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func GtStringHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeBoolValue(args[0].StringVal > args[1].StringVal), nil
 }
-func EqNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func EqNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeBoolValue(args[0].NumVal == args[1].NumVal), nil
 }
-func EqStringHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func EqStringHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeBoolValue(args[0].StringVal == args[1].StringVal), nil
 }
-func LeqNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func LeqNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeBoolValue(args[0].NumVal <= args[1].NumVal), nil
 }
-func LeqStringHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func LeqStringHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeBoolValue(args[0].StringVal <= args[1].StringVal), nil
 }
-func GeqNumHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func GeqNumHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeBoolValue(args[0].NumVal >= args[1].NumVal), nil
 }
-func GeqStringHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func GeqStringHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeBoolValue(args[0].StringVal >= args[1].StringVal), nil
 }
-func OrBoolHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func OrBoolHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeBoolValue(args[0].BoolVal || args[1].BoolVal), nil
 }
-func AndBoolHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func AndBoolHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeBoolValue(args[0].BoolVal && args[1].BoolVal), nil
 }
-func NotBoolHandler(args []*Value, vars *map[string]*Value) (*Value, error) {
+func NotBoolHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, error) {
 	return MakeBoolValue(!args[0].BoolVal), nil
 }

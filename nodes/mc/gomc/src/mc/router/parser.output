@@ -1,0 +1,2264 @@
+
+state 0
+	$accept: .route $end 
+
+	IDENT  shift 3
+	.  error
+
+	route  goto 1
+	node  goto 2
+
+state 1
+	$accept:  route.$end 
+
+	$end  accept
+	.  error
+
+
+state 2
+	route:  node.'>' node 
+	route:  node.'<' node 
+	route:  node.'<' '>' node 
+	route:  node.'>' transforms 
+
+	'<'  shift 5
+	'>'  shift 4
+	.  error
+
+
+state 3
+	node:  IDENT.    (5)
+	node:  IDENT.'/' IDENT 
+
+	'/'  shift 6
+	.  reduce 5 (src line 82)
+
+
+state 4
+	route:  node '>'.node 
+	route:  node '>'.transforms 
+
+	IDENT  shift 3
+	'?'  shift 10
+	'%'  shift 11
+	'='  shift 12
+	.  error
+
+	node  goto 7
+	transforms  goto 8
+	transform  goto 9
+
+state 5
+	route:  node '<'.node 
+	route:  node '<'.'>' node 
+
+	IDENT  shift 3
+	'>'  shift 14
+	.  error
+
+	node  goto 13
+
+state 6
+	node:  IDENT '/'.IDENT 
+
+	IDENT  shift 15
+	.  error
+
+
+state 7
+	route:  node '>' node.    (1)
+
+	.  reduce 1 (src line 44)
+
+
+state 8
+	route:  node '>' transforms.    (4)
+
+	.  reduce 4 (src line 69)
+
+
+state 9
+	transforms:  transform.'>' node 
+	transforms:  transform.'>' transforms 
+
+	'>'  shift 16
+	.  error
+
+
+state 10
+	transform:  '?'.'{' expr '}' 
+	transform:  '?'.'{' expr '}' '%' '{' script '}' 
+	transform:  '?'.'{' expr '}' '=' '{' mapexprs '}' 
+
+	'{'  shift 17
+	.  error
+
+
+state 11
+	transform:  '%'.'{' script '}' 
+
+	'{'  shift 18
+	.  error
+
+
+state 12
+	transform:  '='.'{' mapexprs '}' 
+
+	'{'  shift 19
+	.  error
+
+
+state 13
+	route:  node '<' node.    (2)
+
+	.  reduce 2 (src line 52)
+
+
+state 14
+	route:  node '<' '>'.node 
+
+	IDENT  shift 3
+	.  error
+
+	node  goto 20
+
+state 15
+	node:  IDENT '/' IDENT.    (6)
+
+	.  reduce 6 (src line 86)
+
+
+state 16
+	transforms:  transform '>'.node 
+	transforms:  transform '>'.transforms 
+
+	IDENT  shift 3
+	'?'  shift 10
+	'%'  shift 11
+	'='  shift 12
+	.  error
+
+	node  goto 21
+	transforms  goto 22
+	transform  goto 9
+
+state 17
+	transform:  '?' '{'.expr '}' 
+	transform:  '?' '{'.expr '}' '%' '{' script '}' 
+	transform:  '?' '{'.expr '}' '=' '{' mapexprs '}' 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 23
+
+state 18
+	transform:  '%' '{'.script '}' 
+
+	IDENT  shift 36
+	THIS  shift 37
+	.  error
+
+	script  goto 33
+	dstexpr  goto 35
+	stmt  goto 34
+
+state 19
+	transform:  '=' '{'.mapexprs '}' 
+
+	IDENT  shift 39
+	.  error
+
+	mapexprs  goto 38
+
+state 20
+	route:  node '<' '>' node.    (3)
+
+	.  reduce 3 (src line 60)
+
+
+state 21
+	transforms:  transform '>' node.    (7)
+
+	.  reduce 7 (src line 91)
+
+
+state 22
+	transforms:  transform '>' transforms.    (8)
+
+	.  reduce 8 (src line 97)
+
+
+state 23
+	transform:  '?' '{' expr.'}' 
+	transform:  '?' '{' expr.'}' '%' '{' script '}' 
+	transform:  '?' '{' expr.'}' '=' '{' mapexprs '}' 
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'}'  shift 40
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  error
+
+
+state 24
+	expr:  NUMBER.    (17)
+
+	.  reduce 17 (src line 152)
+
+
+state 25
+	expr:  '{'.mapexprs '}' 
+
+	IDENT  shift 39
+	.  error
+
+	mapexprs  goto 59
+
+state 26
+	expr:  '['.listexprs ']' 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 61
+	listexprs  goto 60
+
+state 27
+	expr:  IDENT.'(' listexprs ')' 
+	varexpr:  IDENT.    (48)
+
+	'('  shift 62
+	.  reduce 48 (src line 344)
+
+
+state 28
+	expr:  STRING.    (21)
+
+	.  reduce 21 (src line 175)
+
+
+state 29
+	expr:  '-'.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 63
+
+state 30
+	expr:  '('.expr ')' 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 64
+
+state 31
+	expr:  varexpr.    (24)
+
+	.  reduce 24 (src line 191)
+
+
+state 32
+	expr:  '!'.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 65
+
+state 33
+	transform:  '%' '{' script.'}' 
+
+	'}'  shift 66
+	.  error
+
+
+state 34
+	script:  stmt.    (14)
+	script:  stmt.script 
+
+	IDENT  shift 36
+	THIS  shift 37
+	.  reduce 14 (src line 137)
+
+	script  goto 67
+	dstexpr  goto 35
+	stmt  goto 34
+
+state 35
+	stmt:  dstexpr.'=' expr ';' 
+	dstexpr:  dstexpr.'[' expr ']' 
+	dstexpr:  dstexpr.'.' IDENT 
+
+	'='  shift 68
+	'['  shift 69
+	'.'  shift 70
+	.  error
+
+
+state 36
+	dstexpr:  IDENT.    (49)
+
+	.  reduce 49 (src line 351)
+
+
+state 37
+	dstexpr:  THIS.    (50)
+
+	.  reduce 50 (src line 357)
+
+
+state 38
+	transform:  '=' '{' mapexprs.'}' 
+
+	'}'  shift 71
+	.  error
+
+
+state 39
+	mapexprs:  IDENT.':' expr 
+	mapexprs:  IDENT.':' expr ',' mapexprs 
+
+	':'  shift 72
+	.  error
+
+
+state 40
+	transform:  '?' '{' expr '}'.    (9)
+	transform:  '?' '{' expr '}'.'%' '{' script '}' 
+	transform:  '?' '{' expr '}'.'=' '{' mapexprs '}' 
+
+	'%'  shift 73
+	'='  shift 74
+	.  reduce 9 (src line 104)
+
+
+state 41
+	expr:  expr '+'.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 75
+
+state 42
+	expr:  expr '-'.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 76
+
+state 43
+	expr:  expr '*'.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 77
+
+state 44
+	expr:  expr '/'.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 78
+
+state 45
+	expr:  expr '&'.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 79
+
+state 46
+	expr:  expr '|'.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 80
+
+state 47
+	expr:  expr '^'.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 81
+
+state 48
+	expr:  expr '%'.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 82
+
+state 49
+	expr:  expr EQ.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 83
+
+state 50
+	expr:  expr NE.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 84
+
+state 51
+	expr:  expr GE.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 85
+
+state 52
+	expr:  expr LE.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 86
+
+state 53
+	expr:  expr AND.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 87
+
+state 54
+	expr:  expr OR.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 88
+
+state 55
+	expr:  expr '>'.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 89
+
+state 56
+	expr:  expr '<'.expr 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 90
+
+state 57
+	varexpr:  expr '.'.IDENT 
+
+	IDENT  shift 91
+	.  error
+
+
+state 58
+	varexpr:  expr '['.expr ']' 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 92
+
+state 59
+	expr:  '{' mapexprs.'}' 
+
+	'}'  shift 93
+	.  error
+
+
+state 60
+	expr:  '[' listexprs.']' 
+
+	']'  shift 94
+	.  error
+
+
+state 61
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	listexprs:  expr.    (44)
+	listexprs:  expr.',' listexprs 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	','  shift 95
+	'.'  shift 57
+	.  reduce 44 (src line 316)
+
+
+state 62
+	expr:  IDENT '('.listexprs ')' 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 61
+	listexprs  goto 96
+
+63: shift/reduce conflict (shift 49(0), red'n 22(1)) on EQ
+63: shift/reduce conflict (shift 50(0), red'n 22(1)) on NE
+63: shift/reduce conflict (shift 48(0), red'n 22(1)) on '%'
+63: shift/reduce conflict (shift 58(0), red'n 22(1)) on '['
+63: shift/reduce conflict (shift 56(0), red'n 22(1)) on '<'
+63: shift/reduce conflict (shift 55(0), red'n 22(1)) on '>'
+63: shift/reduce conflict (shift 41(0), red'n 22(1)) on '+'
+63: shift/reduce conflict (shift 42(0), red'n 22(1)) on '-'
+63: shift/reduce conflict (shift 43(0), red'n 22(1)) on '*'
+63: shift/reduce conflict (shift 44(0), red'n 22(1)) on '/'
+63: shift/reduce conflict (shift 45(0), red'n 22(1)) on '&'
+63: shift/reduce conflict (shift 46(0), red'n 22(1)) on '|'
+63: shift/reduce conflict (shift 47(0), red'n 22(1)) on '^'
+63: shift/reduce conflict (shift 57(0), red'n 22(1)) on '.'
+state 63
+	expr:  '-' expr.    (22)
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 22 (src line 181)
+
+
+state 64
+	expr:  '(' expr.')' 
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	')'  shift 97
+	'.'  shift 57
+	.  error
+
+
+65: shift/reduce conflict (shift 49(0), red'n 39(6)) on EQ
+65: shift/reduce conflict (shift 50(0), red'n 39(6)) on NE
+65: shift/reduce conflict (shift 48(0), red'n 39(6)) on '%'
+65: shift/reduce conflict (shift 58(0), red'n 39(6)) on '['
+65: shift/reduce conflict (shift 56(0), red'n 39(6)) on '<'
+65: shift/reduce conflict (shift 55(0), red'n 39(6)) on '>'
+65: shift/reduce conflict (shift 41(0), red'n 39(6)) on '+'
+65: shift/reduce conflict (shift 42(0), red'n 39(6)) on '-'
+65: shift/reduce conflict (shift 43(0), red'n 39(6)) on '*'
+65: shift/reduce conflict (shift 44(0), red'n 39(6)) on '/'
+65: shift/reduce conflict (shift 45(0), red'n 39(6)) on '&'
+65: shift/reduce conflict (shift 46(0), red'n 39(6)) on '|'
+65: shift/reduce conflict (shift 47(0), red'n 39(6)) on '^'
+65: shift/reduce conflict (shift 57(0), red'n 39(6)) on '.'
+state 65
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  '!' expr.    (39)
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	EQ  shift 49
+	NE  shift 50
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 39 (src line 279)
+
+
+state 66
+	transform:  '%' '{' script '}'.    (10)
+
+	.  reduce 10 (src line 110)
+
+
+state 67
+	script:  stmt script.    (15)
+
+	.  reduce 15 (src line 142)
+
+
+state 68
+	stmt:  dstexpr '='.expr ';' 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 98
+
+state 69
+	dstexpr:  dstexpr '['.expr ']' 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 99
+
+state 70
+	dstexpr:  dstexpr '.'.IDENT 
+
+	IDENT  shift 100
+	.  error
+
+
+state 71
+	transform:  '=' '{' mapexprs '}'.    (11)
+
+	.  reduce 11 (src line 116)
+
+
+state 72
+	mapexprs:  IDENT ':'.expr 
+	mapexprs:  IDENT ':'.expr ',' mapexprs 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 101
+
+state 73
+	transform:  '?' '{' expr '}' '%'.'{' script '}' 
+
+	'{'  shift 102
+	.  error
+
+
+state 74
+	transform:  '?' '{' expr '}' '='.'{' mapexprs '}' 
+
+	'{'  shift 103
+	.  error
+
+
+75: shift/reduce conflict (shift 53(4), red'n 25(0)) on AND
+75: shift/reduce conflict (shift 54(5), red'n 25(0)) on OR
+75: shift/reduce conflict (shift 49(0), red'n 25(0)) on EQ
+75: shift/reduce conflict (shift 50(0), red'n 25(0)) on NE
+75: shift/reduce conflict (shift 52(3), red'n 25(0)) on LE
+75: shift/reduce conflict (shift 51(3), red'n 25(0)) on GE
+75: shift/reduce conflict (shift 48(0), red'n 25(0)) on '%'
+75: shift/reduce conflict (shift 58(0), red'n 25(0)) on '['
+75: shift/reduce conflict (shift 56(0), red'n 25(0)) on '<'
+75: shift/reduce conflict (shift 55(0), red'n 25(0)) on '>'
+75: shift/reduce conflict (shift 41(0), red'n 25(0)) on '+'
+75: shift/reduce conflict (shift 42(0), red'n 25(0)) on '-'
+75: shift/reduce conflict (shift 43(0), red'n 25(0)) on '*'
+75: shift/reduce conflict (shift 44(0), red'n 25(0)) on '/'
+75: shift/reduce conflict (shift 45(0), red'n 25(0)) on '&'
+75: shift/reduce conflict (shift 46(0), red'n 25(0)) on '|'
+75: shift/reduce conflict (shift 47(0), red'n 25(0)) on '^'
+75: shift/reduce conflict (shift 57(0), red'n 25(0)) on '.'
+state 75
+	expr:  expr.'+' expr 
+	expr:  expr '+' expr.    (25)
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 25 (src line 195)
+
+
+76: shift/reduce conflict (shift 53(4), red'n 26(0)) on AND
+76: shift/reduce conflict (shift 54(5), red'n 26(0)) on OR
+76: shift/reduce conflict (shift 49(0), red'n 26(0)) on EQ
+76: shift/reduce conflict (shift 50(0), red'n 26(0)) on NE
+76: shift/reduce conflict (shift 52(3), red'n 26(0)) on LE
+76: shift/reduce conflict (shift 51(3), red'n 26(0)) on GE
+76: shift/reduce conflict (shift 48(0), red'n 26(0)) on '%'
+76: shift/reduce conflict (shift 58(0), red'n 26(0)) on '['
+76: shift/reduce conflict (shift 56(0), red'n 26(0)) on '<'
+76: shift/reduce conflict (shift 55(0), red'n 26(0)) on '>'
+76: shift/reduce conflict (shift 41(0), red'n 26(0)) on '+'
+76: shift/reduce conflict (shift 42(0), red'n 26(0)) on '-'
+76: shift/reduce conflict (shift 43(0), red'n 26(0)) on '*'
+76: shift/reduce conflict (shift 44(0), red'n 26(0)) on '/'
+76: shift/reduce conflict (shift 45(0), red'n 26(0)) on '&'
+76: shift/reduce conflict (shift 46(0), red'n 26(0)) on '|'
+76: shift/reduce conflict (shift 47(0), red'n 26(0)) on '^'
+76: shift/reduce conflict (shift 57(0), red'n 26(0)) on '.'
+state 76
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr '-' expr.    (26)
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 26 (src line 201)
+
+
+77: shift/reduce conflict (shift 53(4), red'n 27(0)) on AND
+77: shift/reduce conflict (shift 54(5), red'n 27(0)) on OR
+77: shift/reduce conflict (shift 49(0), red'n 27(0)) on EQ
+77: shift/reduce conflict (shift 50(0), red'n 27(0)) on NE
+77: shift/reduce conflict (shift 52(3), red'n 27(0)) on LE
+77: shift/reduce conflict (shift 51(3), red'n 27(0)) on GE
+77: shift/reduce conflict (shift 48(0), red'n 27(0)) on '%'
+77: shift/reduce conflict (shift 58(0), red'n 27(0)) on '['
+77: shift/reduce conflict (shift 56(0), red'n 27(0)) on '<'
+77: shift/reduce conflict (shift 55(0), red'n 27(0)) on '>'
+77: shift/reduce conflict (shift 41(0), red'n 27(0)) on '+'
+77: shift/reduce conflict (shift 42(0), red'n 27(0)) on '-'
+77: shift/reduce conflict (shift 43(0), red'n 27(0)) on '*'
+77: shift/reduce conflict (shift 44(0), red'n 27(0)) on '/'
+77: shift/reduce conflict (shift 45(0), red'n 27(0)) on '&'
+77: shift/reduce conflict (shift 46(0), red'n 27(0)) on '|'
+77: shift/reduce conflict (shift 47(0), red'n 27(0)) on '^'
+77: shift/reduce conflict (shift 57(0), red'n 27(0)) on '.'
+state 77
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr '*' expr.    (27)
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 27 (src line 207)
+
+
+78: shift/reduce conflict (shift 53(4), red'n 28(0)) on AND
+78: shift/reduce conflict (shift 54(5), red'n 28(0)) on OR
+78: shift/reduce conflict (shift 49(0), red'n 28(0)) on EQ
+78: shift/reduce conflict (shift 50(0), red'n 28(0)) on NE
+78: shift/reduce conflict (shift 52(3), red'n 28(0)) on LE
+78: shift/reduce conflict (shift 51(3), red'n 28(0)) on GE
+78: shift/reduce conflict (shift 48(0), red'n 28(0)) on '%'
+78: shift/reduce conflict (shift 58(0), red'n 28(0)) on '['
+78: shift/reduce conflict (shift 56(0), red'n 28(0)) on '<'
+78: shift/reduce conflict (shift 55(0), red'n 28(0)) on '>'
+78: shift/reduce conflict (shift 41(0), red'n 28(0)) on '+'
+78: shift/reduce conflict (shift 42(0), red'n 28(0)) on '-'
+78: shift/reduce conflict (shift 43(0), red'n 28(0)) on '*'
+78: shift/reduce conflict (shift 44(0), red'n 28(0)) on '/'
+78: shift/reduce conflict (shift 45(0), red'n 28(0)) on '&'
+78: shift/reduce conflict (shift 46(0), red'n 28(0)) on '|'
+78: shift/reduce conflict (shift 47(0), red'n 28(0)) on '^'
+78: shift/reduce conflict (shift 57(0), red'n 28(0)) on '.'
+state 78
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr '/' expr.    (28)
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 28 (src line 213)
+
+
+79: shift/reduce conflict (shift 53(4), red'n 29(0)) on AND
+79: shift/reduce conflict (shift 54(5), red'n 29(0)) on OR
+79: shift/reduce conflict (shift 49(0), red'n 29(0)) on EQ
+79: shift/reduce conflict (shift 50(0), red'n 29(0)) on NE
+79: shift/reduce conflict (shift 52(3), red'n 29(0)) on LE
+79: shift/reduce conflict (shift 51(3), red'n 29(0)) on GE
+79: shift/reduce conflict (shift 48(0), red'n 29(0)) on '%'
+79: shift/reduce conflict (shift 58(0), red'n 29(0)) on '['
+79: shift/reduce conflict (shift 56(0), red'n 29(0)) on '<'
+79: shift/reduce conflict (shift 55(0), red'n 29(0)) on '>'
+79: shift/reduce conflict (shift 41(0), red'n 29(0)) on '+'
+79: shift/reduce conflict (shift 42(0), red'n 29(0)) on '-'
+79: shift/reduce conflict (shift 43(0), red'n 29(0)) on '*'
+79: shift/reduce conflict (shift 44(0), red'n 29(0)) on '/'
+79: shift/reduce conflict (shift 45(0), red'n 29(0)) on '&'
+79: shift/reduce conflict (shift 46(0), red'n 29(0)) on '|'
+79: shift/reduce conflict (shift 47(0), red'n 29(0)) on '^'
+79: shift/reduce conflict (shift 57(0), red'n 29(0)) on '.'
+state 79
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr '&' expr.    (29)
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 29 (src line 219)
+
+
+80: shift/reduce conflict (shift 53(4), red'n 30(0)) on AND
+80: shift/reduce conflict (shift 54(5), red'n 30(0)) on OR
+80: shift/reduce conflict (shift 49(0), red'n 30(0)) on EQ
+80: shift/reduce conflict (shift 50(0), red'n 30(0)) on NE
+80: shift/reduce conflict (shift 52(3), red'n 30(0)) on LE
+80: shift/reduce conflict (shift 51(3), red'n 30(0)) on GE
+80: shift/reduce conflict (shift 48(0), red'n 30(0)) on '%'
+80: shift/reduce conflict (shift 58(0), red'n 30(0)) on '['
+80: shift/reduce conflict (shift 56(0), red'n 30(0)) on '<'
+80: shift/reduce conflict (shift 55(0), red'n 30(0)) on '>'
+80: shift/reduce conflict (shift 41(0), red'n 30(0)) on '+'
+80: shift/reduce conflict (shift 42(0), red'n 30(0)) on '-'
+80: shift/reduce conflict (shift 43(0), red'n 30(0)) on '*'
+80: shift/reduce conflict (shift 44(0), red'n 30(0)) on '/'
+80: shift/reduce conflict (shift 45(0), red'n 30(0)) on '&'
+80: shift/reduce conflict (shift 46(0), red'n 30(0)) on '|'
+80: shift/reduce conflict (shift 47(0), red'n 30(0)) on '^'
+80: shift/reduce conflict (shift 57(0), red'n 30(0)) on '.'
+state 80
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr '|' expr.    (30)
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 30 (src line 225)
+
+
+81: shift/reduce conflict (shift 53(4), red'n 31(0)) on AND
+81: shift/reduce conflict (shift 54(5), red'n 31(0)) on OR
+81: shift/reduce conflict (shift 49(0), red'n 31(0)) on EQ
+81: shift/reduce conflict (shift 50(0), red'n 31(0)) on NE
+81: shift/reduce conflict (shift 52(3), red'n 31(0)) on LE
+81: shift/reduce conflict (shift 51(3), red'n 31(0)) on GE
+81: shift/reduce conflict (shift 48(0), red'n 31(0)) on '%'
+81: shift/reduce conflict (shift 58(0), red'n 31(0)) on '['
+81: shift/reduce conflict (shift 56(0), red'n 31(0)) on '<'
+81: shift/reduce conflict (shift 55(0), red'n 31(0)) on '>'
+81: shift/reduce conflict (shift 41(0), red'n 31(0)) on '+'
+81: shift/reduce conflict (shift 42(0), red'n 31(0)) on '-'
+81: shift/reduce conflict (shift 43(0), red'n 31(0)) on '*'
+81: shift/reduce conflict (shift 44(0), red'n 31(0)) on '/'
+81: shift/reduce conflict (shift 45(0), red'n 31(0)) on '&'
+81: shift/reduce conflict (shift 46(0), red'n 31(0)) on '|'
+81: shift/reduce conflict (shift 47(0), red'n 31(0)) on '^'
+81: shift/reduce conflict (shift 57(0), red'n 31(0)) on '.'
+state 81
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr '^' expr.    (31)
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 31 (src line 231)
+
+
+82: shift/reduce conflict (shift 53(4), red'n 32(0)) on AND
+82: shift/reduce conflict (shift 54(5), red'n 32(0)) on OR
+82: shift/reduce conflict (shift 49(0), red'n 32(0)) on EQ
+82: shift/reduce conflict (shift 50(0), red'n 32(0)) on NE
+82: shift/reduce conflict (shift 52(3), red'n 32(0)) on LE
+82: shift/reduce conflict (shift 51(3), red'n 32(0)) on GE
+82: shift/reduce conflict (shift 48(0), red'n 32(0)) on '%'
+82: shift/reduce conflict (shift 58(0), red'n 32(0)) on '['
+82: shift/reduce conflict (shift 56(0), red'n 32(0)) on '<'
+82: shift/reduce conflict (shift 55(0), red'n 32(0)) on '>'
+82: shift/reduce conflict (shift 41(0), red'n 32(0)) on '+'
+82: shift/reduce conflict (shift 42(0), red'n 32(0)) on '-'
+82: shift/reduce conflict (shift 43(0), red'n 32(0)) on '*'
+82: shift/reduce conflict (shift 44(0), red'n 32(0)) on '/'
+82: shift/reduce conflict (shift 45(0), red'n 32(0)) on '&'
+82: shift/reduce conflict (shift 46(0), red'n 32(0)) on '|'
+82: shift/reduce conflict (shift 47(0), red'n 32(0)) on '^'
+82: shift/reduce conflict (shift 57(0), red'n 32(0)) on '.'
+state 82
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr '%' expr.    (32)
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 32 (src line 237)
+
+
+83: shift/reduce conflict (shift 53(4), red'n 33(0)) on AND
+83: shift/reduce conflict (shift 54(5), red'n 33(0)) on OR
+83: shift/reduce conflict (shift 49(0), red'n 33(0)) on EQ
+83: shift/reduce conflict (shift 50(0), red'n 33(0)) on NE
+83: shift/reduce conflict (shift 52(3), red'n 33(0)) on LE
+83: shift/reduce conflict (shift 51(3), red'n 33(0)) on GE
+83: shift/reduce conflict (shift 48(0), red'n 33(0)) on '%'
+83: shift/reduce conflict (shift 58(0), red'n 33(0)) on '['
+83: shift/reduce conflict (shift 56(0), red'n 33(0)) on '<'
+83: shift/reduce conflict (shift 55(0), red'n 33(0)) on '>'
+83: shift/reduce conflict (shift 41(0), red'n 33(0)) on '+'
+83: shift/reduce conflict (shift 42(0), red'n 33(0)) on '-'
+83: shift/reduce conflict (shift 43(0), red'n 33(0)) on '*'
+83: shift/reduce conflict (shift 44(0), red'n 33(0)) on '/'
+83: shift/reduce conflict (shift 45(0), red'n 33(0)) on '&'
+83: shift/reduce conflict (shift 46(0), red'n 33(0)) on '|'
+83: shift/reduce conflict (shift 47(0), red'n 33(0)) on '^'
+83: shift/reduce conflict (shift 57(0), red'n 33(0)) on '.'
+state 83
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr EQ expr.    (33)
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 33 (src line 243)
+
+
+84: shift/reduce conflict (shift 53(4), red'n 34(0)) on AND
+84: shift/reduce conflict (shift 54(5), red'n 34(0)) on OR
+84: shift/reduce conflict (shift 49(0), red'n 34(0)) on EQ
+84: shift/reduce conflict (shift 50(0), red'n 34(0)) on NE
+84: shift/reduce conflict (shift 52(3), red'n 34(0)) on LE
+84: shift/reduce conflict (shift 51(3), red'n 34(0)) on GE
+84: shift/reduce conflict (shift 48(0), red'n 34(0)) on '%'
+84: shift/reduce conflict (shift 58(0), red'n 34(0)) on '['
+84: shift/reduce conflict (shift 56(0), red'n 34(0)) on '<'
+84: shift/reduce conflict (shift 55(0), red'n 34(0)) on '>'
+84: shift/reduce conflict (shift 41(0), red'n 34(0)) on '+'
+84: shift/reduce conflict (shift 42(0), red'n 34(0)) on '-'
+84: shift/reduce conflict (shift 43(0), red'n 34(0)) on '*'
+84: shift/reduce conflict (shift 44(0), red'n 34(0)) on '/'
+84: shift/reduce conflict (shift 45(0), red'n 34(0)) on '&'
+84: shift/reduce conflict (shift 46(0), red'n 34(0)) on '|'
+84: shift/reduce conflict (shift 47(0), red'n 34(0)) on '^'
+84: shift/reduce conflict (shift 57(0), red'n 34(0)) on '.'
+state 84
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr NE expr.    (34)
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 34 (src line 249)
+
+
+85: shift/reduce conflict (shift 49(0), red'n 35(3)) on EQ
+85: shift/reduce conflict (shift 50(0), red'n 35(3)) on NE
+85: shift/reduce conflict (shift 48(0), red'n 35(3)) on '%'
+85: shift/reduce conflict (shift 58(0), red'n 35(3)) on '['
+85: shift/reduce conflict (shift 56(0), red'n 35(3)) on '<'
+85: shift/reduce conflict (shift 55(0), red'n 35(3)) on '>'
+85: shift/reduce conflict (shift 41(0), red'n 35(3)) on '+'
+85: shift/reduce conflict (shift 42(0), red'n 35(3)) on '-'
+85: shift/reduce conflict (shift 43(0), red'n 35(3)) on '*'
+85: shift/reduce conflict (shift 44(0), red'n 35(3)) on '/'
+85: shift/reduce conflict (shift 45(0), red'n 35(3)) on '&'
+85: shift/reduce conflict (shift 46(0), red'n 35(3)) on '|'
+85: shift/reduce conflict (shift 47(0), red'n 35(3)) on '^'
+85: shift/reduce conflict (shift 57(0), red'n 35(3)) on '.'
+state 85
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr GE expr.    (35)
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 35 (src line 255)
+
+
+86: shift/reduce conflict (shift 49(0), red'n 36(3)) on EQ
+86: shift/reduce conflict (shift 50(0), red'n 36(3)) on NE
+86: shift/reduce conflict (shift 48(0), red'n 36(3)) on '%'
+86: shift/reduce conflict (shift 58(0), red'n 36(3)) on '['
+86: shift/reduce conflict (shift 56(0), red'n 36(3)) on '<'
+86: shift/reduce conflict (shift 55(0), red'n 36(3)) on '>'
+86: shift/reduce conflict (shift 41(0), red'n 36(3)) on '+'
+86: shift/reduce conflict (shift 42(0), red'n 36(3)) on '-'
+86: shift/reduce conflict (shift 43(0), red'n 36(3)) on '*'
+86: shift/reduce conflict (shift 44(0), red'n 36(3)) on '/'
+86: shift/reduce conflict (shift 45(0), red'n 36(3)) on '&'
+86: shift/reduce conflict (shift 46(0), red'n 36(3)) on '|'
+86: shift/reduce conflict (shift 47(0), red'n 36(3)) on '^'
+86: shift/reduce conflict (shift 57(0), red'n 36(3)) on '.'
+state 86
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr LE expr.    (36)
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 36 (src line 261)
+
+
+87: shift/reduce conflict (shift 49(0), red'n 37(4)) on EQ
+87: shift/reduce conflict (shift 50(0), red'n 37(4)) on NE
+87: shift/reduce conflict (shift 48(0), red'n 37(4)) on '%'
+87: shift/reduce conflict (shift 58(0), red'n 37(4)) on '['
+87: shift/reduce conflict (shift 56(0), red'n 37(4)) on '<'
+87: shift/reduce conflict (shift 55(0), red'n 37(4)) on '>'
+87: shift/reduce conflict (shift 41(0), red'n 37(4)) on '+'
+87: shift/reduce conflict (shift 42(0), red'n 37(4)) on '-'
+87: shift/reduce conflict (shift 43(0), red'n 37(4)) on '*'
+87: shift/reduce conflict (shift 44(0), red'n 37(4)) on '/'
+87: shift/reduce conflict (shift 45(0), red'n 37(4)) on '&'
+87: shift/reduce conflict (shift 46(0), red'n 37(4)) on '|'
+87: shift/reduce conflict (shift 47(0), red'n 37(4)) on '^'
+87: shift/reduce conflict (shift 57(0), red'n 37(4)) on '.'
+state 87
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr AND expr.    (37)
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 37 (src line 267)
+
+
+88: shift/reduce conflict (shift 49(0), red'n 38(5)) on EQ
+88: shift/reduce conflict (shift 50(0), red'n 38(5)) on NE
+88: shift/reduce conflict (shift 48(0), red'n 38(5)) on '%'
+88: shift/reduce conflict (shift 58(0), red'n 38(5)) on '['
+88: shift/reduce conflict (shift 56(0), red'n 38(5)) on '<'
+88: shift/reduce conflict (shift 55(0), red'n 38(5)) on '>'
+88: shift/reduce conflict (shift 41(0), red'n 38(5)) on '+'
+88: shift/reduce conflict (shift 42(0), red'n 38(5)) on '-'
+88: shift/reduce conflict (shift 43(0), red'n 38(5)) on '*'
+88: shift/reduce conflict (shift 44(0), red'n 38(5)) on '/'
+88: shift/reduce conflict (shift 45(0), red'n 38(5)) on '&'
+88: shift/reduce conflict (shift 46(0), red'n 38(5)) on '|'
+88: shift/reduce conflict (shift 47(0), red'n 38(5)) on '^'
+88: shift/reduce conflict (shift 57(0), red'n 38(5)) on '.'
+state 88
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr OR expr.    (38)
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	EQ  shift 49
+	NE  shift 50
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 38 (src line 273)
+
+
+89: shift/reduce conflict (shift 53(4), red'n 40(0)) on AND
+89: shift/reduce conflict (shift 54(5), red'n 40(0)) on OR
+89: shift/reduce conflict (shift 49(0), red'n 40(0)) on EQ
+89: shift/reduce conflict (shift 50(0), red'n 40(0)) on NE
+89: shift/reduce conflict (shift 52(3), red'n 40(0)) on LE
+89: shift/reduce conflict (shift 51(3), red'n 40(0)) on GE
+89: shift/reduce conflict (shift 48(0), red'n 40(0)) on '%'
+89: shift/reduce conflict (shift 58(0), red'n 40(0)) on '['
+89: shift/reduce conflict (shift 56(0), red'n 40(0)) on '<'
+89: shift/reduce conflict (shift 55(0), red'n 40(0)) on '>'
+89: shift/reduce conflict (shift 41(0), red'n 40(0)) on '+'
+89: shift/reduce conflict (shift 42(0), red'n 40(0)) on '-'
+89: shift/reduce conflict (shift 43(0), red'n 40(0)) on '*'
+89: shift/reduce conflict (shift 44(0), red'n 40(0)) on '/'
+89: shift/reduce conflict (shift 45(0), red'n 40(0)) on '&'
+89: shift/reduce conflict (shift 46(0), red'n 40(0)) on '|'
+89: shift/reduce conflict (shift 47(0), red'n 40(0)) on '^'
+89: shift/reduce conflict (shift 57(0), red'n 40(0)) on '.'
+state 89
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr '>' expr.    (40)
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 40 (src line 285)
+
+
+90: shift/reduce conflict (shift 53(4), red'n 41(0)) on AND
+90: shift/reduce conflict (shift 54(5), red'n 41(0)) on OR
+90: shift/reduce conflict (shift 49(0), red'n 41(0)) on EQ
+90: shift/reduce conflict (shift 50(0), red'n 41(0)) on NE
+90: shift/reduce conflict (shift 52(3), red'n 41(0)) on LE
+90: shift/reduce conflict (shift 51(3), red'n 41(0)) on GE
+90: shift/reduce conflict (shift 48(0), red'n 41(0)) on '%'
+90: shift/reduce conflict (shift 58(0), red'n 41(0)) on '['
+90: shift/reduce conflict (shift 56(0), red'n 41(0)) on '<'
+90: shift/reduce conflict (shift 55(0), red'n 41(0)) on '>'
+90: shift/reduce conflict (shift 41(0), red'n 41(0)) on '+'
+90: shift/reduce conflict (shift 42(0), red'n 41(0)) on '-'
+90: shift/reduce conflict (shift 43(0), red'n 41(0)) on '*'
+90: shift/reduce conflict (shift 44(0), red'n 41(0)) on '/'
+90: shift/reduce conflict (shift 45(0), red'n 41(0)) on '&'
+90: shift/reduce conflict (shift 46(0), red'n 41(0)) on '|'
+90: shift/reduce conflict (shift 47(0), red'n 41(0)) on '^'
+90: shift/reduce conflict (shift 57(0), red'n 41(0)) on '.'
+state 90
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	expr:  expr '<' expr.    (41)
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  reduce 41 (src line 291)
+
+
+state 91
+	varexpr:  expr '.' IDENT.    (46)
+
+	.  reduce 46 (src line 330)
+
+
+state 92
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+	varexpr:  expr '[' expr.']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	']'  shift 104
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  error
+
+
+state 93
+	expr:  '{' mapexprs '}'.    (18)
+
+	.  reduce 18 (src line 159)
+
+
+state 94
+	expr:  '[' listexprs ']'.    (19)
+
+	.  reduce 19 (src line 163)
+
+
+state 95
+	listexprs:  expr ','.listexprs 
+
+	IDENT  shift 27
+	NUMBER  shift 24
+	STRING  shift 28
+	'{'  shift 25
+	'['  shift 26
+	'-'  shift 29
+	'!'  shift 32
+	'('  shift 30
+	.  error
+
+	varexpr  goto 31
+	expr  goto 61
+	listexprs  goto 105
+
+state 96
+	expr:  IDENT '(' listexprs.')' 
+
+	')'  shift 106
+	.  error
+
+
+state 97
+	expr:  '(' expr ')'.    (23)
+
+	.  reduce 23 (src line 187)
+
+
+state 98
+	stmt:  dstexpr '=' expr.';' 
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	';'  shift 107
+	'.'  shift 57
+	.  error
+
+
+state 99
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+	dstexpr:  dstexpr '[' expr.']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	']'  shift 108
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	'.'  shift 57
+	.  error
+
+
+state 100
+	dstexpr:  dstexpr '.' IDENT.    (52)
+
+	.  reduce 52 (src line 368)
+
+
+state 101
+	expr:  expr.'+' expr 
+	expr:  expr.'-' expr 
+	expr:  expr.'*' expr 
+	expr:  expr.'/' expr 
+	expr:  expr.'&' expr 
+	expr:  expr.'|' expr 
+	expr:  expr.'^' expr 
+	expr:  expr.'%' expr 
+	expr:  expr.EQ expr 
+	expr:  expr.NE expr 
+	expr:  expr.GE expr 
+	expr:  expr.LE expr 
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr.'>' expr 
+	expr:  expr.'<' expr 
+	mapexprs:  IDENT ':' expr.    (42)
+	mapexprs:  IDENT ':' expr.',' mapexprs 
+	varexpr:  expr.'.' IDENT 
+	varexpr:  expr.'[' expr ']' 
+
+	AND  shift 53
+	OR  shift 54
+	EQ  shift 49
+	NE  shift 50
+	LE  shift 52
+	GE  shift 51
+	'%'  shift 48
+	'['  shift 58
+	'<'  shift 56
+	'>'  shift 55
+	'+'  shift 41
+	'-'  shift 42
+	'*'  shift 43
+	'/'  shift 44
+	'&'  shift 45
+	'|'  shift 46
+	'^'  shift 47
+	','  shift 109
+	'.'  shift 57
+	.  reduce 42 (src line 298)
+
+
+state 102
+	transform:  '?' '{' expr '}' '%' '{'.script '}' 
+
+	IDENT  shift 36
+	THIS  shift 37
+	.  error
+
+	script  goto 110
+	dstexpr  goto 35
+	stmt  goto 34
+
+state 103
+	transform:  '?' '{' expr '}' '=' '{'.mapexprs '}' 
+
+	IDENT  shift 39
+	.  error
+
+	mapexprs  goto 111
+
+state 104
+	varexpr:  expr '[' expr ']'.    (47)
+
+	.  reduce 47 (src line 338)
+
+
+state 105
+	listexprs:  expr ',' listexprs.    (45)
+
+	.  reduce 45 (src line 322)
+
+
+state 106
+	expr:  IDENT '(' listexprs ')'.    (20)
+
+	.  reduce 20 (src line 167)
+
+
+state 107
+	stmt:  dstexpr '=' expr ';'.    (16)
+
+	.  reduce 16 (src line 147)
+
+
+state 108
+	dstexpr:  dstexpr '[' expr ']'.    (51)
+
+	.  reduce 51 (src line 363)
+
+
+state 109
+	mapexprs:  IDENT ':' expr ','.mapexprs 
+
+	IDENT  shift 39
+	.  error
+
+	mapexprs  goto 112
+
+state 110
+	transform:  '?' '{' expr '}' '%' '{' script.'}' 
+
+	'}'  shift 113
+	.  error
+
+
+state 111
+	transform:  '?' '{' expr '}' '=' '{' mapexprs.'}' 
+
+	'}'  shift 114
+	.  error
+
+
+state 112
+	mapexprs:  IDENT ':' expr ',' mapexprs.    (43)
+
+	.  reduce 43 (src line 306)
+
+
+state 113
+	transform:  '?' '{' expr '}' '%' '{' script '}'.    (12)
+
+	.  reduce 12 (src line 122)
+
+
+state 114
+	transform:  '?' '{' expr '}' '=' '{' mapexprs '}'.    (13)
+
+	.  reduce 13 (src line 129)
+
+
+47 terminals, 12 nonterminals
+53 grammar rules, 115/8000 states
+300 shift/reduce, 0 reduce/reduce conflicts reported
+61 working sets used
+memory: parser 80/120000
+63 extra closures
+706 shift entries, 1 exceptions
+47 goto entries
+33 entries saved by goto default
+Optimizer space used: output 441/120000
+441 table entries, 154 zero
+maximum spread: 47, maximum offset: 109

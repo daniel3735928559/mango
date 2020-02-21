@@ -5,16 +5,32 @@ type Signature struct {
 	Operation ExpressionOperationType
 	ArgTypes []ValueType
 	ReturnType ValueType
-	Handler func([]*Value, *map[string]*Value) (*Value, error)
+	Handler func(*Value, map[string]*Value, []*Value) (*Value, error) // this, local_vars, args -> result, err
+}
+
+type StatementSignature struct {
+	Operation StatementType
+	ArgTypes []ValueType
+	Handler func(*Value, map[string]*Value, []*Value) (*Value, map[string]*Value, error) // this, local_vars, args -> updated_this, updated_local_vars, err
 }
 
 var (
+	// StatementSignatures = []*StatementSignature{
+	// 	&StatementSignature{
+	// 		Operation: STMT_ASSIGN,
+	// 		ArgTypes:[]ValueType{VAL_ANY},
+	// 		Handler: AssignHandler}}
 	ExpressionSignatures = []*Signature{
 		&Signature{
-			Operation: OP_ASSIGN,
-			ArgTypes:[]ValueType{VAL_NAME,VAL_ANY},
-			ReturnType: VAL_ANY,
-			Handler: AssignHandler},
+			Operation: OP_NUM,
+			ArgTypes:[]ValueType{},
+			ReturnType: VAL_NUM,
+			Handler: NumHandler},
+		&Signature{
+			Operation: OP_STRING,
+			ArgTypes:[]ValueType{},
+			ReturnType: VAL_STRING,
+			Handler: StringHandler},
 		&Signature{
 			Operation: OP_CALL,
 			ArgTypes:[]ValueType{VAL_NAME,VAL_LIST},
@@ -42,9 +58,9 @@ var (
 			Handler: ListGetHandler},
 		&Signature{
 			Operation: OP_VAR,
-			ArgTypes:[]ValueType{VAL_NAME},
+			ArgTypes:[]ValueType{},
 			ReturnType: VAL_ANY,
-			Handler: ValHandler},
+			Handler: VarHandler},
 		&Signature{
 			Operation: OP_UMINUS,
 			ArgTypes:[]ValueType{VAL_NUM},

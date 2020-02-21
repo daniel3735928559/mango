@@ -32,6 +32,7 @@ const (
 	OP_MAP
 	OP_LIST
 	OP_EQ
+	OP_NE
 	OP_GT
 	OP_LT
 	OP_GE
@@ -56,7 +57,77 @@ func MakeNameExpression(name string) *Expression {
 }
 
 func (e *Expression) ToString() string {
-	subexprs := ""
+	if e.Operation == OP_ASSIGN {
+		return fmt.Sprintf("%s = %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_VAR {
+		return e.Value.ToString()
+	} else if e.Operation == OP_MAPVAR {
+		return fmt.Sprintf("%s.%s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_LISTVAR {
+		return fmt.Sprintf("%s[%s]", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_NUM || e.Operation == OP_STRING {
+		return e.Value.ToString()
+	} else if e.Operation == OP_CALL {
+		return fmt.Sprintf("%s(%s)", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_UMINUS {
+		return fmt.Sprintf("-%s", e.Args[0].ToString())
+	} else if e.Operation == OP_MAPGET {
+		return fmt.Sprintf("%s[%s]", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_LISTGET {
+		return fmt.Sprintf("%s[%s]", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_MAP {
+		fmt.Println("MA",e.Args,len(e.Args))
+		mapargs := make([]string, len(e.Args)/2)
+		for i := 0; i < len(e.Args)/2; i++ {
+			mapargs[i] = fmt.Sprintf("%s:%s", e.Args[2*i].ToString(), e.Args[2*i+1].ToString())
+			fmt.Println("ma",mapargs[i])
+		}
+		return fmt.Sprintf("{%s}",strings.Join(mapargs, ","))
+	} else if e.Operation == OP_LIST {
+		listargs := make([]string, len(e.Args))
+		for i := 0; i < len(e.Args); i++ {
+			listargs[i] = e.Args[i].ToString()
+		}
+		return fmt.Sprintf("[%s]",strings.Join(listargs, ","))
+	} else if e.Operation == OP_PLUS {
+		return fmt.Sprintf("%s + %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_MINUS {
+		return fmt.Sprintf("%s - %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_MUL {
+		return fmt.Sprintf("%s * %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_DIV {
+		return fmt.Sprintf("%s / %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_MOD {
+		return fmt.Sprintf("%s %% %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_BITWISEAND {
+		return fmt.Sprintf("%s & %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_BITWISEOR {
+		return fmt.Sprintf("%s | %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_BITWISEXOR {
+		return fmt.Sprintf("%s ^ %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_MATCH {
+		return fmt.Sprintf("%s ~ %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_SUB {
+		return fmt.Sprintf("%s ~~ %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_EQ {
+		return fmt.Sprintf("%s == %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_GT {
+		return fmt.Sprintf("%s > %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_LT {
+		return fmt.Sprintf("%s < %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_GE {
+		return fmt.Sprintf("%s >= %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_LE {
+		return fmt.Sprintf("%s <= %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_AND {
+		return fmt.Sprintf("%s && %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_OR {
+		return fmt.Sprintf("%s || %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_NOT {
+		return fmt.Sprintf("!%s", e.Args[0].ToString())
+	}
+	
+		subexprs := ""
 	val := ""
 	if e.Args != nil {
 		subexprs_strings := make([]string, len(e.Args))
@@ -72,19 +143,18 @@ func (e *Expression) ToString() string {
 }
 
 func (e *Expression) TypeCheck() *Signature {
+	fmt.Println("TypeCheck",e.ToString(),"op",e.Operation)
 	arg_types := make([]ValueType, len(e.Args))
 	for i, a := range e.Args {
-		if a.Operation == OP_NUM || a.Operation == OP_STRING {
-			arg_types[i] = a.Value.Type
-		} else {
-			sig := a.TypeCheck()
-			if sig == nil {
+		fmt.Println("checking arg",a.ToString())
+		sig := a.TypeCheck()
+		if sig == nil {
 			return nil
-			}
-			arg_types[i] = sig.ReturnType
 		}
+		arg_types[i] = sig.ReturnType
+		fmt.Println("arg type",i,sig.ReturnType)
 	}
-		
+	
 	for _, sig := range ExpressionSignatures {
 		if e.Operation == sig.Operation {
 			ok := true
@@ -98,22 +168,29 @@ func (e *Expression) TypeCheck() *Signature {
 			}
 		}
 	}
+	fmt.Println("No type for ",e.ToString())
 	return nil
 }
 
-func (e *Expression) Evaluate(context *map[string]*Value) (*Value, error) {
+func (e *Expression) Evaluate(this *Value, vars map[string]*Value) (*Value, error) {
+	fmt.Println("EVAL",e)
 	sig := e.TypeCheck()
 	if sig == nil {
 		return nil, errors.New("No valid type found for expression")
 	}
-	vals := make([]*Value, len(e.Args))
+	args := make([]*Value, len(e.Args))
+	local_vars := vars
+	var err error
+	var arg *Value
 	for i, a := range e.Args {
-		v, err := a.Evaluate(context)
+		arg, err = a.Evaluate(this, local_vars)
 		if err != nil {
 			return nil, err
 		}
-		vals[i] = v
+		args[i] = arg
 	}
-	vars := make(map[string]*Value)
-	return sig.Handler(vals, &vars)
+	ans, err := sig.Handler(this, local_vars, args)
+	fmt.Println("EVALed",e,"=",ans)
+	//fmt.Println("EVALed",e.ToString(),"=",ans.ToString())
+	return ans, err
 }
