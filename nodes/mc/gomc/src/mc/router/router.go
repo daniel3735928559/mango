@@ -35,7 +35,7 @@ func (r *Router) Send(src_node string, header map[string]string, args map[string
 			output, err := rt.Send(args)
 			if err != nil {
 				fmt.Println("ERROR SENDING ON",rt.ToString(), err)
-			} else {
+			} else if output != nil {
 				fmt.Println("SENDING",output,"TO",r.Nodes[rt.Dest].Name)
 				// Send the result to the destination
 				r.Nodes[rt.Dest].Handle(header, output)

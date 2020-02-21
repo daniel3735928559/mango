@@ -343,20 +343,18 @@ varexpr : expr '.' IDENT
 }
 | IDENT
 {
-	$$ = &Expression{
-		Operation: OP_VAR,
-		Args: []*Expression{MakeNameExpression($1.literal)}}
+	$$ = MakeNameExpression($1.literal)
 }
 ;
 dstexpr : IDENT
 {
-	$$ = WriteableValue {
+	$$ = WriteableValue{
 		Base: $1.literal,
 		Path: []PathEntry{}}
 }
 | THIS
 {
-	$$ = WriteableValue {
+	$$ = WriteableValue{
 		Base: "this",
 		Path: []PathEntry{}}
 }

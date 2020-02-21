@@ -11,6 +11,7 @@ type ExpressionOperationType int
 const (
 	OP_ASSIGN ExpressionOperationType = iota + 1
 	OP_VAR
+	OP_NAME
 	OP_MAPVAR
 	OP_LISTVAR
 	OP_NUM
@@ -189,7 +190,7 @@ func (e *Expression) Evaluate(this *Value, vars map[string]*Value) (*Value, erro
 		}
 		args[i] = arg
 	}
-	ans, err := sig.Handler(this, local_vars, args)
+	ans, err := sig.Handler(this, local_vars, args, e.Value)
 	fmt.Println("EVALed",e,"=",ans)
 	//fmt.Println("EVALed",e.ToString(),"=",ans.ToString())
 	return ans, err

@@ -24,6 +24,7 @@ type Transform struct {
 
 func (t *Transform) ToString() string {
 	if t.Type == TR_FILTER {
+		fmt.Println(t.Condition)
 		return fmt.Sprintf("pass if {%s}", t.Condition.ToString())
 	} else if t.Type == TR_EDIT {
 		script := ""

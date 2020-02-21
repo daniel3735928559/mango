@@ -30,15 +30,22 @@ func (rt *Route) Send(args map[string]interface{}) (map[string]interface{}, erro
 	if this.Type != VAL_MAP {
 		return nil, errors.New("args must be a map")
 	}
+	fmt.Println("MV",this)
 	
 	// Apply transforms
-	var err error
+	
 	for _, t := range rt.Transforms {
-		this, err = t.Execute(this)
+		new_this, err := t.Execute(this)
 		if err != nil {
-			fmt.Println("Error executing transform",t.ToString(),"on",this,"ERROR",err)
+			fmt.Println("Error executing transform",t.ToString(),"on",this.ToString(),"ERROR",err)
 			return nil, err
 		}
+		if new_this == nil {
+			return nil, nil
+		}
+		
+		fmt.Println("TRANSFORMED",new_this.ToString())
+		this = new_this
 	}
 	
 	output_prim := this.ToPrimitive()

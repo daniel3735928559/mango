@@ -5,7 +5,7 @@ type Signature struct {
 	Operation ExpressionOperationType
 	ArgTypes []ValueType
 	ReturnType ValueType
-	Handler func(*Value, map[string]*Value, []*Value) (*Value, error) // this, local_vars, args -> result, err
+	Handler func(*Value, map[string]*Value, []*Value, *Value) (*Value, error) // this, local_vars, args, primitive -> result, err
 }
 
 type StatementSignature struct {

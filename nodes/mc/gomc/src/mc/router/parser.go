@@ -107,7 +107,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line src/mc/router/parser.go.y:374
+//line src/mc/router/parser.go.y:372
 
 func Parse(exp string) []*Route {
 	l := new(RouteLexer)
@@ -996,13 +996,11 @@ yydefault:
 		yyDollar = yyS[yypt-1 : yypt+1]
 //line src/mc/router/parser.go.y:345
 		{
-			yyVAL.expression = &Expression{
-				Operation: OP_VAR,
-				Args:      []*Expression{MakeNameExpression(yyDollar[1].token.literal)}}
+			yyVAL.expression = MakeNameExpression(yyDollar[1].token.literal)
 		}
 	case 49:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line src/mc/router/parser.go.y:352
+//line src/mc/router/parser.go.y:350
 		{
 			yyVAL.writeable = WriteableValue{
 				Base: yyDollar[1].token.literal,
@@ -1010,7 +1008,7 @@ yydefault:
 		}
 	case 50:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line src/mc/router/parser.go.y:358
+//line src/mc/router/parser.go.y:356
 		{
 			yyVAL.writeable = WriteableValue{
 				Base: "this",
@@ -1018,14 +1016,14 @@ yydefault:
 		}
 	case 51:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:364
+//line src/mc/router/parser.go.y:362
 		{
 			yyDollar[1].writeable.Path = append(yyDollar[1].writeable.Path, PathEntry{Type: PATH_LIST, ListIndex: yyDollar[3].expression})
 			yyVAL.writeable = yyDollar[1].writeable
 		}
 	case 52:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:369
+//line src/mc/router/parser.go.y:367
 		{
 			yyDollar[1].writeable.Path = append(yyDollar[1].writeable.Path, PathEntry{Type: PATH_MAP, MapKey: yyDollar[3].token.literal})
 			yyVAL.writeable = yyDollar[1].writeable
