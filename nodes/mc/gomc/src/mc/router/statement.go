@@ -76,26 +76,43 @@ func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Express
 	}
 	var dest *Value
 	dest_name := w.Base
-	is_this := true
+	is_local_var := true
 	if dest_name == "this" {
 		dest = this.Clone()
+		is_local_var = false
 	} else if v, ok := vars[dest_name]; ok {
 		dest = v.Clone()
-		is_this = false
+		is_local_var = true
+	} else if this.Type == VAL_MAP {
+		if _, ok := this.MapVal[dest_name]; ok {
+			dest = this.Clone()
+			is_local_var = false
+		} else {
+			return this, vars, errors.New(fmt.Sprintf("No such variable in this: %s", dest_name))
+		}
 	} else {
 		return this, vars, errors.New(fmt.Sprintf("No such variable: %s", dest_name))
 	}
 	
 	target_base := dest.Clone()
 	target := target_base
+	if len(w.Path) == 0 {
+		if dest_name == "this" || !is_local_var {
+			target.MapVal[dest_name] = content
+			return target_base, vars, nil
+		} else {
+			vars[dest_name] = content
+			return this, vars, nil
+		}
+	}
 	for i, e := range w.Path {
 		if e.Type == PATH_MAP {
 			if target.Type != VAL_MAP {
 				return this, vars, errors.New(fmt.Sprintf("Attempted to access key %s in non-map", e.MapKey))
 			}
 			if i == len(w.Path) - 1 {
-				target.MapVal[e.MapKey] = content
-				if is_this {
+				if dest_name == "this" || !is_local_var {
+					target.MapVal[e.MapKey] = content
 					return target_base, vars, nil
 				} else {
 					vars[dest_name] = target_base
@@ -124,7 +141,7 @@ func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Express
 			if i == len(w.Path) - 1 {
 				// We're at the end--write this value
 				target.ListVal[list_index] = content
-				if is_this {
+				if dest_name == "this" {
 					return target_base, vars, nil
 				} else {
 					vars[dest_name] = target_base

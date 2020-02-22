@@ -35,13 +35,13 @@
 
 %token<token> IDENT VAR NUMBER STRING THIS AND OR EQ NE LE GE PE ME TE DE RE XE SUB '?' '%' '=' '{' '}' '[' ']' '<' '>' ':' '+' '-' '*' '/' '&' '|', '^', '!', '~'
 
+%left ':'
 %left AND OR
 %left GE LE EQ '<' '>'
-%left '|'
-%left '&'
+%left '|' '&' '^'
 %left '+'  '-'
 %left '*'  '/'  '%'
-%left UNARY '!'
+%left UNARY '!' '~'
 %%
 route   : node '>' node
 {

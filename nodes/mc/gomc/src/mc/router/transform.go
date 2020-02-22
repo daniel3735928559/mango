@@ -65,9 +65,9 @@ func (t *Transform) EvaluateCondition(this *Value) (bool, error) {
 func (t *Transform) EvaluateScript(this *Value) (*Value, error) {
 	vars := make(map[string]*Value)
 	var err error
-	for _, e := range t.Script {
-		fmt.Println("Script",e.ToString(),"on",this.ToString())
-		this, vars, err = e.Execute(this, vars)
+	for _, s := range t.Script {
+		fmt.Println("Statement",s.ToString(),"on",this.ToString())
+		this, vars, err = s.Execute(this, vars)
 		if err != nil {
 			return nil, err
 		}

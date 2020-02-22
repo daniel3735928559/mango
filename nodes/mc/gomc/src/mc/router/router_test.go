@@ -105,26 +105,20 @@ func RunMessagesThroughRoutes(t *testing.T, routes []string, messages map[string
 	// - messages: nodename -> message to send from that node
 	// returns:
 	// - nodename -> list of stringified messages received by that node
-	node0_msgs,node1_msgs,node2_msgs := []string{}, []string{}, []string{}
-	node0_handler := func(header map[string]string, args map[string]interface{}) {
-		fmt.Println("node0 GOT",header,args)
-		data, _ := json.Marshal(args)
-		node0_msgs = append(node0_msgs, string(data))
+	r := MakeRouter()
+	num_nodes := 10
+	node_msgs := make([][]string, num_nodes)
+	node_handlers := make([]func(header map[string]string, args map[string]interface{}), num_nodes)
+	for i := 0; i < num_nodes; i++ {
+		i := i
+		node_msgs[i] = []string{}
+		node_handlers[i] = func(header map[string]string, args map[string]interface{}) {
+			fmt.Println("node",i,"GOT",header,args)
+			data, _ := json.Marshal(args)
+			node_msgs[i] = append(node_msgs[i], string(data))
+		}
+		r.AddNode(&Node{Group:"group",Name:fmt.Sprintf("node%d",i),Handle:node_handlers[i]})
 	}
-	node1_handler := func(header map[string]string, args map[string]interface{}) {
-		fmt.Println("node1 GOT",header,args)
-		data, _ := json.Marshal(args)
-		node1_msgs = append(node1_msgs, string(data))
-	}
-	node2_handler := func(header map[string]string, args map[string]interface{}) {
-		fmt.Println("node2 GOT",header,args)
-		data, _ := json.Marshal(args)
-		node2_msgs = append(node2_msgs, string(data))
-	}
-	r := MakeRouter()	
-	r.AddNode(&Node{Group:"group",Name:"node0",Handle:node0_handler})
-	r.AddNode(&Node{Group:"group",Name:"node1",Handle:node1_handler})
-	r.AddNode(&Node{Group:"group",Name:"node2",Handle:node2_handler})
 
 	for _, rt := range routes {
 		r.ParseAndAddRoutes(rt)
@@ -135,10 +129,12 @@ func RunMessagesThroughRoutes(t *testing.T, routes []string, messages map[string
 			r.Send(src_node, map[string]string{}, msg)
 		}
 	}
-	results := map[string][]string {
-		"node0":node0_msgs,
-		"node1":node1_msgs,
-		"node2":node2_msgs}
+	results := make(map[string][]string)
+	for i := 0; i < num_nodes; i++ {
+		if len(node_msgs[i]) > 0 {
+			results[fmt.Sprintf("node%d",i)] = node_msgs[i]
+		}
+	}
 	for dst_node, recvd_messages := range results {
 		if _, ok := expected[dst_node]; !ok {
 			t.Errorf("Did not have expected messages for node %s", dst_node)
@@ -270,7 +266,6 @@ func TestRouterOrFilter(t *testing.T) {
 			map[string]interface{}{"key1":2},
 			map[string]interface{}{"key1":0}}}
 	expected := map[string][]string{
-		"node0":[]string{},
 		"node1":[]string{`{"key1":-1}`,`{"key1":10}`},
 		"node2":[]string{`{"key1":"val1"}`,`{"key1":-1}`,`{"key1":10}`,`{"key1":2}`,`{"key1":0}`}}
 	RunMessagesThroughRoutes(t, routes, messages, expected)
@@ -287,8 +282,31 @@ func TestRouterNotFilter(t *testing.T) {
 			map[string]interface{}{"key1":10},
 			map[string]interface{}{"key1":0}}}
 	expected := map[string][]string{
-		"node0":[]string{},
 		"node1":[]string{`{"key1":10}`},
 		"node2":[]string{`{"key1":"val1"}`,`{"key1":-1}`,`{"key1":10}`,`{"key1":0}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
+
+func TestRouterAddEdit(t *testing.T) {
+	routes := []string{
+		"node0 > node1",
+		`node0 > % {key1 += 1;} > node2`,
+		`node0 > % {key1 -= 1;} > node3`,
+		`node0 > % {key1 *= 2;} > node4`,
+		`node0 > % {key1 /= 2;} > node5`,
+		`node0 > % {key1 %= 2;} > node6`}
+	messages := map[string][]map[string]interface{}{
+		"node0":[]map[string]interface{}{
+			map[string]interface{}{"key1":"val1"},
+			map[string]interface{}{"key1":-2},
+			map[string]interface{}{"key1":10},
+			map[string]interface{}{"key1":0}}}
+	expected := map[string][]string{
+		"node1":[]string{`{"key1":"val1"}`,`{"key1":-2}`,`{"key1":10}`,`{"key1":0}`},
+		"node2":[]string{`{"key1":-1}`,`{"key1":11}`,`{"key1":1}`},
+		"node3":[]string{`{"key1":-3}`,`{"key1":9}`,`{"key1":-1}`},
+		"node4":[]string{`{"key1":"val1val1"}`,`{"key1":-4}`,`{"key1":20}`,`{"key1":0}`},
+		"node5":[]string{`{"key1":-1}`,`{"key1":5}`,`{"key1":0}`},
+		"node6":[]string{`{"key1":0}`,`{"key1":0}`,`{"key1":0}`}}
 	RunMessagesThroughRoutes(t, routes, messages, expected)
 }

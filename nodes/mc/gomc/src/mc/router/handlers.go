@@ -46,6 +46,9 @@ func ListGetHandler(this *Value, local_vars map[string]*Value, args []*Value, pr
 // }
 func VarHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	fmt.Println("VAR Handler",primitive)
+	if primitive.NameVal == "this" {
+		return this, nil
+	}
 	if this.Type == VAL_MAP {
 		if v, ok := this.MapVal[primitive.NameVal]; ok {
 			return v, nil
@@ -80,7 +83,7 @@ func MulNumHandler(this *Value, local_vars map[string]*Value, args []*Value, pri
 func MulStringNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	ans := args[0].StringVal
 	// TODO: error if count < 0 or count is not int
-	for i := 0; uint(i) < uint(args[1].NumVal); i++ {
+	for i := 1; uint(i) < uint(args[1].NumVal); i++ {
 		ans += args[0].StringVal
 	}
 	return MakeStringValue(ans), nil
