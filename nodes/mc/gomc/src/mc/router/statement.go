@@ -19,7 +19,7 @@ const (
 
 type Statement struct {
 	Type StatementType
-	Destination WriteableValue
+	Destination *WriteableValue
 	Args []*Expression
 }
 
@@ -32,6 +32,41 @@ type PathEntry struct {
 type WriteableValue struct {
 	Base string
 	Path []PathEntry
+}
+
+func (w *WriteableValue) ToExpression() *Expression {
+	var ans, arg, current *Expression
+	for i, pe := range w.Path {
+		if pe.Type == PATH_MAP {
+			arg = MakeNameExpression(w.Path[i].MapKey)
+		} else if w.Path[i].Type == PATH_LIST {
+			arg = w.Path[i].ListIndex
+		}
+		if i == 0 {
+			ans = arg
+			current = arg
+		} else {
+			current.Args = append(current.Args, arg)
+			current = arg
+		}
+	}
+	base := &Expression{
+		Operation:OP_VAR,
+		Value:&Value{
+			Type:VAL_NAME,
+			NameVal:w.Base}}
+	if len(w.Path) > 0 {
+		if w.Path[0].Type == PATH_MAP {
+			return &Expression{
+				Operation:OP_MAPVAR,
+				Args:[]*Expression{base, ans}}
+		} else if w.Path[0].Type  == PATH_LIST {
+			return &Expression{
+				Operation:OP_LISTVAR,
+				Args:[]*Expression{base, ans}}
+		}
+	}
+	return base
 }
 
 func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Expression) (*Value, map[string]*Value, error) {
@@ -103,7 +138,7 @@ func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Express
 	return this, vars, errors.New("Something went wrong?")
 }
 
-func MakeAssignment(dest WriteableValue, val *Expression) *Statement {
+func MakeAssignment(dest *WriteableValue, val *Expression) *Statement {
 	return &Statement {
 		Type: STMT_ASSIGN,
 		Destination: dest,

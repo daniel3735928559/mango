@@ -2,6 +2,8 @@ package router
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 )
 
 type ValueType int
@@ -112,6 +114,10 @@ func MakeValue(args interface{}) *Value {
 		return &Value{
 			Type: VAL_NUM,
 			NumVal: numval}
+	} else if numval, ok := args.(int); ok {
+		return &Value{
+			Type: VAL_NUM,
+			NumVal: float64(numval)}
 	} else if strval, ok := args.(string); ok {
 		return &Value{
 			Type: VAL_STRING,
@@ -166,9 +172,22 @@ func AssignValue(dst, src *Value, vars *map[string]*Value) {
 
 func (v *Value) ToString() string {
 	if v.Type == VAL_MAP {
-		return fmt.Sprintf("%v",v.MapVal)
+		map_keys := make([]string, 0)
+		for k, _ := range v.MapVal {
+			map_keys = append(map_keys, k)
+		}
+		sort.Strings(map_keys)
+		val_strs := make([]string, len(map_keys))
+		for i, k := range map_keys {
+			val_strs[i] = fmt.Sprintf("%s:%s",k,v.MapVal[k].ToString())
+		}
+		return fmt.Sprintf("{%s}",strings.Join(val_strs ,","))
 	} else if v.Type == VAL_LIST {
-		return fmt.Sprintf("%v",v.ListVal)
+		val_strs := make([]string, len(v.ListVal))
+		for i, val := range v.ListVal {
+			val_strs[i] = val.ToString()
+		}
+		return fmt.Sprintf("{%s}",strings.Join(val_strs ,","))
 	} else if v.Type == VAL_NAME {
 		return fmt.Sprintf("VAR(%s)",v.NameVal)
 	} else if v.Type == VAL_INT {

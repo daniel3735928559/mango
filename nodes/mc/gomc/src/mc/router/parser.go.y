@@ -17,7 +17,7 @@
 	transform *Transform
 	expression *Expression
 	statement *Statement
-	writeable WriteableValue
+	writeable *WriteableValue
 	script []*Statement
 	node *Node
 }
@@ -147,6 +147,36 @@ script
 stmt : dstexpr '=' expr ';'
 {
 	$$ = MakeAssignment($1, $3)
+}
+| dstexpr PE expr ';'
+{
+	$$ = MakeAssignment($1, &Expression{
+		Operation: OP_PLUS,
+		Args: []*Expression{$1.ToExpression(), $3}})
+}
+| dstexpr ME expr ';'
+{
+	$$ = MakeAssignment($1, &Expression{
+		Operation: OP_MINUS,
+		Args: []*Expression{$1.ToExpression(), $3}})
+}
+| dstexpr TE expr ';'
+{
+	$$ = MakeAssignment($1, &Expression{
+		Operation: OP_MUL,
+		Args: []*Expression{$1.ToExpression(), $3}})
+}
+| dstexpr DE expr ';'
+{
+	$$ = MakeAssignment($1, &Expression{
+		Operation: OP_DIV,
+		Args: []*Expression{$1.ToExpression(), $3}})
+}
+| dstexpr RE expr ';'
+{
+	$$ = MakeAssignment($1, &Expression{
+		Operation: OP_MOD,
+		Args: []*Expression{$1.ToExpression(), $3}})
 }
 
 expr : NUMBER
@@ -348,13 +378,13 @@ varexpr : expr '.' IDENT
 ;
 dstexpr : IDENT
 {
-	$$ = WriteableValue{
+	$$ = &WriteableValue{
 		Base: $1.literal,
 		Path: []PathEntry{}}
 }
 | THIS
 {
-	$$ = WriteableValue{
+	$$ = &WriteableValue{
 		Base: "this",
 		Path: []PathEntry{}}
 }

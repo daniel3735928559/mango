@@ -172,7 +172,13 @@ func (s *RouteScanner) scanTest() (int, string) {
 		//fmt.Printf("peek, fc:%s,p:%s\n",string(fc),string(s.peek()))
 		if s.peek() == '=' {
 			s.next()
-			return EQ, "=="
+			if fc == '=' {
+				return EQ, "=="
+			} else if fc == '<' {
+				return LE, "<="
+			} else if fc == '>' {
+				return GE, ">="
+			}
 		}
 	}
 	return int(fc), string(fc)

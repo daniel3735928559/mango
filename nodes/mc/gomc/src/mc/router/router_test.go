@@ -30,7 +30,7 @@ func TestParserSingleSimpleTransforms(t *testing.T) {
         examples := map[string]string{
 		`src > = {key1:"val1"} > dst`:`src > replace {VAR(key1):STRING(val1)} > dst`,
 		`src > ? {key1 == "val1"} > dst`:`src > pass if {VAR(key1) == STRING(val1)} > dst`,
-		`src > % {key1 = "val1";} > dst`:`src > edit {VAR(key1) = STRING(val1);} > dst`}
+		`src > % {key1 = "val1";} > dst`:`src > edit {key1 = STRING(val1);} > dst`}
         for s, ans := range examples {
 		fmt.Println("PARSING",s)
 		rs := Parse(s)
@@ -50,9 +50,9 @@ func TestParserSingleSimpleTransforms(t *testing.T) {
 func TestParserSingleComplexTransforms(t *testing.T) {
 	fmt.Println("ASD")
         examples := map[string]string{
-		`src > ? {!(key2 >= 4 || key2 < 8)} = {key1:"val1",key2:-99,key3:1+1+1^6} > dst`: `src > replace {VAR(key1):STRING(val1),VAR(key2):-NUM(99.000000),VAR(key3):NUM(1.000000) + NUM(1.000000) + NUM(1.000000) ^ NUM(6.000000)} if {!VAR(key2) == NUM(4.000000) || VAR(key2) < NUM(8.000000)} > dst`,
-		`src > ? {key1 == "val1" && !(key2 == 4 || key2 >= 8)} > dst`: `src > pass if {VAR(key1) == STRING(val1) && !VAR(key2) == NUM(4.000000) || VAR(key2) == NUM(8.000000)} > dst`,
-		`src > ? {key1 == "val1" && !(key2 <= 4 || key3 < -100.9)} % {key1 = "val1"; key2[4] = key3.key4[1+1];} > dst`: `src > edit {VAR(key1) = STRING(val1);VAR(key2)[NUM(4.000000)] = VAR(key3).VAR(key4)[NUM(1.000000) + NUM(1.000000)];} if {VAR(key1) == STRING(val1) && !VAR(key2) == NUM(4.000000) || VAR(key3) < -NUM(0.000000)} > dst`}
+		`src > ? {!(key2 >= 4 || key2 < 8)} = {key1:"val1",key2:-99,key3:1+1+1^6} > dst`: `src > replace {VAR(key1):STRING(val1),VAR(key2):-NUM(99.000000),VAR(key3):NUM(1.000000) + NUM(1.000000) + NUM(1.000000) ^ NUM(6.000000)} if {!VAR(key2) >= NUM(4.000000) || VAR(key2) < NUM(8.000000)} > dst`,
+		`src > ? {key1 == "val1" && !(key2 == 4 || key2 >= 8)} > dst`: `src > pass if {VAR(key1) == STRING(val1) && !VAR(key2) == NUM(4.000000) || VAR(key2) >= NUM(8.000000)} > dst`,
+		`src > ? {key1 == "val1" && !(key2 <= 4 || key3 < -100.9)} % {key1 = "val1"; key2[4] = key3.key4[1+1];} > dst`: `src > edit {key1 = STRING(val1);key2[NUM(4.000000)] = VAR(key3).VAR(key4)[NUM(1.000000) + NUM(1.000000)];} if {VAR(key1) == STRING(val1) && !VAR(key2) <= NUM(4.000000) || VAR(key3) < -NUM(0.000000)} > dst`}
         for s, ans := range examples {
 		fmt.Println("PARSING",s)
 		rs := Parse(s)
@@ -156,17 +156,86 @@ func RunMessagesThroughRoutes(t *testing.T, routes []string, messages map[string
 	}
 }
 
-func TestRouterTransforms(t *testing.T) {
+func TestRouterEqFilter(t *testing.T) {
 	routes := []string{
 		"node0 > node2",
 		`node0 > ? {key1=="val1"} > node1`}
 	messages := map[string][]map[string]interface{}{
 		"node0":[]map[string]interface{}{
 			map[string]interface{}{"key1":"val1"},
-			map[string]interface{}{"key1":"val2"}}}
+			map[string]interface{}{"key1":"val2"},
+			map[string]interface{}{"key2":"val3"}}}
 	expected := map[string][]string{
 		"node0":[]string{},
 		"node1":[]string{`{"key1":"val1"}`},
-		"node2":[]string{`{"key1":"val1"}`,`{"key1":"val2"}`}}
+		"node2":[]string{`{"key1":"val1"}`,`{"key1":"val2"}`,`{"key2":"val3"}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
+
+func TestRouterGtFilter(t *testing.T) {
+	routes := []string{
+		"node0 > node2",
+		`node0 > ? {key1 > 0} > node1`}
+	messages := map[string][]map[string]interface{}{
+		"node0":[]map[string]interface{}{
+			map[string]interface{}{"key1":"val1"},
+			map[string]interface{}{"key1":-1},
+			map[string]interface{}{"key1":10},
+			map[string]interface{}{"key1":0}}}
+	expected := map[string][]string{
+		"node0":[]string{},
+		"node1":[]string{`{"key1":10}`},
+		"node2":[]string{`{"key1":"val1"}`,`{"key1":-1}`,`{"key1":10}`,`{"key1":0}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
+
+func TestRouterLtFilter(t *testing.T) {
+	routes := []string{
+		"node0 > node2",
+		`node0 > ? {key1 < 0} > node1`}
+	messages := map[string][]map[string]interface{}{
+		"node0":[]map[string]interface{}{
+			map[string]interface{}{"key1":"val1"},
+			map[string]interface{}{"key1":-1},
+			map[string]interface{}{"key1":10},
+			map[string]interface{}{"key1":0}}}
+	expected := map[string][]string{
+		"node0":[]string{},
+		"node1":[]string{`{"key1":-1}`},
+		"node2":[]string{`{"key1":"val1"}`,`{"key1":-1}`,`{"key1":10}`,`{"key1":0}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
+
+func TestRouterGeFilter(t *testing.T) {
+	routes := []string{
+		"node0 > node2",
+		`node0 > ? {key1 >= 0} > node1`}
+	messages := map[string][]map[string]interface{}{
+		"node0":[]map[string]interface{}{
+			map[string]interface{}{"key1":"val1"},
+			map[string]interface{}{"key1":-1},
+			map[string]interface{}{"key1":10},
+			map[string]interface{}{"key1":0}}}
+	expected := map[string][]string{
+		"node0":[]string{},
+		"node1":[]string{`{"key1":10}`,`{"key1":0}`},
+		"node2":[]string{`{"key1":"val1"}`,`{"key1":-1}`,`{"key1":10}`,`{"key1":0}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
+
+func TestRouterLeFilter(t *testing.T) {
+	routes := []string{
+		"node0 > node2",
+		`node0 > ? {key1 <= 0} > node1`}
+	messages := map[string][]map[string]interface{}{
+		"node0":[]map[string]interface{}{
+			map[string]interface{}{"key1":"val1"},
+			map[string]interface{}{"key1":-1},
+			map[string]interface{}{"key1":10},
+			map[string]interface{}{"key1":0}}}
+	expected := map[string][]string{
+		"node0":[]string{},
+		"node1":[]string{`{"key1":-1}`,`{"key1":0}`},
+		"node2":[]string{`{"key1":"val1"}`,`{"key1":-1}`,`{"key1":10}`,`{"key1":0}`}}
 	RunMessagesThroughRoutes(t, routes, messages, expected)
 }

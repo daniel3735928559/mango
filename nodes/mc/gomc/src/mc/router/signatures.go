@@ -1,11 +1,27 @@
 package router
 
+import (
+	"fmt"
+	"errors"
+)
 
 type Signature struct {
 	Operation ExpressionOperationType
 	ArgTypes []ValueType
 	ReturnType ValueType
 	Handler func(*Value, map[string]*Value, []*Value, *Value) (*Value, error) // this, local_vars, args, primitive -> result, err
+}
+
+func (s *Signature) TypeCheck(args []*Value) error {
+	if len(args) != len(s.ArgTypes) {
+		return errors.New(fmt.Sprintf("Signature has arity %d, got %d args", len(s.ArgTypes), len(args)))
+	}
+	for i, a := range args {
+		if s.ArgTypes[i] != a.Type {
+			return errors.New(fmt.Sprintf("Argument %d has type mismatch: Wanted %d, got %d", i, s.ArgTypes[i], a.Type))
+		}
+	}
+	return nil
 }
 
 type StatementSignature struct {

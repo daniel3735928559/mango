@@ -5,28 +5,6 @@ import (
 	"errors"
 )
 
-func AssignHandler(this *Value, local_vars map[string]*Value, args []*Value) (*Value, map[string]*Value, error) {
-	// if variable, ok := (*vars)[args[0].NameVal]; !ok {
-	// 	return nil, errors.New(fmt.Sprintf("No such variable: %s", args[0].NameVal))
-	// }
-	// if args[0].PathVal != nil && len(args[0].PathVal) > 0 {
-	// 	v := ResolvePathValue(variable, args[0].PathVal)
-	// }
-	ans := this.Clone()
-	if args[0].Type == VAL_NAME {
-		name := args[0].NameVal
-		if this.Type == VAL_MAP {
-			if _, ok := this.MapVal[name]; ok {
-				this.MapVal[name] = args[1]
-			} else {
-				local_vars[name] = args[1]
-			}
-		} else {
-			local_vars[name] = args[1]
-		}
-	}
-	return ans, local_vars, nil
-}
 func CallHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	// TODO: error if called function does not exist
 	fmt.Println("CALL",args[0].NameVal)
@@ -67,7 +45,7 @@ func ListGetHandler(this *Value, local_vars map[string]*Value, args []*Value, pr
 // 	return nil, nil, nil
 // }
 func VarHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
-	fmt.Println("VAR Handler ARGS",args)
+	fmt.Println("VAR Handler",primitive)
 	if this.Type == VAL_MAP {
 		if v, ok := this.MapVal[primitive.NameVal]; ok {
 			return v, nil
@@ -76,7 +54,7 @@ func VarHandler(this *Value, local_vars map[string]*Value, args []*Value, primit
 	if v, ok := local_vars[primitive.NameVal]; ok {
 		return v, nil
 	}
-	return nil, errors.New(fmt.Sprintf("No such variable: %s",args[0].NameVal))
+	return nil, errors.New(fmt.Sprintf("No such variable: %s",primitive.NameVal))
 }
 func NumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	return MakeFloatValue(primitive.NumVal), nil

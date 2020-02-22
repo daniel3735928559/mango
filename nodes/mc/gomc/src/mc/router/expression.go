@@ -58,10 +58,8 @@ func MakeNameExpression(name string) *Expression {
 }
 
 func (e *Expression) ToString() string {
-	if e.Operation == OP_ASSIGN {
-		return fmt.Sprintf("%s = %s", e.Args[0].ToString(), e.Args[1].ToString())
-	} else if e.Operation == OP_VAR {
-		return e.Value.ToString()
+	if e.Operation == OP_VAR {
+		return fmt.Sprintf("%s", e.Value.ToString())
 	} else if e.Operation == OP_MAPVAR {
 		return fmt.Sprintf("%s.%s", e.Args[0].ToString(), e.Args[1].ToString())
 	} else if e.Operation == OP_LISTVAR {
@@ -165,6 +163,7 @@ func (e *Expression) TypeCheck() *Signature {
 				}
 			}
 			if ok {
+				fmt.Println("FOUND SIG",arg_types,sig.ArgTypes)
 				return sig
 			}
 		}
@@ -174,7 +173,10 @@ func (e *Expression) TypeCheck() *Signature {
 }
 
 func (e *Expression) Evaluate(this *Value, vars map[string]*Value) (*Value, error) {
-	fmt.Println("EVAL",e)
+	if e == nil {
+		return nil, errors.New("Invalid expression")
+	}
+	fmt.Println("EVAL",e.ToString())
 	sig := e.TypeCheck()
 	if sig == nil {
 		return nil, errors.New("No valid type found for expression")
@@ -190,8 +192,15 @@ func (e *Expression) Evaluate(this *Value, vars map[string]*Value) (*Value, erro
 		}
 		args[i] = arg
 	}
+	if err := sig.TypeCheck(args); err != nil {
+		return nil, err
+	}
 	ans, err := sig.Handler(this, local_vars, args, e.Value)
-	fmt.Println("EVALed",e,"=",ans)
+	if ans != nil {
+		fmt.Println("EVALed",e.ToString(),"=",ans.ToString())
+	} else {
+		fmt.Println("EVALed",e.ToString(),"= nil")
+	}
 	//fmt.Println("EVALed",e.ToString(),"=",ans.ToString())
 	return ans, err
 }
