@@ -197,25 +197,25 @@ func MakeBoolValue(x bool) *Value {
 		BoolVal: x}
 }
 
-func AssignValue(dst, src *Value, vars *map[string]*Value) {
-	if src.Type == VAL_MAP {
-		dst.MapVal = src.MapVal
-	} else if src.Type == VAL_LIST {
-		dst.ListVal = src.ListVal
-	} else if src.Type == VAL_NAME {
-		AssignValue(dst, (*vars)[src.NameVal], vars)
-	} else if src.Type == VAL_INT {
-		dst.IntVal = src.IntVal
-	} else if src.Type == VAL_FLOAT {
-		dst.FloatVal = src.FloatVal
-	} else if src.Type == VAL_NUM {
-		dst.NumVal = src.NumVal
-	} else if src.Type == VAL_STRING {
-		dst.StringVal = src.StringVal
-	} else if src.Type == VAL_BOOL {
-		dst.BoolVal = src.BoolVal
-	}
-}
+// func AssignValue(dst, src *Value, vars *map[string]*Value) {
+// 	if src.Type == VAL_MAP {
+// 		dst.MapVal = src.MapVal
+// 	} else if src.Type == VAL_LIST {
+// 		dst.ListVal = src.ListVal
+// 	} else if src.Type == VAL_NAME {
+// 		AssignValue(dst, (*vars)[src.NameVal], vars)
+// 	} else if src.Type == VAL_INT {
+// 		dst.IntVal = src.IntVal
+// 	} else if src.Type == VAL_FLOAT {
+// 		dst.FloatVal = src.FloatVal
+// 	} else if src.Type == VAL_NUM {
+// 		dst.NumVal = src.NumVal
+// 	} else if src.Type == VAL_STRING {
+// 		dst.StringVal = src.StringVal
+// 	} else if src.Type == VAL_BOOL {
+// 		dst.BoolVal = src.BoolVal
+// 	}
+// }
 
 func (v *Value) ToString() string {
 	if v.Type == VAL_MAP {

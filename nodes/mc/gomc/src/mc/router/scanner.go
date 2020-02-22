@@ -1,7 +1,7 @@
 package router
 
 import (
-	//"fmt"
+	"fmt"
 )
 
 const (
@@ -21,6 +21,8 @@ var (
 		"*=":TE,
 		"/=":DE,
 		"%=":RE,
+		"&=":AE,
+		"|=":OE,
 		"^=":XE,
 		"~=":SUB,
 		"&&":AND,
@@ -194,6 +196,7 @@ func (s *RouteScanner) scanNumber() string {
 		}
 		s.next()
 	}
+	fmt.Println("SN",string(ret))
 	return string(ret)
 }
 

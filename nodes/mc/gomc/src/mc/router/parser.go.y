@@ -33,7 +33,7 @@
 %type<expression> mapexprs
 %type<expression> listexprs
 
-%token<token> IDENT VAR NUMBER STRING THIS AND OR EQ NE LE GE PE ME TE DE RE XE SUB '?' '%' '=' '{' '}' '[' ']' '<' '>' ':' '+' '-' '*' '/' '&' '|', '^', '!', '~'
+%token<token> IDENT VAR NUMBER STRING THIS AND OR EQ NE LE GE PE ME TE DE RE AE OE XE SUB '?' '%' '=' '{' '}' '[' ']' '<' '>' ':' '+' '-' '*' '/' '&' '|', '^', '!', '~'
 
 %left ':'
 %left AND OR
@@ -152,6 +152,24 @@ stmt : dstexpr '=' expr ';'
 {
 	$$ = MakeAssignment($1, $3)
 }
+| dstexpr AE expr ';'
+{
+	$$ = MakeAssignment($1, &Expression{
+		Operation: OP_BITWISEAND,
+		Args: []*Expression{$1.ToExpression(), $3}})
+}
+| dstexpr OE expr ';'
+{
+	$$ = MakeAssignment($1, &Expression{
+		Operation: OP_BITWISEOR,
+		Args: []*Expression{$1.ToExpression(), $3}})
+}
+| dstexpr XE expr ';'
+{
+	$$ = MakeAssignment($1, &Expression{
+		Operation: OP_BITWISEXOR,
+		Args: []*Expression{$1.ToExpression(), $3}})
+}
 | dstexpr PE expr ';'
 {
 	$$ = MakeAssignment($1, &Expression{
@@ -185,10 +203,10 @@ stmt : dstexpr '=' expr ';'
 
 expr : NUMBER
 {
-	x, _ := strconv.Atoi($1.literal)
+	x, _ := strconv.ParseFloat($1.literal, 64)
 	$$ = &Expression{
 		Operation: OP_NUM,
-		Value: &Value{Type: VAL_NUM, NumVal: float64(x)}}
+		Value: &Value{Type: VAL_NUM, NumVal: x}}
 }
 | '{' mapexprs '}'
 {

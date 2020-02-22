@@ -137,52 +137,52 @@ func (e *Expression) ToString() string {
 	} else if e.Operation == OP_NOT {
 		return fmt.Sprintf("!%s", e.Args[0].ToString())
 	}
-	
-	subexprs := ""
-	val := ""
-	if e.Args != nil {
-		subexprs_strings := make([]string, len(e.Args))
-		for i, es := range e.Args {
-			subexprs_strings[i] = es.ToString()
-		}
-		subexprs = strings.Join(subexprs_strings, ",")
-	}
-	if e.Value != nil {
-		val = e.Value.ToString()
-	}
-	return fmt.Sprintf("%d(%s;%s)",e.Operation, subexprs, val)
+	return fmt.Sprintf("[unknown expression type %d]",e.Operation)
+	// subexprs := ""
+	// val := ""
+	// if e.Args != nil {
+	// 	subexprs_strings := make([]string, len(e.Args))
+	// 	for i, es := range e.Args {
+	// 		subexprs_strings[i] = es.ToString()
+	// 	}
+	// 	subexprs = strings.Join(subexprs_strings, ",")
+	// }
+	// if e.Value != nil {
+	// 	val = e.Value.ToString()
+	// }
+	// return fmt.Sprintf("%d(%s;%s)",e.Operation, subexprs, val)
 }
 
-func (e *Expression) TypeCheck() *Signature {
-	fmt.Println("TypeCheck",e.ToString(),"op",e.Operation)
-	arg_types := make([]ValueType, len(e.Args))
-	for i, a := range e.Args {
-		fmt.Println("checking arg",a.ToString())
-		sig := a.TypeCheck()
-		if sig == nil {
-			return nil
-		}
-		arg_types[i] = sig.ReturnType
-		fmt.Println("arg type",i,sig.ReturnType)
-	}
+// func (e *Expression) TypeCheck() *Signature {
+// 	fmt.Println("TypeCheck",e.ToString(),"op",e.Operation)
+// 	arg_types := make([]ValueType, len(e.Args))
+// 	for i, a := range e.Args {
+// 		fmt.Println("checking arg",a.ToString())
+// 		sig := a.TypeCheck()
+// 		if sig == nil {
+// 			return nil
+// 		}
+// 		arg_types[i] = sig.ReturnType
+// 		fmt.Println("arg type",i,sig.ReturnType)
+// 	}
 	
-	for _, sig := range ExpressionSignatures {
-		if e.Operation == sig.Operation {
-			ok := true
-			for i, a := range arg_types {
-				if i > len(sig.ArgTypes) || (sig.ArgTypes[i] != VAL_ANY && a != VAL_ANY && a != sig.ArgTypes[i]) {
-					ok = false
-				}
-			}
-			if ok {
-				fmt.Println("FOUND SIG",arg_types,sig.ArgTypes)
-				return sig
-			}
-		}
-	}
-	fmt.Println("No type for ",e.ToString())
-	return nil
-}
+// 	for _, sig := range ExpressionSignatures {
+// 		if e.Operation == sig.Operation {
+// 			ok := true
+// 			for i, a := range arg_types {
+// 				if i > len(sig.ArgTypes) || (sig.ArgTypes[i] != VAL_ANY && a != VAL_ANY && a != sig.ArgTypes[i]) {
+// 					ok = false
+// 				}
+// 			}
+// 			if ok {
+// 				fmt.Println("FOUND SIG",arg_types,sig.ArgTypes)
+// 				return sig
+// 			}
+// 		}
+// 	}
+// 	fmt.Println("No type for ",e.ToString())
+// 	return nil
+// }
 
 func (e *Expression) Evaluate(this *Value, vars map[string]*Value) (*Value, error) {
 	if e == nil {

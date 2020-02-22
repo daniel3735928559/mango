@@ -2,7 +2,6 @@ package router
 
 import (
 	"fmt"
-	"errors"
 )
 
 type Signature struct {
@@ -38,17 +37,17 @@ func FindSignature(op ExpressionOperationType, args []*Value) *Signature {
 	return nil
 }
 
-func (s *Signature) TypeCheck(args []*Value) error {
-	if len(args) != len(s.ArgTypes) {
-		return errors.New(fmt.Sprintf("Signature has arity %d, got %d args", len(s.ArgTypes), len(args)))
-	}
-	for i, a := range args {
-		if s.ArgTypes[i] != a.Type {
-			return errors.New(fmt.Sprintf("Argument %d has type mismatch: Wanted %d, got %d", i, s.ArgTypes[i], a.Type))
-		}
-	}
-	return nil
-}
+// func (s *Signature) TypeCheck(args []*Value) error {
+// 	if len(args) != len(s.ArgTypes) {
+// 		return errors.New(fmt.Sprintf("Signature has arity %d, got %d args", len(s.ArgTypes), len(args)))
+// 	}
+// 	for i, a := range args {
+// 		if s.ArgTypes[i] != a.Type {
+// 			return errors.New(fmt.Sprintf("Argument %d has type mismatch: Wanted %d, got %d", i, s.ArgTypes[i], a.Type))
+// 		}
+// 	}
+// 	return nil
+// }
 
 type StatementSignature struct {
 	Operation StatementType
