@@ -61,6 +61,11 @@ var (
 	// 		Handler: AssignHandler}}
 	ExpressionSignatures = []*Signature{
 		&Signature{
+			Operation: OP_NAME,
+			ArgTypes:[]ValueType{},
+			ReturnType: VAL_NAME,
+			Handler: NameHandler},
+		&Signature{
 			Operation: OP_NUM,
 			ArgTypes:[]ValueType{},
 			ReturnType: VAL_NUM,
@@ -185,6 +190,16 @@ var (
 			ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
 			ReturnType: VAL_BOOL,
 			Handler: EqStringHandler},
+		&Signature{
+			Operation: OP_NE,
+			ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+			ReturnType: VAL_BOOL,
+			Handler: NeNumHandler},
+		&Signature{
+			Operation: OP_NE,
+			ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
+			ReturnType: VAL_BOOL,
+			Handler: NeStringHandler},
 		&Signature{
 			Operation: OP_LE,
 			ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},

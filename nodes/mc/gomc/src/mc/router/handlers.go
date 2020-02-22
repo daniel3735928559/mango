@@ -10,6 +10,9 @@ func CallHandler(this *Value, local_vars map[string]*Value, args []*Value, primi
 	fmt.Println("CALL",args[0].NameVal)
 	return this.Clone(), nil
 }
+func NameHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
+	return primitive, nil
+}
 func MapHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	// TODO: Error if odd number of args or if keys are not Type:"name"
 	mapval := make(map[string]*Value)
@@ -26,14 +29,15 @@ func ListHandler(this *Value, local_vars map[string]*Value, args []*Value, primi
 		ListVal: args}, nil
 }
 func MapGetHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
-	// TODO: error if key does not exist
 	item := args[1].NameVal
-	return args[0].MapVal[item], nil
+	if v, ok := args[0].MapVal[item]; ok {
+		return v, nil
+	}
+	return nil, errors.New(fmt.Sprintf("No such key %s found in map",item))
 }
 func ListGetHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
-	// TODO: error if index out of bounds
 	idx := uint(args[1].NumVal)
-	if idx > uint(len(args[0].ListVal)) {
+	if idx >= uint(len(args[0].ListVal)) {
 		return nil, errors.New(fmt.Sprintf("Index out of bounds: %d", idx))
 	}
 	return args[0].ListVal[idx], nil
@@ -121,6 +125,12 @@ func EqNumHandler(this *Value, local_vars map[string]*Value, args []*Value, prim
 }
 func EqStringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	return MakeBoolValue(args[0].StringVal == args[1].StringVal), nil
+}
+func NeNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
+	return MakeBoolValue(args[0].NumVal != args[1].NumVal), nil
+}
+func NeStringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
+	return MakeBoolValue(args[0].StringVal != args[1].StringVal), nil
 }
 func LeqNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	return MakeBoolValue(args[0].NumVal <= args[1].NumVal), nil

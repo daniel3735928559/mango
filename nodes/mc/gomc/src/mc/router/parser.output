@@ -278,7 +278,7 @@ state 27
 	varexpr:  IDENT.    (53)
 
 	'('  shift 62
-	.  reduce 53 (src line 378)
+	.  reduce 53 (src line 376)
 
 
 state 28
@@ -384,13 +384,13 @@ state 35
 state 36
 	dstexpr:  IDENT.    (54)
 
-	.  reduce 54 (src line 383)
+	.  reduce 54 (src line 381)
 
 
 state 37
 	dstexpr:  THIS.    (55)
 
-	.  reduce 55 (src line 389)
+	.  reduce 55 (src line 387)
 
 
 state 38
@@ -793,6 +793,7 @@ state 63
 	varexpr:  expr.'.' IDENT 
 	varexpr:  expr.'[' expr ']' 
 
+	'['  shift 58
 	'.'  shift 57
 	.  reduce 27 (src line 215)
 
@@ -861,6 +862,7 @@ state 65
 	varexpr:  expr.'.' IDENT 
 	varexpr:  expr.'[' expr ']' 
 
+	'['  shift 58
 	'.'  shift 57
 	.  reduce 44 (src line 313)
 
@@ -1941,7 +1943,7 @@ state 109
 state 110
 	dstexpr:  dstexpr '.' IDENT.    (57)
 
-	.  reduce 57 (src line 400)
+	.  reduce 57 (src line 398)
 
 
 state 111
@@ -2010,7 +2012,7 @@ state 113
 state 114
 	varexpr:  expr '[' expr ']'.    (52)
 
-	.  reduce 52 (src line 372)
+	.  reduce 52 (src line 370)
 
 
 state 115
@@ -2064,7 +2066,7 @@ state 122
 state 123
 	dstexpr:  dstexpr '[' expr ']'.    (56)
 
-	.  reduce 56 (src line 395)
+	.  reduce 56 (src line 393)
 
 
 state 124
@@ -2113,9 +2115,9 @@ state 129
 61 working sets used
 memory: parser 89/120000
 63 extra closures
-668 shift entries, 1 exceptions
+670 shift entries, 1 exceptions
 52 goto entries
 38 entries saved by goto default
 Optimizer space used: output 579/120000
-579 table entries, 209 zero
+579 table entries, 210 zero
 maximum spread: 46, maximum offset: 124

@@ -51,6 +51,14 @@ type Expression struct {
 
 func MakeNameExpression(name string) *Expression {
 	return &Expression {
+		Operation: OP_NAME,
+		Value: &Value {
+			Type:VAL_NAME,
+			NameVal:name}}
+}
+
+func MakeVarExpression(name string) *Expression {
+	return &Expression {
 		Operation: OP_VAR,
 		Value: &Value {
 			Type:VAL_NAME,
@@ -60,6 +68,8 @@ func MakeNameExpression(name string) *Expression {
 func (e *Expression) ToString() string {
 	if e.Operation == OP_VAR {
 		return fmt.Sprintf("%s", e.Value.ToString())
+	} else if e.Operation == OP_NAME {
+		return fmt.Sprintf("NAME(%s)", e.Value.NameVal)
 	} else if e.Operation == OP_MAPVAR {
 		return fmt.Sprintf("%s.%s", e.Args[0].ToString(), e.Args[1].ToString())
 	} else if e.Operation == OP_LISTVAR {
@@ -126,7 +136,7 @@ func (e *Expression) ToString() string {
 		return fmt.Sprintf("!%s", e.Args[0].ToString())
 	}
 	
-		subexprs := ""
+	subexprs := ""
 	val := ""
 	if e.Args != nil {
 		subexprs_strings := make([]string, len(e.Args))

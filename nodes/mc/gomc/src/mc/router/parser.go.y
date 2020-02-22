@@ -41,8 +41,8 @@
 %left '|' '&' '^'
 %left '+'  '-'
 %left '*'  '/'  '%'
-%left '['
 %left UNARY '!' '~'
+%left '['
 %left '.'
 %%
 route   : node '>' node
@@ -365,9 +365,7 @@ varexpr : expr '.' IDENT
 {
 	$$ = &Expression{
 		Operation: OP_MAPVAR,
-		Args: []*Expression{
-			$1,
-			MakeNameExpression($3.literal)}}
+		Args: []*Expression{$1,MakeNameExpression($3.literal)}}
 }
 | expr '[' expr ']'
 {
@@ -377,7 +375,7 @@ varexpr : expr '.' IDENT
 }
 | IDENT
 {
-	$$ = MakeNameExpression($1.literal)
+	$$ = MakeVarExpression($1.literal)
 }
 ;
 dstexpr : IDENT

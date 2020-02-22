@@ -105,7 +105,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line src/mc/router/parser.go.y:406
+//line src/mc/router/parser.go.y:404
 
 func Parse(exp string) []*Route {
 	l := new(RouteLexer)
@@ -130,17 +130,17 @@ const yyLast = 579
 var yyAct = [...]int{
 
 	38, 61, 33, 60, 116, 62, 69, 70, 71, 72,
-	73, 57, 6, 77, 58, 68, 48, 99, 74, 23,
+	73, 6, 77, 3, 58, 68, 48, 99, 74, 23,
 	58, 5, 4, 129, 16, 128, 59, 43, 44, 57,
-	98, 63, 64, 75, 65, 57, 76, 67, 3, 66,
+	98, 63, 64, 75, 65, 57, 76, 67, 66, 14,
 	113, 112, 19, 80, 81, 82, 83, 84, 85, 86,
 	87, 88, 89, 90, 91, 92, 93, 94, 95, 27,
-	97, 24, 28, 18, 14, 17, 101, 78, 79, 8,
-	103, 104, 105, 106, 107, 108, 109, 3, 39, 111,
-	25, 48, 26, 36, 110, 58, 22, 37, 29, 96,
-	41, 42, 43, 44, 32, 10, 11, 12, 3, 30,
-	57, 34, 15, 31, 115, 35, 53, 54, 49, 50,
-	52, 51, 9, 1, 126, 125, 0, 0, 0, 0,
+	97, 24, 28, 78, 79, 39, 101, 18, 17, 8,
+	103, 104, 105, 106, 107, 108, 109, 3, 110, 111,
+	25, 48, 26, 36, 96, 58, 22, 37, 29, 3,
+	41, 42, 43, 44, 32, 10, 11, 12, 15, 30,
+	57, 34, 31, 35, 115, 9, 53, 54, 49, 50,
+	52, 51, 1, 0, 126, 125, 0, 0, 0, 0,
 	48, 0, 0, 0, 58, 127, 56, 55, 0, 41,
 	42, 43, 44, 45, 46, 47, 2, 0, 0, 57,
 	0, 7, 13, 124, 53, 54, 49, 50, 52, 51,
@@ -190,23 +190,23 @@ var yyAct = [...]int{
 }
 var yyPact = [...]int{
 
-	94, -1000, -8, -23, 73, 34, 98, -1000, -1000, -6,
-	40, 38, 17, -1000, 94, -1000, 73, 55, 79, 74,
-	-1000, -1000, -1000, 488, -1000, 74, 55, -39, -1000, 55,
-	55, -1000, 55, 13, 79, -9, -1000, -1000, 10, -18,
-	44, 55, 55, 55, 55, 55, 55, 55, 55, 55,
-	55, 55, 55, 55, 55, 55, 55, 85, 55, 4,
-	-11, 135, 55, -31, 173, -31, -1000, -1000, 55, 55,
-	55, 55, 55, 55, 55, 80, -1000, 55, 16, 15,
+	85, -1000, -8, -24, 73, 9, 94, -1000, -1000, -6,
+	43, 42, 17, -1000, 85, -1000, 73, 55, 79, 61,
+	-1000, -1000, -1000, 488, -1000, 61, 55, -39, -1000, 55,
+	55, -1000, 55, 12, 79, -9, -1000, -1000, 10, -19,
+	40, 55, 55, 55, 55, 55, 55, 55, 55, 55,
+	55, 55, 55, 55, 55, 55, 55, 80, 55, 4,
+	-11, 135, 55, -13, 173, -13, -1000, -1000, 55, 55,
+	55, 55, 55, 55, 55, 74, -1000, 55, 16, 15,
 	-7, -7, -13, -13, 58, 58, 58, -13, 536, 536,
 	536, 536, 520, 520, 536, 536, -1000, 454, -1000, -1000,
 	55, -41, -1000, 385, 350, 315, 280, 245, 210, 420,
-	-1000, 97, 79, 74, -1000, -1000, -1000, -1000, -1000, -1000,
-	-1000, -1000, -1000, -1000, 74, -1, -3, -1000, -1000, -1000,
+	-1000, 97, 79, 61, -1000, -1000, -1000, -1000, -1000, -1000,
+	-1000, -1000, -1000, -1000, 61, -1, -3, -1000, -1000, -1000,
 }
 var yyPgo = [...]int{
 
-	0, 113, 136, 69, 112, 2, 105, 103, 101, 1,
+	0, 112, 136, 69, 105, 2, 103, 102, 101, 1,
 	0, 3,
 }
 var yyR1 = [...]int{
@@ -1034,13 +1034,11 @@ yydefault:
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_MAPVAR,
-				Args: []*Expression{
-					yyDollar[1].expression,
-					MakeNameExpression(yyDollar[3].token.literal)}}
+				Args:      []*Expression{yyDollar[1].expression, MakeNameExpression(yyDollar[3].token.literal)}}
 		}
 	case 52:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:373
+//line src/mc/router/parser.go.y:371
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_LISTVAR,
@@ -1048,13 +1046,13 @@ yydefault:
 		}
 	case 53:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line src/mc/router/parser.go.y:379
+//line src/mc/router/parser.go.y:377
 		{
-			yyVAL.expression = MakeNameExpression(yyDollar[1].token.literal)
+			yyVAL.expression = MakeVarExpression(yyDollar[1].token.literal)
 		}
 	case 54:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line src/mc/router/parser.go.y:384
+//line src/mc/router/parser.go.y:382
 		{
 			yyVAL.writeable = &WriteableValue{
 				Base: yyDollar[1].token.literal,
@@ -1062,7 +1060,7 @@ yydefault:
 		}
 	case 55:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line src/mc/router/parser.go.y:390
+//line src/mc/router/parser.go.y:388
 		{
 			yyVAL.writeable = &WriteableValue{
 				Base: "this",
@@ -1070,14 +1068,14 @@ yydefault:
 		}
 	case 56:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:396
+//line src/mc/router/parser.go.y:394
 		{
 			yyDollar[1].writeable.Path = append(yyDollar[1].writeable.Path, PathEntry{Type: PATH_LIST, ListIndex: yyDollar[3].expression})
 			yyVAL.writeable = yyDollar[1].writeable
 		}
 	case 57:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:401
+//line src/mc/router/parser.go.y:399
 		{
 			yyDollar[1].writeable.Path = append(yyDollar[1].writeable.Path, PathEntry{Type: PATH_MAP, MapKey: yyDollar[3].token.literal})
 			yyVAL.writeable = yyDollar[1].writeable

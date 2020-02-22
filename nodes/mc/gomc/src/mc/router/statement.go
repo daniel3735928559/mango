@@ -35,38 +35,24 @@ type WriteableValue struct {
 }
 
 func (w *WriteableValue) ToExpression() *Expression {
-	var ans, arg, current *Expression
-	for i, pe := range w.Path {
-		if pe.Type == PATH_MAP {
-			arg = MakeNameExpression(w.Path[i].MapKey)
-		} else if w.Path[i].Type == PATH_LIST {
-			arg = w.Path[i].ListIndex
-		}
-		if i == 0 {
-			ans = arg
-			current = arg
-		} else {
-			current.Args = append(current.Args, arg)
-			current = arg
-		}
-	}
 	base := &Expression{
 		Operation:OP_VAR,
 		Value:&Value{
 			Type:VAL_NAME,
 			NameVal:w.Base}}
-	if len(w.Path) > 0 {
-		if w.Path[0].Type == PATH_MAP {
-			return &Expression{
+	current := base
+	for _, pe := range w.Path {
+		if pe.Type == PATH_MAP {
+			current = &Expression{
 				Operation:OP_MAPVAR,
-				Args:[]*Expression{base, ans}}
-		} else if w.Path[0].Type  == PATH_LIST {
-			return &Expression{
+				Args:[]*Expression{current, MakeNameExpression(pe.MapKey)}}
+		} else if pe.Type  == PATH_LIST {
+			current = &Expression{
 				Operation:OP_LISTVAR,
-				Args:[]*Expression{base, ans}}
+				Args:[]*Expression{current, pe.ListIndex}}
 		}
 	}
-	return base
+	return current
 }
 
 func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Expression) (*Value, map[string]*Value, error) {
@@ -76,56 +62,69 @@ func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Express
 	}
 	var dest *Value
 	dest_name := w.Base
+	is_this_var := true
 	is_local_var := true
 	if dest_name == "this" {
 		dest = this.Clone()
+		is_this_var = false
 		is_local_var = false
 	} else if v, ok := vars[dest_name]; ok {
 		dest = v.Clone()
+		is_this_var = false
 		is_local_var = true
-	} else if this.Type == VAL_MAP {
-		if _, ok := this.MapVal[dest_name]; ok {
-			dest = this.Clone()
-			is_local_var = false
-		} else {
-			return this, vars, errors.New(fmt.Sprintf("No such variable in this: %s", dest_name))
-		}
+	} else if v, ok := this.MapVal[dest_name]; ok && this.Type == VAL_MAP {
+		dest = v.Clone()
+		is_this_var = true
+		is_local_var = false
 	} else {
 		return this, vars, errors.New(fmt.Sprintf("No such variable: %s", dest_name))
 	}
-	
-	target_base := dest.Clone()
+
+	new_this := this.Clone()
+	target_base := dest
 	target := target_base
 	if len(w.Path) == 0 {
-		if dest_name == "this" || !is_local_var {
-			target.MapVal[dest_name] = content
-			return target_base, vars, nil
-		} else {
+		if is_this_var {
+			// We're assigning to a value in this
+			new_this.MapVal[dest_name] = content
+			return new_this, vars, nil
+		} else if is_local_var {
+			// We're assigning an existing local variable
 			vars[dest_name] = content
-			return this, vars, nil
+			return new_this, vars, nil
+		} else {
+			// We're returning a wholesale this object
+			return content, vars, nil
 		}
 	}
 	for i, e := range w.Path {
 		if e.Type == PATH_MAP {
 			if target.Type != VAL_MAP {
-				return this, vars, errors.New(fmt.Sprintf("Attempted to access key %s in non-map", e.MapKey))
+				return this, vars, errors.New(fmt.Sprintf("Attempted to access key %s in non-map %d != %d", e.MapKey,target.Type,VAL_MAP))
 			}
 			if i == len(w.Path) - 1 {
-				if dest_name == "this" || !is_local_var {
-					target.MapVal[e.MapKey] = content
-					return target_base, vars, nil
-				} else {
+				target.MapVal[e.MapKey] = content
+				if is_this_var {
+					// We're assigning to a value in this
+					new_this.MapVal[dest_name] = target_base
+					return new_this, vars, nil
+				} else if is_local_var {
+					// We're assigning an existing local variable
 					vars[dest_name] = target_base
-					return this, vars, nil
+					return new_this, vars, nil
+				} else {
+					// We're returning a wholesale this object
+					return content, vars, nil
 				}
 			} else if new_target, ok := target.MapVal[e.MapKey]; ok {
+				fmt.Println("Descending into map by key",e.MapKey,"new type",new_target.Type)
 				target = new_target
 			} else {
 				return this, vars, errors.New(fmt.Sprintf("Attempted to access non-existent key %s", e.MapKey))
 			}
 		} else if e.Type == PATH_LIST {
 			if target.Type != VAL_LIST {
-				return this, vars, errors.New("Attempted to access index in non-map")
+				return this, vars, errors.New(fmt.Sprintf("Attempted to access index in non-list type %d != %d",target.Type,VAL_LIST))
 			}
 			idx, err := e.ListIndex.Evaluate(this, vars)
 			if err != nil {
@@ -139,15 +138,21 @@ func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Express
 				return this, vars, errors.New(fmt.Sprintf("Attempted to access out-of-bounds index %d", list_index))
 			}
 			if i == len(w.Path) - 1 {
-				// We're at the end--write this value
 				target.ListVal[list_index] = content
-				if dest_name == "this" {
-					return target_base, vars, nil
-				} else {
+				if is_this_var {
+					// We're assigning to a value in this
+					new_this.MapVal[dest_name] = target_base
+					return new_this, vars, nil
+				} else if is_local_var {
+					// We're assigning an existing local variable
 					vars[dest_name] = target_base
-					return this, vars, nil
+					return new_this, vars, nil
+				} else {
+					// We're returning a wholesale this object
+					return content, vars, nil
 				}
 			} else {
+				fmt.Println("Descending into list by index",list_index,"new type",target.ListVal[list_index].Type)
 				target = target.ListVal[list_index]
 			}
 		}

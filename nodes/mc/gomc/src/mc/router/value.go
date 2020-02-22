@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"errors"
 )
 
 type ValueType int
@@ -89,41 +90,49 @@ func (v *Value) Clone() *Value {
 	return ans
 }
 
-func MakeValue(args interface{}) *Value {
+func MakeValue(args interface{}) (*Value, error) {
+	var err error
 	if mapvals, ok := args.(map[string]interface{}); ok {
 		mapval := make(map[string]*Value)
 		for k, v := range mapvals {
-			mapval[k] = MakeValue(v)
+			mapval[k], err = MakeValue(v)
+			if err != nil {
+				return nil, err
+			}
 		}
 		return &Value{
 			Type: VAL_MAP,
-			MapVal: mapval}
+			MapVal: mapval}, nil
 	} else if listvals, ok := args.([]interface{}); ok {
+		fmt.Println("MAKEVALUE list")
 		listval := make([]*Value, len(listvals))
 		for i, v := range listvals {
-			listval[i] = MakeValue(v)
+			listval[i], err = MakeValue(v)
+			if err != nil {
+				return nil, err
+			}
 		}
 		return &Value{
 			Type: VAL_LIST,
-			ListVal: listval}
+			ListVal: listval}, nil
 	} else if boolval, ok := args.(bool); ok {
 		return &Value{
 			Type: VAL_BOOL,
-			BoolVal: boolval}
+			BoolVal: boolval}, nil
 	} else if numval, ok := args.(float64); ok {
 		return &Value{
 			Type: VAL_NUM,
-			NumVal: numval}
+			NumVal: numval}, nil
 	} else if numval, ok := args.(int); ok {
 		return &Value{
 			Type: VAL_NUM,
-			NumVal: float64(numval)}
+			NumVal: float64(numval)}, nil
 	} else if strval, ok := args.(string); ok {
 		return &Value{
 			Type: VAL_STRING,
-			StringVal: strval}
+			StringVal: strval}, nil
 	}
-	return nil
+	return nil, errors.New(fmt.Sprintf("No conversion found for %v",args))
 }
 
 func MakeIntValue(x int) *Value {

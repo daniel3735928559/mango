@@ -26,7 +26,10 @@ func (rt *Route) ToString() string {
 
 func (rt *Route) Send(args map[string]interface{}) (map[string]interface{}, error) {
 	// Convert args to a *Value to be the "this" object
-	this := MakeValue(args)
+	this, err := MakeValue(args)
+	if err != nil {
+		return nil, err
+	}
 	if this.Type != VAL_MAP {
 		return nil, errors.New("args must be a map")
 	}
