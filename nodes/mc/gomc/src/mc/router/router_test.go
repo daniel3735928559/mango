@@ -239,3 +239,73 @@ func TestRouterLeFilter(t *testing.T) {
 		"node2":[]string{`{"key1":"val1"}`,`{"key1":-1}`,`{"key1":10}`,`{"key1":0}`}}
 	RunMessagesThroughRoutes(t, routes, messages, expected)
 }
+
+func TestRouterAndFilter(t *testing.T) {
+	routes := []string{
+		"node0 > node2",
+		`node0 > ? {key1 <= 0} > node1`}
+	messages := map[string][]map[string]interface{}{
+		"node0":[]map[string]interface{}{
+			map[string]interface{}{"key1":"val1"},
+			map[string]interface{}{"key1":-1},
+			map[string]interface{}{"key1":10},
+			map[string]interface{}{"key1":0}}}
+	expected := map[string][]string{
+		"node0":[]string{},
+		"node1":[]string{`{"key1":-1}`,`{"key1":0}`},
+		"node2":[]string{`{"key1":"val1"}`,`{"key1":-1}`,`{"key1":10}`,`{"key1":0}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
+
+func TestRouterAndFilter(t *testing.T) {
+	routes := []string{
+		"node0 > node2",
+		`node0 > ? {key1 >= 0 && key1 < 5} > node1`}
+	messages := map[string][]map[string]interface{}{
+		"node0":[]map[string]interface{}{
+			map[string]interface{}{"key1":"val1"},
+			map[string]interface{}{"key1":-1},
+			map[string]interface{}{"key1":10},
+			map[string]interface{}{"key1":2},
+			map[string]interface{}{"key1":0}}}
+	expected := map[string][]string{
+		"node0":[]string{},
+		"node1":[]string{`{"key1":2}`,`{"key1":0}`},
+		"node2":[]string{`{"key1":"val1"}`,`{"key1":-1}`,`{"key1":10}`,`{"key1":2}`,`{"key1":0}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
+
+func TestRouterOrFilter(t *testing.T) {
+	routes := []string{
+		"node0 > node2",
+		`node0 > ? {key1 < 0 || key1 >= 10} > node1`}
+	messages := map[string][]map[string]interface{}{
+		"node0":[]map[string]interface{}{
+			map[string]interface{}{"key1":"val1"},
+			map[string]interface{}{"key1":-1},
+			map[string]interface{}{"key1":10},
+			map[string]interface{}{"key1":2},
+			map[string]interface{}{"key1":0}}}
+	expected := map[string][]string{
+		"node0":[]string{},
+		"node1":[]string{`{"key1":-1}`,`{"key1":10}`},
+		"node2":[]string{`{"key1":"val1"}`,`{"key1":-1}`,`{"key1":10}`,`{"key1":2}`,`{"key1":0}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
+
+func TestRouterNotFilter(t *testing.T) {
+	routes := []string{
+		"node0 > node2",
+		`node0 > ? {!(key1 <= 0)} > node1`}
+	messages := map[string][]map[string]interface{}{
+		"node0":[]map[string]interface{}{
+			map[string]interface{}{"key1":"val1"},
+			map[string]interface{}{"key1":-1},
+			map[string]interface{}{"key1":10},
+			map[string]interface{}{"key1":0}}}
+	expected := map[string][]string{
+		"node0":[]string{},
+		"node1":[]string{`{"key1":10}`,`{"key1":0}`},
+		"node2":[]string{`{"key1":"val1"}`,`{"key1":-1}`,`{"key1":10}`,`{"key1":0}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
