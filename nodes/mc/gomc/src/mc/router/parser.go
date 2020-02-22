@@ -50,7 +50,6 @@ const RE = 57361
 const XE = 57362
 const SUB = 57363
 const UNARY = 57364
-const IS = 57365
 
 var yyToknames = [...]string{
 	"$end",
@@ -94,7 +93,6 @@ var yyToknames = [...]string{
 	"'!'",
 	"'~'",
 	"UNARY",
-	"IS",
 	"';'",
 	"'('",
 	"')'",
@@ -107,7 +105,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line src/mc/router/parser.go.y:402
+//line src/mc/router/parser.go.y:404
 
 func Parse(exp string) []*Route {
 	l := new(RouteLexer)
@@ -127,96 +125,95 @@ var yyExca = [...]int{
 
 const yyPrivate = 57344
 
-const yyLast = 651
+const yyLast = 643
 
 var yyAct = [...]int{
 
-	38, 61, 33, 60, 69, 70, 71, 72, 73, 116,
-	62, 6, 77, 68, 3, 16, 74, 5, 4, 23,
-	99, 129, 128, 98, 76, 66, 59, 113, 112, 78,
-	79, 63, 64, 19, 65, 39, 75, 67, 18, 17,
-	14, 110, 8, 80, 81, 82, 83, 84, 85, 86,
-	87, 88, 89, 90, 91, 92, 93, 94, 95, 22,
-	97, 36, 96, 2, 3, 37, 101, 15, 7, 13,
-	103, 104, 105, 106, 107, 108, 109, 34, 20, 111,
-	21, 31, 53, 54, 49, 50, 52, 51, 35, 9,
-	1, 0, 0, 0, 0, 0, 48, 0, 3, 0,
+	38, 61, 33, 60, 116, 62, 6, 50, 69, 70,
+	71, 72, 73, 77, 3, 5, 4, 68, 48, 23,
+	74, 16, 58, 129, 99, 128, 59, 41, 42, 43,
+	44, 63, 64, 47, 65, 98, 113, 67, 76, 75,
+	14, 57, 66, 80, 81, 82, 83, 84, 85, 86,
+	87, 88, 89, 90, 91, 92, 93, 94, 95, 112,
+	97, 78, 79, 50, 19, 18, 101, 17, 39, 110,
+	103, 104, 105, 106, 107, 108, 109, 8, 58, 111,
+	96, 3, 53, 54, 49, 50, 52, 51, 36, 47,
+	15, 34, 37, 31, 22, 35, 48, 57, 9, 1,
 	58, 0, 56, 55, 115, 41, 42, 43, 44, 45,
-	46, 47, 0, 0, 126, 125, 10, 11, 12, 124,
-	57, 0, 0, 0, 0, 127, 53, 54, 49, 50,
-	52, 51, 0, 0, 0, 0, 0, 0, 0, 0,
+	46, 47, 0, 0, 126, 125, 3, 0, 124, 57,
+	0, 0, 0, 0, 0, 127, 53, 54, 49, 50,
+	52, 51, 0, 0, 10, 11, 12, 0, 0, 0,
 	48, 0, 0, 0, 58, 123, 56, 55, 0, 41,
 	42, 43, 44, 45, 46, 47, 53, 54, 49, 50,
-	52, 51, 0, 0, 57, 0, 0, 0, 0, 0,
+	52, 51, 0, 57, 0, 0, 0, 0, 0, 0,
 	48, 0, 0, 0, 58, 0, 56, 55, 0, 41,
-	42, 43, 44, 45, 46, 47, 0, 0, 0, 0,
-	122, 0, 0, 0, 57, 53, 54, 49, 50, 52,
-	51, 0, 0, 0, 0, 0, 0, 0, 0, 48,
-	0, 0, 0, 58, 0, 56, 55, 0, 41, 42,
-	43, 44, 45, 46, 47, 0, 0, 0, 0, 121,
-	0, 0, 0, 57, 53, 54, 49, 50, 52, 51,
-	0, 0, 0, 0, 0, 0, 0, 0, 48, 0,
+	42, 43, 44, 45, 46, 47, 2, 0, 0, 122,
+	0, 7, 13, 57, 53, 54, 49, 50, 52, 51,
+	0, 20, 0, 21, 0, 0, 0, 0, 48, 0,
 	0, 0, 58, 0, 56, 55, 0, 41, 42, 43,
-	44, 45, 46, 47, 0, 0, 0, 0, 120, 0,
-	0, 0, 57, 53, 54, 49, 50, 52, 51, 0,
-	0, 0, 0, 0, 0, 0, 0, 48, 0, 0,
-	0, 58, 0, 56, 55, 0, 41, 42, 43, 44,
-	45, 46, 47, 0, 0, 0, 0, 119, 0, 0,
+	44, 45, 46, 47, 0, 0, 0, 121, 0, 0,
 	0, 57, 53, 54, 49, 50, 52, 51, 0, 0,
 	0, 0, 0, 0, 0, 0, 48, 0, 0, 0,
 	58, 0, 56, 55, 0, 41, 42, 43, 44, 45,
-	46, 47, 0, 0, 0, 0, 118, 0, 0, 0,
-	57, 53, 54, 49, 50, 52, 51, 0, 0, 0,
-	0, 0, 0, 0, 0, 48, 0, 0, 0, 58,
-	0, 56, 55, 0, 41, 42, 43, 44, 45, 46,
-	47, 0, 0, 0, 0, 117, 0, 0, 0, 57,
+	46, 47, 0, 0, 0, 120, 0, 0, 0, 57,
 	53, 54, 49, 50, 52, 51, 0, 0, 0, 0,
-	0, 0, 0, 0, 48, 0, 0, 0, 58, 114,
-	56, 55, 0, 41, 42, 43, 44, 45, 46, 47,
-	53, 54, 49, 50, 52, 51, 0, 0, 57, 0,
 	0, 0, 0, 0, 48, 0, 0, 0, 58, 0,
 	56, 55, 0, 41, 42, 43, 44, 45, 46, 47,
-	53, 54, 49, 50, 52, 51, 102, 0, 57, 0,
-	0, 0, 0, 0, 48, 0, 0, 0, 58, 0,
+	0, 0, 0, 119, 0, 0, 0, 57, 53, 54,
+	49, 50, 52, 51, 0, 0, 0, 0, 0, 0,
+	0, 0, 48, 0, 0, 0, 58, 0, 56, 55,
+	0, 41, 42, 43, 44, 45, 46, 47, 0, 0,
+	0, 118, 0, 0, 0, 57, 53, 54, 49, 50,
+	52, 51, 0, 0, 0, 0, 0, 0, 0, 0,
+	48, 0, 0, 0, 58, 0, 56, 55, 0, 41,
+	42, 43, 44, 45, 46, 47, 0, 0, 0, 117,
+	0, 0, 0, 57, 53, 54, 49, 50, 52, 51,
+	0, 0, 0, 0, 0, 0, 0, 0, 48, 0,
+	0, 0, 58, 114, 56, 55, 0, 41, 42, 43,
+	44, 45, 46, 47, 53, 54, 49, 50, 52, 51,
+	0, 57, 0, 0, 0, 0, 0, 0, 48, 0,
+	0, 0, 58, 0, 56, 55, 0, 41, 42, 43,
+	44, 45, 46, 47, 0, 0, 0, 0, 0, 102,
+	0, 57, 53, 54, 49, 50, 52, 51, 0, 0,
+	0, 0, 0, 0, 0, 0, 48, 0, 0, 0,
+	58, 0, 56, 55, 0, 41, 42, 43, 44, 45,
+	46, 47, 53, 54, 49, 50, 52, 51, 100, 57,
+	0, 0, 0, 0, 0, 0, 48, 0, 0, 40,
+	58, 0, 56, 55, 0, 41, 42, 43, 44, 45,
+	46, 47, 53, 54, 49, 50, 52, 51, 0, 57,
+	0, 0, 0, 0, 0, 0, 48, 0, 0, 0,
+	58, 0, 56, 55, 0, 41, 42, 43, 44, 45,
+	46, 47, 49, 50, 52, 51, 0, 0, 0, 57,
+	0, 0, 0, 0, 48, 0, 0, 0, 58, 50,
 	56, 55, 0, 41, 42, 43, 44, 45, 46, 47,
-	53, 54, 49, 50, 52, 51, 0, 100, 57, 0,
-	0, 0, 0, 0, 48, 0, 0, 40, 58, 0,
-	56, 55, 0, 41, 42, 43, 44, 45, 46, 47,
-	53, 54, 49, 50, 52, 51, 0, 0, 57, 0,
-	0, 0, 0, 0, 48, 0, 0, 0, 58, 0,
-	56, 55, 0, 41, 42, 43, 44, 45, 46, 47,
-	53, 54, 49, 50, 0, 0, 0, 0, 57, 0,
-	0, 0, 0, 0, 48, 0, 0, 0, 58, 0,
-	56, 55, 0, 41, 42, 43, 44, 45, 46, 47,
-	54, 49, 50, 0, 0, 0, 0, 0, 57, 0,
-	0, 0, 0, 48, 0, 0, 0, 58, 0, 56,
-	55, 0, 41, 42, 43, 44, 45, 46, 47, 49,
-	50, 0, 0, 0, 0, 0, 0, 57, 0, 0,
-	27, 48, 24, 28, 0, 58, 0, 56, 55, 0,
-	41, 42, 43, 44, 45, 46, 47, 0, 0, 0,
-	0, 25, 0, 26, 0, 57, 0, 0, 0, 29,
-	0, 0, 0, 0, 0, 32, 0, 0, 0, 0,
-	30,
+	48, 0, 0, 0, 58, 50, 0, 57, 0, 41,
+	42, 43, 44, 45, 46, 47, 48, 0, 0, 50,
+	58, 0, 0, 57, 0, 41, 42, 43, 44, 45,
+	48, 47, 0, 27, 58, 24, 28, 0, 0, 57,
+	0, 43, 44, 0, 0, 47, 0, 0, 0, 0,
+	0, 0, 0, 57, 25, 0, 26, 0, 0, 0,
+	0, 0, 29, 0, 0, 0, 0, 0, 32, 0,
+	0, 0, 30,
 }
 var yyPact = [...]int{
 
-	60, -1000, -12, -24, 94, 10, 63, -1000, -1000, -15,
-	14, 13, 8, -1000, 60, -1000, 94, 606, 57, 31,
-	-1000, -1000, -1000, 471, -1000, 31, 606, -34, -1000, 606,
-	606, -1000, 606, -1, 57, -11, -1000, -1000, -2, -19,
-	6, 606, 606, 606, 606, 606, 606, 606, 606, 606,
-	606, 606, 606, 606, 606, 606, 606, 58, 606, -3,
-	-8, 441, 606, 501, 411, 588, -1000, -1000, 606, 606,
-	606, 606, 606, 606, 606, 37, -1000, 606, 3, 2,
-	501, 501, 501, 501, 501, 501, 501, 501, 501, 501,
-	531, 531, 560, 588, 501, 501, -1000, 381, -1000, -1000,
-	606, -36, -1000, 342, 303, 264, 225, 186, 147, 117,
-	-1000, 73, 57, 31, -1000, -1000, -1000, -1000, -1000, -1000,
-	-1000, -1000, -1000, -1000, 31, -4, -5, -1000, -1000, -1000,
+	77, -1000, -14, -29, 112, 10, 86, -1000, -1000, -9,
+	42, 40, 39, -1000, 77, -1000, 112, 599, 84, 64,
+	-1000, -1000, -1000, 473, -1000, 64, 599, -38, -1000, 599,
+	599, -1000, 599, 16, 84, -7, -1000, -1000, 12, -18,
+	38, 599, 599, 599, 599, 599, 599, 599, 599, 599,
+	599, 599, 599, 599, 599, 599, 599, 76, 599, 9,
+	-4, 443, 599, 51, 405, 51, -1000, -1000, 599, 599,
+	599, 599, 599, 599, 599, 65, -1000, 599, 34, 11,
+	577, 577, 51, 51, -5, 563, 503, 51, 547, 503,
+	547, 547, 531, 531, 547, 547, -1000, 375, -1000, -1000,
+	599, -40, -1000, 337, 299, 261, 223, 185, 147, 117,
+	-1000, 73, 84, 64, -1000, -1000, -1000, -1000, -1000, -1000,
+	-1000, -1000, -1000, -1000, 64, -1, -3, -1000, -1000, -1000,
 }
 var yyPgo = [...]int{
 
-	0, 90, 63, 42, 89, 2, 88, 81, 77, 1,
+	0, 99, 186, 77, 98, 2, 95, 93, 91, 1,
 	0, 3,
 }
 var yyR1 = [...]int{
@@ -242,16 +239,16 @@ var yyChk = [...]int{
 	-1000, -1, -2, 4, 30, 29, 35, -2, -3, -4,
 	22, 23, 24, -2, 30, 4, 30, 25, 25, 25,
 	-2, -2, -3, -9, 6, 25, 27, 4, 7, 33,
-	44, -7, 39, -5, -8, -6, 4, 8, -10, 4,
+	43, -7, 39, -5, -8, -6, 4, 8, -10, 4,
 	26, 32, 33, 34, 35, 36, 37, 38, 23, 11,
-	12, 14, 13, 9, 10, 30, 29, 47, 27, -10,
-	-11, -9, 44, -9, -9, -9, 26, -5, 24, 15,
-	16, 17, 18, 19, 27, 47, 26, 31, 23, 24,
+	12, 14, 13, 9, 10, 30, 29, 46, 27, -10,
+	-11, -9, 43, -9, -9, -9, 26, -5, 24, 15,
+	16, 17, 18, 19, 27, 46, 26, 31, 23, 24,
 	-9, -9, -9, -9, -9, -9, -9, -9, -9, -9,
 	-9, -9, -9, -9, -9, -9, 4, -9, 26, 28,
-	46, -11, 45, -9, -9, -9, -9, -9, -9, -9,
-	4, -9, 25, 25, 28, -11, 45, 43, 43, 43,
-	43, 43, 43, 28, 46, -5, -10, -10, 26, 26,
+	45, -11, 44, -9, -9, -9, -9, -9, -9, -9,
+	4, -9, 25, 25, 28, -11, 44, 42, 42, 42,
+	42, 42, 42, 28, 45, -5, -10, -10, 26, 26,
 }
 var yyDef = [...]int{
 
@@ -275,8 +272,8 @@ var yyTok1 = [...]int{
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 39, 3, 3, 3, 23, 36, 3,
-	44, 45, 34, 32, 46, 33, 47, 35, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 31, 43,
+	43, 44, 34, 32, 45, 33, 46, 35, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 3, 31, 42,
 	29, 24, 30, 22, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -289,7 +286,7 @@ var yyTok2 = [...]int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 	12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-	41, 42,
+	41,
 }
 var yyTok3 = [...]int{
 	0,
@@ -634,7 +631,7 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:45
+//line src/mc/router/parser.go.y:47
 		{
 			// fmt.Println("C")
 			yyVAL.routes = nil
@@ -644,7 +641,7 @@ yydefault:
 		}
 	case 2:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:53
+//line src/mc/router/parser.go.y:55
 		{
 			// fmt.Println("B")
 			yyVAL.routes = nil
@@ -654,7 +651,7 @@ yydefault:
 		}
 	case 3:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:61
+//line src/mc/router/parser.go.y:63
 		{
 			yyVAL.routes = nil
 			if l, ok := yylex.(*RouteLexer); ok {
@@ -665,7 +662,7 @@ yydefault:
 		}
 	case 4:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:70
+//line src/mc/router/parser.go.y:72
 		{
 			yyVAL.routes = nil
 			// fmt.Println("A")
@@ -679,19 +676,19 @@ yydefault:
 		}
 	case 5:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line src/mc/router/parser.go.y:83
+//line src/mc/router/parser.go.y:85
 		{
 			yyVAL.node = &Node{Name: yyDollar[1].token.literal}
 		}
 	case 6:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:87
+//line src/mc/router/parser.go.y:89
 		{
 			yyVAL.node = &Node{Group: yyDollar[1].token.literal, Name: yyDollar[3].token.literal}
 		}
 	case 7:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:92
+//line src/mc/router/parser.go.y:94
 		{
 			yyVAL.transforms = &Route{
 				Dest:       yyDollar[3].node.Name,
@@ -699,7 +696,7 @@ yydefault:
 		}
 	case 8:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:98
+//line src/mc/router/parser.go.y:100
 		{
 			yyVAL.transforms = &Route{
 				Dest:       yyDollar[3].transforms.Dest,
@@ -707,7 +704,7 @@ yydefault:
 		}
 	case 9:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:105
+//line src/mc/router/parser.go.y:107
 		{
 			yyVAL.transform = &Transform{
 				Type:      TR_FILTER,
@@ -715,7 +712,7 @@ yydefault:
 		}
 	case 10:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:111
+//line src/mc/router/parser.go.y:113
 		{
 			yyVAL.transform = &Transform{
 				Type:   TR_EDIT,
@@ -723,7 +720,7 @@ yydefault:
 		}
 	case 11:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:117
+//line src/mc/router/parser.go.y:119
 		{
 			yyVAL.transform = &Transform{
 				Type:    TR_REPLACE,
@@ -731,7 +728,7 @@ yydefault:
 		}
 	case 12:
 		yyDollar = yyS[yypt-8 : yypt+1]
-//line src/mc/router/parser.go.y:123
+//line src/mc/router/parser.go.y:125
 		{
 			yyVAL.transform = &Transform{
 				Type:      TR_COND_EDIT,
@@ -740,7 +737,7 @@ yydefault:
 		}
 	case 13:
 		yyDollar = yyS[yypt-8 : yypt+1]
-//line src/mc/router/parser.go.y:130
+//line src/mc/router/parser.go.y:132
 		{
 			yyVAL.transform = &Transform{
 				Type:      TR_COND_REPLACE,
@@ -749,25 +746,25 @@ yydefault:
 		}
 	case 14:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line src/mc/router/parser.go.y:139
+//line src/mc/router/parser.go.y:141
 		{
 			yyVAL.script = []*Statement{yyDollar[1].statement}
 		}
 	case 15:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line src/mc/router/parser.go.y:143
+//line src/mc/router/parser.go.y:145
 		{
 			yyVAL.script = append([]*Statement{yyDollar[1].statement}, yyDollar[2].script...)
 		}
 	case 16:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:148
+//line src/mc/router/parser.go.y:150
 		{
 			yyVAL.statement = MakeAssignment(yyDollar[1].writeable, yyDollar[3].expression)
 		}
 	case 17:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:152
+//line src/mc/router/parser.go.y:154
 		{
 			yyVAL.statement = MakeAssignment(yyDollar[1].writeable, &Expression{
 				Operation: OP_PLUS,
@@ -775,7 +772,7 @@ yydefault:
 		}
 	case 18:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:158
+//line src/mc/router/parser.go.y:160
 		{
 			yyVAL.statement = MakeAssignment(yyDollar[1].writeable, &Expression{
 				Operation: OP_MINUS,
@@ -783,7 +780,7 @@ yydefault:
 		}
 	case 19:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:164
+//line src/mc/router/parser.go.y:166
 		{
 			yyVAL.statement = MakeAssignment(yyDollar[1].writeable, &Expression{
 				Operation: OP_MUL,
@@ -791,7 +788,7 @@ yydefault:
 		}
 	case 20:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:170
+//line src/mc/router/parser.go.y:172
 		{
 			yyVAL.statement = MakeAssignment(yyDollar[1].writeable, &Expression{
 				Operation: OP_DIV,
@@ -799,7 +796,7 @@ yydefault:
 		}
 	case 21:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:176
+//line src/mc/router/parser.go.y:178
 		{
 			yyVAL.statement = MakeAssignment(yyDollar[1].writeable, &Expression{
 				Operation: OP_MOD,
@@ -807,7 +804,7 @@ yydefault:
 		}
 	case 22:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line src/mc/router/parser.go.y:183
+//line src/mc/router/parser.go.y:185
 		{
 			x, _ := strconv.Atoi(yyDollar[1].token.literal)
 			yyVAL.expression = &Expression{
@@ -816,19 +813,19 @@ yydefault:
 		}
 	case 23:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:190
+//line src/mc/router/parser.go.y:192
 		{
 			yyVAL.expression = yyDollar[2].expression
 		}
 	case 24:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:194
+//line src/mc/router/parser.go.y:196
 		{
 			yyVAL.expression = yyDollar[2].expression
 		}
 	case 25:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:198
+//line src/mc/router/parser.go.y:200
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_CALL,
@@ -838,7 +835,7 @@ yydefault:
 		}
 	case 26:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line src/mc/router/parser.go.y:206
+//line src/mc/router/parser.go.y:208
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_STRING,
@@ -846,7 +843,7 @@ yydefault:
 		}
 	case 27:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line src/mc/router/parser.go.y:212
+//line src/mc/router/parser.go.y:214
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_UMINUS,
@@ -854,19 +851,19 @@ yydefault:
 		}
 	case 28:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:218
+//line src/mc/router/parser.go.y:220
 		{
 			yyVAL.expression = yyDollar[2].expression
 		}
 	case 29:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line src/mc/router/parser.go.y:222
+//line src/mc/router/parser.go.y:224
 		{
 			yyVAL.expression = yyDollar[1].expression
 		}
 	case 30:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:226
+//line src/mc/router/parser.go.y:228
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_PLUS,
@@ -874,7 +871,7 @@ yydefault:
 		}
 	case 31:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:232
+//line src/mc/router/parser.go.y:234
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_MINUS,
@@ -882,7 +879,7 @@ yydefault:
 		}
 	case 32:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:238
+//line src/mc/router/parser.go.y:240
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_MUL,
@@ -890,7 +887,7 @@ yydefault:
 		}
 	case 33:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:244
+//line src/mc/router/parser.go.y:246
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_DIV,
@@ -898,7 +895,7 @@ yydefault:
 		}
 	case 34:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:250
+//line src/mc/router/parser.go.y:252
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_BITWISEAND,
@@ -906,7 +903,7 @@ yydefault:
 		}
 	case 35:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:256
+//line src/mc/router/parser.go.y:258
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_BITWISEOR,
@@ -914,7 +911,7 @@ yydefault:
 		}
 	case 36:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:262
+//line src/mc/router/parser.go.y:264
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_BITWISEXOR,
@@ -922,7 +919,7 @@ yydefault:
 		}
 	case 37:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:268
+//line src/mc/router/parser.go.y:270
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_MOD,
@@ -930,7 +927,7 @@ yydefault:
 		}
 	case 38:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:274
+//line src/mc/router/parser.go.y:276
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_EQ,
@@ -938,7 +935,7 @@ yydefault:
 		}
 	case 39:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:280
+//line src/mc/router/parser.go.y:282
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_NE,
@@ -946,7 +943,7 @@ yydefault:
 		}
 	case 40:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:286
+//line src/mc/router/parser.go.y:288
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_GE,
@@ -954,7 +951,7 @@ yydefault:
 		}
 	case 41:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:292
+//line src/mc/router/parser.go.y:294
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_LE,
@@ -962,7 +959,7 @@ yydefault:
 		}
 	case 42:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:298
+//line src/mc/router/parser.go.y:300
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_AND,
@@ -970,7 +967,7 @@ yydefault:
 		}
 	case 43:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:304
+//line src/mc/router/parser.go.y:306
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_OR,
@@ -978,7 +975,7 @@ yydefault:
 		}
 	case 44:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line src/mc/router/parser.go.y:310
+//line src/mc/router/parser.go.y:312
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_NOT,
@@ -986,7 +983,7 @@ yydefault:
 		}
 	case 45:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:316
+//line src/mc/router/parser.go.y:318
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_GT,
@@ -994,7 +991,7 @@ yydefault:
 		}
 	case 46:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:322
+//line src/mc/router/parser.go.y:324
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_LT,
@@ -1002,7 +999,7 @@ yydefault:
 		}
 	case 47:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:329
+//line src/mc/router/parser.go.y:331
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_MAP,
@@ -1012,7 +1009,7 @@ yydefault:
 		}
 	case 48:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line src/mc/router/parser.go.y:337
+//line src/mc/router/parser.go.y:339
 		{
 			args := []*Expression{
 				MakeNameExpression(yyDollar[1].token.literal),
@@ -1023,7 +1020,7 @@ yydefault:
 		}
 	case 49:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line src/mc/router/parser.go.y:347
+//line src/mc/router/parser.go.y:349
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_LIST,
@@ -1031,7 +1028,7 @@ yydefault:
 		}
 	case 50:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:353
+//line src/mc/router/parser.go.y:355
 		{
 			args := []*Expression{yyDollar[1].expression}
 			yyVAL.expression = &Expression{
@@ -1040,7 +1037,7 @@ yydefault:
 		}
 	case 51:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:361
+//line src/mc/router/parser.go.y:363
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_MAPVAR,
@@ -1050,7 +1047,7 @@ yydefault:
 		}
 	case 52:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:369
+//line src/mc/router/parser.go.y:371
 		{
 			yyVAL.expression = &Expression{
 				Operation: OP_LISTVAR,
@@ -1058,13 +1055,13 @@ yydefault:
 		}
 	case 53:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line src/mc/router/parser.go.y:375
+//line src/mc/router/parser.go.y:377
 		{
 			yyVAL.expression = MakeNameExpression(yyDollar[1].token.literal)
 		}
 	case 54:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line src/mc/router/parser.go.y:380
+//line src/mc/router/parser.go.y:382
 		{
 			yyVAL.writeable = &WriteableValue{
 				Base: yyDollar[1].token.literal,
@@ -1072,7 +1069,7 @@ yydefault:
 		}
 	case 55:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line src/mc/router/parser.go.y:386
+//line src/mc/router/parser.go.y:388
 		{
 			yyVAL.writeable = &WriteableValue{
 				Base: "this",
@@ -1080,14 +1077,14 @@ yydefault:
 		}
 	case 56:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line src/mc/router/parser.go.y:392
+//line src/mc/router/parser.go.y:394
 		{
 			yyDollar[1].writeable.Path = append(yyDollar[1].writeable.Path, PathEntry{Type: PATH_LIST, ListIndex: yyDollar[3].expression})
 			yyVAL.writeable = yyDollar[1].writeable
 		}
 	case 57:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line src/mc/router/parser.go.y:397
+//line src/mc/router/parser.go.y:399
 		{
 			yyDollar[1].writeable.Path = append(yyDollar[1].writeable.Path, PathEntry{Type: PATH_MAP, MapKey: yyDollar[3].token.literal})
 			yyVAL.writeable = yyDollar[1].writeable

@@ -177,10 +177,6 @@ func (e *Expression) Evaluate(this *Value, vars map[string]*Value) (*Value, erro
 		return nil, errors.New("Invalid expression")
 	}
 	fmt.Println("EVAL",e.ToString())
-	sig := e.TypeCheck()
-	if sig == nil {
-		return nil, errors.New("No valid type found for expression")
-	}
 	args := make([]*Value, len(e.Args))
 	local_vars := vars
 	var err error
@@ -192,8 +188,10 @@ func (e *Expression) Evaluate(this *Value, vars map[string]*Value) (*Value, erro
 		}
 		args[i] = arg
 	}
-	if err := sig.TypeCheck(args); err != nil {
-		return nil, err
+	fmt.Println("Searching signature",e.ToString())
+	sig := FindSignature(e.Operation, args)
+	if sig == nil {
+		return nil, errors.New("No valid type found for expression")
 	}
 	ans, err := sig.Handler(this, local_vars, args, e.Value)
 	if ans != nil {

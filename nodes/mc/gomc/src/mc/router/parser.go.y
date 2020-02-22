@@ -32,14 +32,16 @@
 %type<expression> expr
 %type<expression> mapexprs
 %type<expression> listexprs
+
 %token<token> IDENT VAR NUMBER STRING THIS AND OR EQ NE LE GE PE ME TE DE RE XE SUB '?' '%' '=' '{' '}' '[' ']' '<' '>' ':' '+' '-' '*' '/' '&' '|', '^', '!', '~'
 
-%right UNARY
-%left IS
-%left GE LE
-%left AND
-%left OR
-%right '!'
+%left AND OR
+%left GE LE EQ '<' '>'
+%left '|'
+%left '&'
+%left '+'  '-'
+%left '*'  '/'  '%'
+%left UNARY '!'
 %%
 route   : node '>' node
 {

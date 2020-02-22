@@ -12,6 +12,29 @@ type Signature struct {
 	Handler func(*Value, map[string]*Value, []*Value, *Value) (*Value, error) // this, local_vars, args, primitive -> result, err
 }
 
+func FindSignature(op ExpressionOperationType, args []*Value) *Signature {
+	for i, a := range args {
+		fmt.Printf("arg[%d]:%d\n",i,a.Type)
+	}
+	for _, s := range ExpressionSignatures {
+		if s.Operation == op {
+			if len(s.ArgTypes) == len(args) {
+				ok := true
+				fmt.Println("AT",s.ArgTypes)
+				for i, a := range args {
+					if a.Type != s.ArgTypes[i] {
+						ok = false
+					}
+				}
+				if ok {
+					return s
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (s *Signature) TypeCheck(args []*Value) error {
 	if len(args) != len(s.ArgTypes) {
 		return errors.New(fmt.Sprintf("Signature has arity %d, got %d args", len(s.ArgTypes), len(args)))
