@@ -56,7 +56,7 @@
 				
 				<option value="file0">mc/router/expression.go (92.4%)</option>
 				
-				<option value="file1">mc/router/handlers.go (93.4%)</option>
+				<option value="file1">mc/router/handlers.go (93.5%)</option>
 				
 				<option value="file2">mc/router/lexer.go (100.0%)</option>
 				
@@ -76,7 +76,7 @@
 				
 				<option value="file10">mc/router/transform.go (88.2%)</option>
 				
-				<option value="file11">mc/router/value.go (86.4%)</option>
+				<option value="file11">mc/router/value.go (88.0%)</option>
 				
 				</select>
 			</div>
@@ -354,11 +354,13 @@ func ListGetHandler(this *Value, local_vars map[string]*Value, args []*Value, pr
         <span class="cov8" title="1">return args[0].ListVal[idx], nil</span>
 }
 func StringGetHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
-        idx := uint(args[1].NumVal)
-        if idx &gt;= uint(len(args[0].StringVal)) </span><span class="cov0" title="0">{
-                return nil, errors.New(fmt.Sprintf("Index out of bounds: %d", idx))
-        }</span>
-        <span class="cov8" title="1">return MakeStringValue(string(args[0].StringVal[idx])), nil</span>
+        idx := int(args[1].NumVal)
+        for i, rv := range args[0].StringVal </span><span class="cov8" title="1">{
+                if i == idx </span><span class="cov8" title="1">{
+                        return MakeStringValue(string(rv)), nil
+                }</span>
+        }
+        <span class="cov0" title="0">return nil, errors.New(fmt.Sprintf("Index out of bounds: %d for %s", idx, args[0].StringVal))</span>
 }
 // func ExprHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 //         return nil, nil, nil
@@ -2662,10 +2664,8 @@ func (v *Value) ToPrimitive() interface{} <span class="cov8" title="1">{
                 return v.StringVal
         }</span> else<span class="cov8" title="1"> if v.Type == VAL_BOOL </span><span class="cov8" title="1">{
                 return v.BoolVal
-        }</span> else<span class="cov0" title="0"> if v.Type == VAL_ANY </span><span class="cov0" title="0">{
-                return "any"
-        }</span>
-        <span class="cov0" title="0">return "[unknown value type]"</span>
+        }</span> 
+        <span class="cov0" title="0">return "&lt;nil&gt;"</span>
         
 }
 

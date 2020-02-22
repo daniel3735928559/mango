@@ -52,10 +52,8 @@ func (v *Value) ToPrimitive() interface{} {
 		return v.StringVal
 	} else if v.Type == VAL_BOOL {
 		return v.BoolVal
-	} else if v.Type == VAL_ANY {
-		return "any"
-	}
-	return "[unknown value type]"
+	} 
+	return "<nil>"
 	
 }
 
