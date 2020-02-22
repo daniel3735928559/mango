@@ -33,15 +33,17 @@
 %type<expression> mapexprs
 %type<expression> listexprs
 
-%token<token> IDENT VAR DEL NUMBER STRING THIS TRUE FALSE AND OR EQ NE LE GE PE ME TE DE RE AE OE XE SUB '?' '%' '=' '{' '}' '[' ']' '<' '>' ':' '+' '-' '*' '/' '&' '|', '^', '!', '~'
+%token<token> IDENT VAR DEL NUMBER STRING THIS TRUE FALSE AND OR EQ NE LE GE PE ME TE DE RE AE OE XE SUB EXP '?' '%' '=' '{' '}' '[' ']' '<' '>' ':' '+' '-' '*' '/' '&' '|', '^', '!', '~'
 
-%left ':'
+%left ':' '?'
 %left AND OR
 %left NE GE LE EQ '<' '>'
 %left '|' '&' '^'
+%left '~'
 %left '+'  '-'
 %left '*'  '/'  '%'
-%left UNARY '!' '~'
+%left EXP
+%left UNARY '!'
 %left '['
 %left '.'
 %%
@@ -250,6 +252,18 @@ expr : NUMBER
 		Operation: OP_STRING,
 		Value: &Value{Type: VAL_STRING, StringVal: $1.literal}}
 }
+| expr '~' expr
+{
+	$$ = &Expression{
+		Operation: OP_MATCH,
+		Args: []*Expression{$1,$3}}
+}
+| expr '?' expr ':' expr
+{
+	$$ = &Expression{
+		Operation: OP_TERNARY,
+		Args: []*Expression{$1,$3,$5}}
+}
 | '-' expr      %prec UNARY
 {
 	$$ = &Expression{
@@ -263,6 +277,12 @@ expr : NUMBER
 | varexpr
 {
 	$$ = $1
+}
+| expr EXP expr
+{
+	$$ = &Expression{
+		Operation: OP_EXP,
+		Args: []*Expression{$1, $3}}
 }
 | expr '+' expr
 {
@@ -348,7 +368,7 @@ expr : NUMBER
 		Operation: OP_OR,
 		Args: []*Expression{$1, $3}}
 }
-| '!' expr
+| '!' expr %prec UNARY
 {
 	$$ = &Expression{
 		Operation: OP_NOT,

@@ -54,15 +54,15 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">mc/router/expression.go (92.4%)</option>
+				<option value="file0">mc/router/expression.go (94.7%)</option>
 				
-				<option value="file1">mc/router/handlers.go (93.5%)</option>
+				<option value="file1">mc/router/handlers.go (88.8%)</option>
 				
 				<option value="file2">mc/router/lexer.go (100.0%)</option>
 				
 				<option value="file3">mc/router/node.go (0.0%)</option>
 				
-				<option value="file4">mc/router/parser.go (78.2%)</option>
+				<option value="file4">mc/router/parser.go (78.7%)</option>
 				
 				<option value="file5">mc/router/route.go (88.5%)</option>
 				
@@ -72,7 +72,7 @@
 				
 				<option value="file8">mc/router/signatures.go (100.0%)</option>
 				
-				<option value="file9">mc/router/statement.go (84.2%)</option>
+				<option value="file9">mc/router/statement.go (85.1%)</option>
 				
 				<option value="file10">mc/router/transform.go (88.2%)</option>
 				
@@ -106,6 +106,7 @@ const (
         OP_NAME
         OP_MAPVAR
         OP_LISTVAR
+        OP_TERNARY
         OP_NUM
         OP_BOOL
         OP_STRING
@@ -113,6 +114,7 @@ const (
         OP_UMINUS
         OP_MAPGET
         OP_LISTGET
+        OP_EXP
         OP_PLUS
         OP_MINUS
         OP_MUL
@@ -191,7 +193,9 @@ func (e *Expression) ToString() string <span class="cov8" title="1">{
                         listargs[i] = e.Args[i].ToString()
                 }</span>
                 <span class="cov8" title="1">return fmt.Sprintf("[%s]",strings.Join(listargs, ","))</span>
-        } else<span class="cov8" title="1"> if e.Operation == OP_PLUS </span><span class="cov8" title="1">{
+        } else<span class="cov8" title="1"> if e.Operation == OP_TERNARY </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s ? %s : %s", e.Args[0].ToString(), e.Args[1].ToString(), e.Args[2].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_PLUS </span><span class="cov8" title="1">{
                 return fmt.Sprintf("%s + %s", e.Args[0].ToString(), e.Args[1].ToString())
         }</span> else<span class="cov8" title="1"> if e.Operation == OP_MINUS </span><span class="cov8" title="1">{
                 return fmt.Sprintf("%s - %s", e.Args[0].ToString(), e.Args[1].ToString())
@@ -207,7 +211,7 @@ func (e *Expression) ToString() string <span class="cov8" title="1">{
                 return fmt.Sprintf("%s | %s", e.Args[0].ToString(), e.Args[1].ToString())
         }</span> else<span class="cov8" title="1"> if e.Operation == OP_BITWISEXOR </span><span class="cov8" title="1">{
                 return fmt.Sprintf("%s ^ %s", e.Args[0].ToString(), e.Args[1].ToString())
-        }</span> else<span class="cov8" title="1"> if e.Operation == OP_MATCH </span><span class="cov0" title="0">{
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_MATCH </span><span class="cov8" title="1">{
                 return fmt.Sprintf("%s ~ %s", e.Args[0].ToString(), e.Args[1].ToString())
         }</span> else<span class="cov8" title="1"> if e.Operation == OP_SUB </span><span class="cov0" title="0">{
                 return fmt.Sprintf("%s ~~ %s", e.Args[0].ToString(), e.Args[1].ToString())
@@ -230,7 +234,7 @@ func (e *Expression) ToString() string <span class="cov8" title="1">{
         }</span> else<span class="cov8" title="1"> if e.Operation == OP_NOT </span><span class="cov8" title="1">{
                 return fmt.Sprintf("!%s", e.Args[0].ToString())
         }</span>
-        <span class="cov0" title="0">return fmt.Sprintf("[unknown expression type %d]",e.Operation)</span>
+        <span class="cov8" title="1">return fmt.Sprintf("[unknown expression type %d]",e.Operation)</span>
         // subexprs := ""
         // val := ""
         // if e.Args != nil {
@@ -313,14 +317,26 @@ func (e *Expression) Evaluate(this *Value, vars map[string]*Value) (*Value, erro
 
 import (
         "fmt"
+        "math"
+        "regexp"
         "errors"
 )
 
 func CallHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov0" title="0">{
         // TODO: error if called function does not exist
-        fmt.Println("CALL",args[0].NameVal)
-        return this.Clone(), nil
-}</span>
+        name := args[0].NameVal
+        fmt.Println("CALL",name)
+        if name == "sub" </span><span class="cov0" title="0">{
+                return this, nil
+        }</span>
+        <span class="cov0" title="0">return nil, errors.New(fmt.Sprintf("No such function %s",name))</span>
+}
+func TernaryHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        if args[0].BoolVal </span><span class="cov8" title="1">{
+                return args[1], nil
+        }</span>
+        <span class="cov8" title="1">return args[2], nil</span>
+}
 func NameHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
         return primitive, nil
 }</span>
@@ -392,6 +408,19 @@ func BoolHandler(this *Value, local_vars map[string]*Value, args []*Value, primi
 func StringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
         return MakeStringValue(primitive.StringVal), nil
 }</span>
+func MatchHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        matches, err := regexp.Match(args[1].StringVal, []byte(args[0].StringVal))
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return MakeBoolValue(matches), nil</span>
+}
+func ExpNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        if args[0].NumVal == 0 &amp;&amp; args[1].NumVal &lt; 0 </span><span class="cov0" title="0">{
+                return nil, errors.New("Divide by zero: zero to a negative power")
+        }</span>
+        <span class="cov8" title="1">return MakeFloatValue(math.Pow(args[0].NumVal, args[1].NumVal)), nil</span>
+}
 func UnaryMinusNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
         return MakeFloatValue(-args[0].NumVal), nil
 }</span>
@@ -401,6 +430,20 @@ func AddNumHandler(this *Value, local_vars map[string]*Value, args []*Value, pri
 func AddStringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
         return MakeStringValue(args[0].StringVal + args[1].StringVal), nil
 }</span>
+func AddListHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return &amp;Value{
+                Type:VAL_LIST,
+                ListVal: append(args[0].ListVal, args[1].ListVal...)}, nil
+}</span>
+func AddMapHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        ans := args[0].MapVal
+        for k, v := range args[1].MapVal </span><span class="cov8" title="1">{
+                ans[k] = v
+        }</span>
+        <span class="cov8" title="1">return &amp;Value{
+                Type:VAL_MAP,
+                MapVal: ans}, nil</span>
+}
 func SubNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
         return MakeFloatValue(args[0].NumVal - args[1].NumVal), nil
 }</span>
@@ -574,7 +617,8 @@ const AE = 57365
 const OE = 57366
 const XE = 57367
 const SUB = 57368
-const UNARY = 57369
+const EXP = 57369
+const UNARY = 57370
 
 var yyToknames = [...]string{
         "$end",
@@ -603,6 +647,7 @@ var yyToknames = [...]string{
         "OE",
         "XE",
         "SUB",
+        "EXP",
         "'?'",
         "'%'",
         "'='",
@@ -655,105 +700,118 @@ var yyExca = [...]int{
 
 const yyPrivate = 57344
 
-const yyLast = 718
+const yyLast = 835
 
 var yyAct = [...]int{
 
-        42, 65, 35, 64, 130, 66, 76, 77, 78, 79,
-        80, 73, 74, 75, 124, 123, 62, 72, 52, 23,
-        81, 6, 62, 86, 16, 5, 4, 108, 63, 47,
-        48, 61, 3, 67, 68, 82, 69, 61, 146, 71,
-        145, 107, 3, 85, 70, 127, 126, 89, 90, 91,
-        92, 93, 94, 95, 96, 97, 98, 99, 100, 101,
-        102, 103, 104, 14, 106, 10, 11, 12, 87, 88,
-        110, 19, 18, 17, 112, 113, 114, 115, 116, 117,
-        118, 119, 120, 121, 2, 8, 43, 122, 125, 7,
-        13, 105, 57, 58, 53, 54, 56, 55, 84, 20,
-        83, 21, 22, 3, 40, 38, 39, 15, 52, 41,
-        36, 33, 62, 129, 60, 59, 37, 45, 46, 47,
-        48, 49, 50, 51, 9, 1, 0, 61, 143, 142,
-        0, 141, 57, 58, 53, 54, 56, 55, 0, 0,
-        0, 0, 144, 0, 0, 0, 0, 0, 52, 0,
-        0, 0, 62, 0, 60, 59, 0, 45, 46, 47,
-        48, 49, 50, 51, 0, 0, 0, 61, 0, 0,
-        0, 109, 57, 58, 53, 54, 56, 55, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 52, 0,
-        0, 0, 62, 0, 60, 59, 0, 45, 46, 47,
-        48, 49, 50, 51, 0, 0, 0, 61, 0, 0,
-        111, 57, 58, 53, 54, 56, 55, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 52, 0, 0,
-        0, 62, 0, 60, 59, 0, 45, 46, 47, 48,
-        49, 50, 51, 0, 0, 0, 61, 139, 57, 58,
-        53, 54, 56, 55, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 52, 0, 0, 0, 62, 0,
-        60, 59, 0, 45, 46, 47, 48, 49, 50, 51,
-        0, 0, 0, 61, 138, 57, 58, 53, 54, 56,
-        55, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 52, 0, 0, 0, 62, 0, 60, 59, 0,
-        45, 46, 47, 48, 49, 50, 51, 0, 0, 0,
-        61, 137, 57, 58, 53, 54, 56, 55, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 52, 0,
-        0, 0, 62, 0, 60, 59, 0, 45, 46, 47,
-        48, 49, 50, 51, 0, 0, 0, 61, 136, 57,
-        58, 53, 54, 56, 55, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 52, 0, 0, 0, 62,
-        0, 60, 59, 0, 45, 46, 47, 48, 49, 50,
-        51, 0, 0, 0, 61, 135, 57, 58, 53, 54,
-        56, 55, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 52, 0, 0, 0, 62, 0, 60, 59,
-        0, 45, 46, 47, 48, 49, 50, 51, 0, 0,
-        0, 61, 134, 57, 58, 53, 54, 56, 55, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 52,
-        0, 0, 0, 62, 0, 60, 59, 0, 45, 46,
-        47, 48, 49, 50, 51, 0, 0, 0, 61, 133,
-        57, 58, 53, 54, 56, 55, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 52, 0, 0, 0,
-        62, 0, 60, 59, 0, 45, 46, 47, 48, 49,
-        50, 51, 0, 0, 0, 61, 132, 57, 58, 53,
-        54, 56, 55, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 52, 0, 0, 0, 62, 0, 60,
-        59, 0, 45, 46, 47, 48, 49, 50, 51, 0,
-        0, 0, 61, 131, 57, 58, 53, 54, 56, 55,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        52, 0, 0, 0, 62, 140, 60, 59, 0, 45,
-        46, 47, 48, 49, 50, 51, 0, 0, 0, 61,
-        57, 58, 53, 54, 56, 55, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 52, 0, 0, 0,
-        62, 128, 60, 59, 0, 45, 46, 47, 48, 49,
-        50, 51, 0, 0, 0, 61, 57, 58, 53, 54,
-        56, 55, 29, 0, 0, 24, 30, 0, 25, 26,
-        0, 0, 52, 0, 0, 44, 62, 0, 60, 59,
-        0, 45, 46, 47, 48, 49, 50, 51, 27, 0,
-        28, 61, 53, 54, 56, 55, 31, 0, 0, 0,
-        0, 0, 34, 0, 0, 0, 52, 32, 0, 0,
-        62, 0, 60, 59, 0, 45, 46, 47, 48, 49,
-        50, 51, 52, 0, 0, 61, 62, 0, 0, 0,
-        0, 45, 46, 47, 48, 49, 50, 51, 52, 0,
-        0, 61, 62, 0, 0, 0, 0, 45, 46, 47,
-        48, 0, 0, 0, 0, 0, 0, 61,
+        68, 35, 42, 67, 137, 47, 69, 130, 47, 129,
+        55, 65, 6, 65, 65, 133, 89, 114, 23, 48,
+        49, 50, 51, 52, 53, 54, 64, 45, 64, 64,
+        66, 16, 70, 71, 154, 72, 3, 153, 74, 5,
+        4, 113, 88, 73, 132, 3, 92, 93, 94, 95,
+        96, 97, 98, 99, 100, 101, 102, 103, 104, 105,
+        106, 107, 108, 109, 110, 19, 112, 18, 14, 10,
+        11, 12, 8, 116, 90, 91, 118, 119, 120, 121,
+        122, 123, 124, 125, 126, 127, 17, 43, 2, 22,
+        131, 128, 111, 7, 13, 87, 86, 60, 61, 56,
+        57, 59, 58, 20, 3, 21, 40, 38, 39, 15,
+        36, 41, 47, 46, 55, 33, 37, 9, 65, 136,
+        63, 62, 1, 48, 49, 50, 51, 52, 53, 54,
+        0, 45, 0, 64, 149, 151, 150, 148, 60, 61,
+        56, 57, 59, 58, 0, 0, 0, 0, 0, 0,
+        0, 152, 0, 47, 46, 55, 0, 0, 0, 65,
+        0, 63, 62, 0, 48, 49, 50, 51, 52, 53,
+        54, 0, 45, 0, 64, 0, 0, 0, 115, 60,
+        61, 56, 57, 59, 58, 0, 79, 80, 81, 82,
+        83, 76, 77, 78, 47, 46, 55, 0, 75, 0,
+        65, 84, 63, 62, 0, 48, 49, 50, 51, 52,
+        53, 54, 0, 45, 0, 64, 85, 0, 117, 60,
+        61, 56, 57, 59, 58, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 47, 46, 55, 0, 0, 0,
+        65, 0, 63, 62, 0, 48, 49, 50, 51, 52,
+        53, 54, 0, 45, 0, 64, 146, 60, 61, 56,
+        57, 59, 58, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 47, 46, 55, 0, 0, 0, 65, 0,
+        63, 62, 0, 48, 49, 50, 51, 52, 53, 54,
+        0, 45, 0, 64, 145, 60, 61, 56, 57, 59,
+        58, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        47, 46, 55, 0, 0, 0, 65, 0, 63, 62,
+        0, 48, 49, 50, 51, 52, 53, 54, 0, 45,
+        0, 64, 144, 60, 61, 56, 57, 59, 58, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 47, 46,
+        55, 0, 0, 0, 65, 0, 63, 62, 0, 48,
+        49, 50, 51, 52, 53, 54, 0, 45, 0, 64,
+        143, 60, 61, 56, 57, 59, 58, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 47, 46, 55, 0,
+        0, 0, 65, 0, 63, 62, 0, 48, 49, 50,
+        51, 52, 53, 54, 0, 45, 0, 64, 142, 60,
+        61, 56, 57, 59, 58, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 47, 46, 55, 0, 0, 0,
+        65, 0, 63, 62, 0, 48, 49, 50, 51, 52,
+        53, 54, 0, 45, 0, 64, 141, 60, 61, 56,
+        57, 59, 58, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 47, 46, 55, 0, 0, 0, 65, 0,
+        63, 62, 0, 48, 49, 50, 51, 52, 53, 54,
+        0, 45, 0, 64, 140, 60, 61, 56, 57, 59,
+        58, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        47, 46, 55, 0, 0, 0, 65, 0, 63, 62,
+        0, 48, 49, 50, 51, 52, 53, 54, 0, 45,
+        0, 64, 139, 60, 61, 56, 57, 59, 58, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 47, 46,
+        55, 0, 0, 0, 65, 0, 63, 62, 0, 48,
+        49, 50, 51, 52, 53, 54, 0, 45, 0, 64,
+        138, 60, 61, 56, 57, 59, 58, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 47, 46, 55, 0,
+        0, 0, 65, 147, 63, 62, 0, 48, 49, 50,
+        51, 52, 53, 54, 0, 45, 0, 64, 60, 61,
+        56, 57, 59, 58, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 47, 46, 55, 0, 0, 0, 65,
+        135, 63, 62, 0, 48, 49, 50, 51, 52, 53,
+        54, 0, 45, 0, 64, 60, 61, 56, 57, 59,
+        58, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        47, 46, 55, 0, 0, 0, 65, 0, 63, 62,
+        134, 48, 49, 50, 51, 52, 53, 54, 0, 45,
+        0, 64, 60, 61, 56, 57, 59, 58, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 47, 46, 55,
+        0, 0, 44, 65, 0, 63, 62, 0, 48, 49,
+        50, 51, 52, 53, 54, 0, 45, 0, 64, 60,
+        61, 56, 57, 59, 58, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 47, 0, 55, 0, 0, 0,
+        65, 0, 63, 62, 0, 48, 49, 50, 51, 52,
+        53, 54, 0, 45, 0, 64, 56, 57, 59, 58,
+        29, 0, 0, 24, 30, 0, 25, 26, 0, 47,
+        0, 55, 0, 0, 0, 65, 0, 63, 62, 0,
+        48, 49, 50, 51, 52, 53, 54, 27, 45, 28,
+        64, 47, 0, 55, 0, 31, 0, 65, 0, 0,
+        0, 34, 48, 49, 50, 51, 32, 47, 0, 55,
+        45, 0, 64, 65, 0, 0, 0, 0, 48, 49,
+        50, 51, 0, 47, 0, 55, 0, 0, 64, 65,
+        0, 0, 0, 0, 0, 0, 50, 51, 0, 0,
+        0, 0, 0, 0, 64,
 }
 var yyPact = [...]int{
 
-        99, -1000, -9, -19, 38, 28, 103, -1000, -1000, -11,
-        43, 42, 41, -1000, 99, -1000, 38, 618, 100, 82,
-        -1000, -1000, -1000, 604, -1000, -1000, -1000, 82, 618, -44,
-        -1000, 618, 618, -1000, 618, 13, 100, -12, 96, 94,
-        -1000, -1000, 12, -13, 40, 618, 618, 618, 618, 618,
-        618, 618, 618, 618, 618, 618, 618, 618, 618, 618,
-        618, 87, 618, 10, -6, 120, 618, -16, 160, -16,
-        -1000, -1000, 618, 618, 618, 618, 618, 618, 618, 618,
-        618, 618, 83, -33, -34, -1000, 618, 16, 15, -10,
-        -10, -16, -16, 670, 670, 670, -16, 654, 654, 654,
-        654, 638, 638, 654, 654, -1000, 568, -1000, -1000, 618,
-        -46, -1000, 495, 458, 421, 384, 347, 310, 273, 236,
-        199, 532, -1000, -1000, -1000, 80, 100, 82, -1000, -1000,
-        -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
-        -1000, 82, 9, 7, -1000, -1000, -1000,
+        100, -1000, 4, -29, 41, 32, 105, -1000, -1000, -5,
+        55, 36, 34, -1000, 100, -1000, 41, 746, 102, 83,
+        -1000, -1000, -1000, 660, -1000, -1000, -1000, 83, 746, -44,
+        -1000, 746, 746, -1000, 746, 11, 102, 168, 92, 91,
+        -1000, -1000, 10, -21, 45, 746, 746, 746, 746, 746,
+        746, 746, 746, 746, 746, 746, 746, 746, 746, 746,
+        746, 746, 746, 746, 88, 746, 9, -17, 126, 746,
+        -20, 167, -20, -1000, -1000, 746, 746, 746, 746, 746,
+        746, 746, 746, 746, 746, 87, -40, -42, -1000, 746,
+        13, -16, 770, 623, -20, 786, 786, -22, -22, 754,
+        754, 754, -22, -19, -19, -19, -19, 732, 732, -19,
+        -19, -1000, 586, -1000, -1000, 746, -47, -1000, 511, 473,
+        435, 397, 359, 321, 283, 245, 207, 549, -1000, -1000,
+        -1000, 85, 102, 83, 746, -1000, -1000, -1000, -1000, -1000,
+        -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, 83, 5,
+        2, 697, -1000, -1000, -1000,
 }
 var yyPgo = [...]int{
 
-        0, 125, 84, 85, 124, 2, 116, 111, 110, 1,
-        0, 3,
+        0, 122, 88, 72, 117, 1, 116, 115, 110, 0,
+        2, 3,
 }
 var yyR1 = [...]int{
 
@@ -762,76 +820,78 @@ var yyR1 = [...]int{
         8, 8, 8, 8, 8, 8, 8, 9, 9, 9,
         9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
         9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-        9, 9, 9, 9, 10, 10, 11, 11, 7, 7,
-        7, 6, 6, 6, 6,
+        9, 9, 9, 9, 9, 9, 9, 10, 10, 11,
+        11, 7, 7, 7, 6, 6, 6, 6,
 }
 var yyR2 = [...]int{
 
         0, 3, 3, 4, 3, 1, 3, 3, 3, 4,
         4, 4, 8, 8, 1, 2, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 3, 3, 1, 1, 1,
-        3, 3, 4, 1, 2, 3, 1, 3, 3, 3,
+        3, 3, 4, 1, 3, 5, 2, 3, 1, 3,
         3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-        3, 2, 3, 3, 3, 5, 1, 3, 3, 4,
-        1, 1, 1, 4, 3,
+        3, 3, 3, 3, 2, 3, 3, 3, 5, 1,
+        3, 3, 4, 1, 1, 1, 4, 3,
 }
 var yyChk = [...]int{
 
-        -1000, -1, -2, 4, 35, 34, 40, -2, -3, -4,
-        27, 28, 29, -2, 35, 4, 35, 30, 30, 30,
-        -2, -2, -3, -9, 7, 10, 11, 30, 32, 4,
-        8, 38, 49, -7, 44, -5, -8, -6, 5, 6,
-        4, 9, -10, 4, 31, 37, 38, 39, 40, 41,
-        42, 43, 28, 14, 15, 17, 16, 12, 13, 35,
-        34, 47, 32, -10, -11, -9, 49, -9, -9, -9,
-        31, -5, 29, 23, 24, 25, 18, 19, 20, 21,
-        22, 32, 47, 4, 4, 31, 36, 28, 29, -9,
+        -1000, -1, -2, 4, 36, 35, 41, -2, -3, -4,
+        28, 29, 30, -2, 36, 4, 36, 31, 31, 31,
+        -2, -2, -3, -9, 7, 10, 11, 31, 33, 4,
+        8, 39, 50, -7, 45, -5, -8, -6, 5, 6,
+        4, 9, -10, 4, 32, 46, 28, 27, 38, 39,
+        40, 41, 42, 43, 44, 29, 14, 15, 17, 16,
+        12, 13, 36, 35, 48, 33, -10, -11, -9, 50,
+        -9, -9, -9, 32, -5, 30, 23, 24, 25, 18,
+        19, 20, 21, 22, 33, 48, 4, 4, 32, 37,
+        29, 30, -9, -9, -9, -9, -9, -9, -9, -9,
         -9, -9, -9, -9, -9, -9, -9, -9, -9, -9,
-        -9, -9, -9, -9, -9, 4, -9, 31, 33, 51,
-        -11, 50, -9, -9, -9, -9, -9, -9, -9, -9,
-        -9, -9, 4, 48, 48, -9, 30, 30, 33, -11,
-        50, 48, 48, 48, 48, 48, 48, 48, 48, 48,
-        33, 51, -5, -10, -10, 31, 31,
+        -9, 4, -9, 32, 34, 52, -11, 51, -9, -9,
+        -9, -9, -9, -9, -9, -9, -9, -9, 4, 49,
+        49, -9, 31, 31, 37, 34, -11, 51, 49, 49,
+        49, 49, 49, 49, 49, 49, 49, 34, 52, -5,
+        -10, -9, -10, 32, 32,
 }
 var yyDef = [...]int{
 
         0, -2, 0, 5, 0, 0, 0, 1, 4, 0,
         0, 0, 0, 2, 0, 6, 0, 0, 0, 0,
-        3, 7, 8, 0, 27, 28, 29, 0, 0, 60,
-        33, 0, 0, 36, 0, 0, 14, 0, 0, 0,
-        61, 62, 0, 0, 9, 0, 0, 0, 0, 0,
+        3, 7, 8, 0, 27, 28, 29, 0, 0, 63,
+        33, 0, 0, 38, 0, 0, 14, 0, 0, 0,
+        64, 65, 0, 0, 9, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 56, 0, 34, 0, 51,
-        10, 15, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 11, 0, 0, 0, 37,
-        38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
-        48, 49, 50, 52, 53, 58, 0, 30, 31, 0,
-        0, 35, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 64, 25, 26, 54, 0, 0, 59, 57,
-        32, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-        63, 0, 0, 0, 55, 12, 13,
+        0, 0, 0, 0, 0, 0, 0, 0, 59, 0,
+        36, 0, 54, 10, 15, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 11, 0,
+        0, 0, 34, 0, 39, 40, 41, 42, 43, 44,
+        45, 46, 47, 48, 49, 50, 51, 52, 53, 55,
+        56, 61, 0, 30, 31, 0, 0, 37, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 67, 25,
+        26, 57, 0, 0, 0, 62, 60, 32, 16, 17,
+        18, 19, 20, 21, 22, 23, 24, 66, 0, 0,
+        0, 35, 58, 12, 13,
 }
 var yyTok1 = [...]int{
 
         1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
         3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
         3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-        3, 3, 3, 44, 3, 3, 3, 28, 41, 3,
-        49, 50, 39, 37, 51, 38, 47, 40, 3, 3,
-        3, 3, 3, 3, 3, 3, 3, 3, 36, 48,
-        34, 29, 35, 27, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 45, 3, 3, 3, 29, 42, 3,
+        50, 51, 40, 38, 52, 39, 48, 41, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 37, 49,
+        35, 30, 36, 28, 3, 3, 3, 3, 3, 3,
         3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
         3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-        3, 32, 3, 33, 43, 3, 3, 3, 3, 3,
+        3, 33, 3, 34, 44, 3, 3, 3, 3, 3,
         3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
         3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-        3, 3, 3, 30, 42, 31, 45,
+        3, 3, 3, 31, 43, 32, 46,
 }
 var yyTok2 = [...]int{
 
         2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
         12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-        22, 23, 24, 25, 26, 46,
+        22, 23, 24, 25, 26, 27, 47,
 }
 var yyTok3 = [...]int{
         0,
@@ -1439,6 +1499,22 @@ yydefault:
                                 Value:     &amp;Value{Type: VAL_STRING, StringVal: yyDollar[1].token.literal}}
                 }</span>
         case 34:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_MATCH,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 35:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-5 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_TERNARY,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression, yyDollar[5].expression}}
+                }</span>
+        case 36:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-2 : yypt+1]
 
                 </span><span class="cov8" title="1">{
@@ -1446,40 +1522,24 @@ yydefault:
                                 Operation: OP_UMINUS,
                                 Args:      []*Expression{yyDollar[2].expression}}
                 }</span>
-        case 35:<span class="cov8" title="1">
+        case 37:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-3 : yypt+1]
 
                 </span><span class="cov8" title="1">{
                         yyVAL.expression = yyDollar[2].expression
                 }</span>
-        case 36:<span class="cov8" title="1">
+        case 38:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-1 : yypt+1]
 
                 </span><span class="cov8" title="1">{
                         yyVAL.expression = yyDollar[1].expression
-                }</span>
-        case 37:<span class="cov8" title="1">
-                yyDollar = yyS[yypt-3 : yypt+1]
-
-                </span><span class="cov8" title="1">{
-                        yyVAL.expression = &amp;Expression{
-                                Operation: OP_PLUS,
-                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
-                }</span>
-        case 38:<span class="cov8" title="1">
-                yyDollar = yyS[yypt-3 : yypt+1]
-
-                </span><span class="cov8" title="1">{
-                        yyVAL.expression = &amp;Expression{
-                                Operation: OP_MINUS,
-                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
         case 39:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-3 : yypt+1]
 
                 </span><span class="cov8" title="1">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_MUL,
+                                Operation: OP_EXP,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
         case 40:<span class="cov8" title="1">
@@ -1487,23 +1547,23 @@ yydefault:
 
                 </span><span class="cov8" title="1">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_DIV,
+                                Operation: OP_PLUS,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
-        case 41:<span class="cov0" title="0">
+        case 41:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-3 : yypt+1]
 
-                </span><span class="cov0" title="0">{
+                </span><span class="cov8" title="1">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_BITWISEAND,
+                                Operation: OP_MINUS,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
-        case 42:<span class="cov0" title="0">
+        case 42:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-3 : yypt+1]
 
-                </span><span class="cov0" title="0">{
+                </span><span class="cov8" title="1">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_BITWISEOR,
+                                Operation: OP_MUL,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
         case 43:<span class="cov8" title="1">
@@ -1511,23 +1571,23 @@ yydefault:
 
                 </span><span class="cov8" title="1">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_BITWISEXOR,
+                                Operation: OP_DIV,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
-        case 44:<span class="cov8" title="1">
+        case 44:<span class="cov0" title="0">
                 yyDollar = yyS[yypt-3 : yypt+1]
 
-                </span><span class="cov8" title="1">{
+                </span><span class="cov0" title="0">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_MOD,
+                                Operation: OP_BITWISEAND,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
-        case 45:<span class="cov8" title="1">
+        case 45:<span class="cov0" title="0">
                 yyDollar = yyS[yypt-3 : yypt+1]
 
-                </span><span class="cov8" title="1">{
+                </span><span class="cov0" title="0">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_EQ,
+                                Operation: OP_BITWISEOR,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
         case 46:<span class="cov8" title="1">
@@ -1535,7 +1595,7 @@ yydefault:
 
                 </span><span class="cov8" title="1">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_NE,
+                                Operation: OP_BITWISEXOR,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
         case 47:<span class="cov8" title="1">
@@ -1543,7 +1603,7 @@ yydefault:
 
                 </span><span class="cov8" title="1">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_GE,
+                                Operation: OP_MOD,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
         case 48:<span class="cov8" title="1">
@@ -1551,7 +1611,7 @@ yydefault:
 
                 </span><span class="cov8" title="1">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_LE,
+                                Operation: OP_EQ,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
         case 49:<span class="cov8" title="1">
@@ -1559,7 +1619,7 @@ yydefault:
 
                 </span><span class="cov8" title="1">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_AND,
+                                Operation: OP_NE,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
         case 50:<span class="cov8" title="1">
@@ -1567,23 +1627,23 @@ yydefault:
 
                 </span><span class="cov8" title="1">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_OR,
+                                Operation: OP_GE,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
         case 51:<span class="cov8" title="1">
-                yyDollar = yyS[yypt-2 : yypt+1]
+                yyDollar = yyS[yypt-3 : yypt+1]
 
                 </span><span class="cov8" title="1">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_NOT,
-                                Args:      []*Expression{yyDollar[2].expression}}
+                                Operation: OP_LE,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
         case 52:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-3 : yypt+1]
 
                 </span><span class="cov8" title="1">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_GT,
+                                Operation: OP_AND,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
         case 53:<span class="cov8" title="1">
@@ -1591,10 +1651,34 @@ yydefault:
 
                 </span><span class="cov8" title="1">{
                         yyVAL.expression = &amp;Expression{
-                                Operation: OP_LT,
+                                Operation: OP_OR,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
         case 54:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-2 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_NOT,
+                                Args:      []*Expression{yyDollar[2].expression}}
+                }</span>
+        case 55:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_GT,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 56:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_LT,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 57:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-3 : yypt+1]
 
                 </span><span class="cov8" title="1">{
@@ -1604,7 +1688,7 @@ yydefault:
                                         MakeNameExpression(yyDollar[1].token.literal),
                                         yyDollar[3].expression}}
                 }</span>
-        case 55:<span class="cov8" title="1">
+        case 58:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-5 : yypt+1]
 
                 </span><span class="cov8" title="1">{
@@ -1615,7 +1699,7 @@ yydefault:
                                 Operation: OP_MAP,
                                 Args:      append(args, yyDollar[5].expression.Args...)}
                 }</span>
-        case 56:<span class="cov8" title="1">
+        case 59:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-1 : yypt+1]
 
                 </span><span class="cov8" title="1">{
@@ -1623,7 +1707,7 @@ yydefault:
                                 Operation: OP_LIST,
                                 Args:      []*Expression{yyDollar[1].expression}}
                 }</span>
-        case 57:<span class="cov8" title="1">
+        case 60:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-3 : yypt+1]
 
                 </span><span class="cov8" title="1">{
@@ -1632,7 +1716,7 @@ yydefault:
                                 Operation: OP_LIST,
                                 Args:      append(args, yyDollar[3].expression.Args...)}
                 }</span>
-        case 58:<span class="cov8" title="1">
+        case 61:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-3 : yypt+1]
 
                 </span><span class="cov8" title="1">{
@@ -1640,7 +1724,7 @@ yydefault:
                                 Operation: OP_MAPVAR,
                                 Args:      []*Expression{yyDollar[1].expression, MakeNameExpression(yyDollar[3].token.literal)}}
                 }</span>
-        case 59:<span class="cov8" title="1">
+        case 62:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-4 : yypt+1]
 
                 </span><span class="cov8" title="1">{
@@ -1648,13 +1732,13 @@ yydefault:
                                 Operation: OP_LISTVAR,
                                 Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
                 }</span>
-        case 60:<span class="cov8" title="1">
+        case 63:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-1 : yypt+1]
 
                 </span><span class="cov8" title="1">{
                         yyVAL.expression = MakeVarExpression(yyDollar[1].token.literal)
                 }</span>
-        case 61:<span class="cov8" title="1">
+        case 64:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-1 : yypt+1]
 
                 </span><span class="cov8" title="1">{
@@ -1662,7 +1746,7 @@ yydefault:
                                 Base: yyDollar[1].token.literal,
                                 Path: []PathEntry{}}
                 }</span>
-        case 62:<span class="cov0" title="0">
+        case 65:<span class="cov0" title="0">
                 yyDollar = yyS[yypt-1 : yypt+1]
 
                 </span><span class="cov0" title="0">{
@@ -1670,14 +1754,14 @@ yydefault:
                                 Base: "this",
                                 Path: []PathEntry{}}
                 }</span>
-        case 63:<span class="cov8" title="1">
+        case 66:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-4 : yypt+1]
 
                 </span><span class="cov8" title="1">{
                         yyDollar[1].writeable.Path = append(yyDollar[1].writeable.Path, PathEntry{Type: PATH_LIST, ListIndex: yyDollar[3].expression})
                         yyVAL.writeable = yyDollar[1].writeable
                 }</span>
-        case 64:<span class="cov8" title="1">
+        case 67:<span class="cov8" title="1">
                 yyDollar = yyS[yypt-3 : yypt+1]
 
                 </span><span class="cov8" title="1">{
@@ -1826,6 +1910,7 @@ var (
                 "~=":SUB,
                 "&amp;&amp;":AND,
                 "||":OR,
+                "**":EXP,
                 "$_":THIS}
         charsyms = map[rune]int {
                 '.':'.',
@@ -2131,6 +2216,21 @@ var (
                         ReturnType: VAL_ANY,
                         Handler: VarHandler},
                 &amp;Signature{
+                        Operation: OP_MATCH,
+                        ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
+                        ReturnType: VAL_BOOL,
+                        Handler: MatchHandler},
+                &amp;Signature{
+                        Operation: OP_TERNARY,
+                        ArgTypes:[]ValueType{VAL_BOOL,VAL_ANY,VAL_ANY},
+                        ReturnType: VAL_ANY,
+                        Handler: TernaryHandler},
+                &amp;Signature{
+                        Operation: OP_EXP,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_NUM,
+                        Handler: ExpNumHandler},
+                &amp;Signature{
                         Operation: OP_UMINUS,
                         ArgTypes:[]ValueType{VAL_NUM},
                         ReturnType: VAL_NUM,
@@ -2145,6 +2245,16 @@ var (
                         ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
                         ReturnType: VAL_STRING,
                         Handler: AddStringHandler},
+                &amp;Signature{
+                        Operation: OP_PLUS,
+                        ArgTypes:[]ValueType{VAL_LIST,VAL_LIST},
+                        ReturnType: VAL_LIST,
+                        Handler: AddListHandler},
+                &amp;Signature{
+                        Operation: OP_PLUS,
+                        ArgTypes:[]ValueType{VAL_MAP,VAL_MAP},
+                        ReturnType: VAL_MAP,
+                        Handler: AddMapHandler},
                 &amp;Signature{
                         Operation: OP_MINUS,
                         ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
@@ -2334,7 +2444,7 @@ func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Express
                 dest = v.Clone()
                 is_this_var = true
                 is_local_var = false
-        }</span> else<span class="cov0" title="0"> {
+        }</span> else<span class="cov8" title="1"> {
                 return this, vars, errors.New(fmt.Sprintf("No such variable: %s", dest_name))
         }</span>
 

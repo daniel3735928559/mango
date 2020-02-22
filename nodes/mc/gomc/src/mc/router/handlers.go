@@ -2,13 +2,25 @@ package router
 
 import (
 	"fmt"
+	"math"
+	"regexp"
 	"errors"
 )
 
 func CallHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	// TODO: error if called function does not exist
-	fmt.Println("CALL",args[0].NameVal)
-	return this.Clone(), nil
+	name := args[0].NameVal
+	fmt.Println("CALL",name)
+	if name == "sub" {
+		return this, nil
+	}
+	return nil, errors.New(fmt.Sprintf("No such function %s",name))
+}
+func TernaryHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
+	if args[0].BoolVal {
+		return args[1], nil
+	}
+	return args[2], nil
 }
 func NameHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	return primitive, nil
@@ -81,6 +93,19 @@ func BoolHandler(this *Value, local_vars map[string]*Value, args []*Value, primi
 func StringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	return MakeStringValue(primitive.StringVal), nil
 }
+func MatchHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
+	matches, err := regexp.Match(args[1].StringVal, []byte(args[0].StringVal))
+	if err != nil {
+		return nil, err
+	}
+	return MakeBoolValue(matches), nil
+}
+func ExpNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
+	if args[0].NumVal == 0 && args[1].NumVal < 0 {
+		return nil, errors.New("Divide by zero: zero to a negative power")
+	}
+	return MakeFloatValue(math.Pow(args[0].NumVal, args[1].NumVal)), nil
+}
 func UnaryMinusNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	return MakeFloatValue(-args[0].NumVal), nil
 }
@@ -89,6 +114,20 @@ func AddNumHandler(this *Value, local_vars map[string]*Value, args []*Value, pri
 }
 func AddStringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	return MakeStringValue(args[0].StringVal + args[1].StringVal), nil
+}
+func AddListHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
+	return &Value{
+		Type:VAL_LIST,
+		ListVal: append(args[0].ListVal, args[1].ListVal...)}, nil
+}
+func AddMapHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
+	ans := args[0].MapVal
+	for k, v := range args[1].MapVal {
+		ans[k] = v
+	}
+	return &Value{
+		Type:VAL_MAP,
+		MapVal: ans}, nil
 }
 func SubNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	return MakeFloatValue(args[0].NumVal - args[1].NumVal), nil

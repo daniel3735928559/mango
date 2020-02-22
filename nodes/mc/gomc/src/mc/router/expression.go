@@ -14,6 +14,7 @@ const (
 	OP_NAME
 	OP_MAPVAR
 	OP_LISTVAR
+	OP_TERNARY
 	OP_NUM
 	OP_BOOL
 	OP_STRING
@@ -21,6 +22,7 @@ const (
 	OP_UMINUS
 	OP_MAPGET
 	OP_LISTGET
+	OP_EXP
 	OP_PLUS
 	OP_MINUS
 	OP_MUL
@@ -99,6 +101,8 @@ func (e *Expression) ToString() string {
 			listargs[i] = e.Args[i].ToString()
 		}
 		return fmt.Sprintf("[%s]",strings.Join(listargs, ","))
+	} else if e.Operation == OP_TERNARY {
+		return fmt.Sprintf("%s ? %s : %s", e.Args[0].ToString(), e.Args[1].ToString(), e.Args[2].ToString())
 	} else if e.Operation == OP_PLUS {
 		return fmt.Sprintf("%s + %s", e.Args[0].ToString(), e.Args[1].ToString())
 	} else if e.Operation == OP_MINUS {

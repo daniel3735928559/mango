@@ -27,6 +27,7 @@ var (
 		"~=":SUB,
 		"&&":AND,
 		"||":OR,
+		"**":EXP,
 		"$_":THIS}
 	charsyms = map[rune]int {
 		'.':'.',

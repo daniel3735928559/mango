@@ -118,6 +118,21 @@ var (
 			ReturnType: VAL_ANY,
 			Handler: VarHandler},
 		&Signature{
+			Operation: OP_MATCH,
+			ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
+			ReturnType: VAL_BOOL,
+			Handler: MatchHandler},
+		&Signature{
+			Operation: OP_TERNARY,
+			ArgTypes:[]ValueType{VAL_BOOL,VAL_ANY,VAL_ANY},
+			ReturnType: VAL_ANY,
+			Handler: TernaryHandler},
+		&Signature{
+			Operation: OP_EXP,
+			ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+			ReturnType: VAL_NUM,
+			Handler: ExpNumHandler},
+		&Signature{
 			Operation: OP_UMINUS,
 			ArgTypes:[]ValueType{VAL_NUM},
 			ReturnType: VAL_NUM,
@@ -132,6 +147,16 @@ var (
 			ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
 			ReturnType: VAL_STRING,
 			Handler: AddStringHandler},
+		&Signature{
+			Operation: OP_PLUS,
+			ArgTypes:[]ValueType{VAL_LIST,VAL_LIST},
+			ReturnType: VAL_LIST,
+			Handler: AddListHandler},
+		&Signature{
+			Operation: OP_PLUS,
+			ArgTypes:[]ValueType{VAL_MAP,VAL_MAP},
+			ReturnType: VAL_MAP,
+			Handler: AddMapHandler},
 		&Signature{
 			Operation: OP_MINUS,
 			ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},

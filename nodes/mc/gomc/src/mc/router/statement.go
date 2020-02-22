@@ -78,6 +78,10 @@ func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Express
 		dest = v.Clone()
 		is_this_var = true
 		is_local_var = false
+	} else if len(w.Path) == 0 {
+		dest = MakeEmptyValue()
+		is_this_var = true
+		is_local_var = false
 	} else {
 		return this, vars, errors.New(fmt.Sprintf("No such variable: %s", dest_name))
 	}

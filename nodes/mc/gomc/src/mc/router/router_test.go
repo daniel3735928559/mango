@@ -384,7 +384,8 @@ func TestRouterArithmeticEdit(t *testing.T) {
 		`node0 > % {key1 /= 2;} > node5`,
 		`node0 > % {key1 %= 2;} > node6`,
 		`node0 > % {key1 = -key1;} > node7`,
-		`node0 > % {key1 = 4-key1;} > node8`}
+		`node0 > % {key1 = 4-key1;} > node8`,
+		`node0 > % {key1 = key1**3;} > node9`}
 	messages := map[string][]map[string]interface{}{
 		"node0":[]map[string]interface{}{
 			map[string]interface{}{"key1":"val1"},
@@ -399,10 +400,10 @@ func TestRouterArithmeticEdit(t *testing.T) {
 		"node5":[]string{`{"key1":-1}`,`{"key1":5}`,`{"key1":0}`},
 		"node6":[]string{`{"key1":0}`,`{"key1":0}`,`{"key1":0}`},
 		"node7":[]string{`{"key1":2}`,`{"key1":-10}`,`{"key1":-0}`},
-		"node8":[]string{`{"key1":6}`,`{"key1":-6}`,`{"key1":4}`}}
+		"node8":[]string{`{"key1":6}`,`{"key1":-6}`,`{"key1":4}`},
+		"node9":[]string{`{"key1":-8}`,`{"key1":1000}`,`{"key1":0}`}}
 	RunMessagesThroughRoutes(t, routes, messages, expected)
 }
-
 
 func TestRouterComplexArithmeticEdit(t *testing.T) {
 	routes := []string{
@@ -569,7 +570,9 @@ func TestRouterCollectionEdit(t *testing.T) {
 		`node0 > % {key1 = key1[1]+key2.a;} > node2`,
 		`node0 > % {key1[0] += key2.b;} > node3`,
 		`node0 > % {key1[0] = [1,2];key2.a = {x:1};} > node4`,
-		`node0 > % {key2=key1[0]+key2.b;} > node5`}
+		`node0 > % {key2=key1[0]+key2.b;} > node5`,
+		`node0 > % {key1 += [3,4];} > node6`,
+		`node0 > % {key2 += {c:9};} > node7`}
 	messages := map[string][]map[string]interface{}{
 		"node0":[]map[string]interface{}{
 			map[string]interface{}{"key1":[]interface{}{"val1",2},"key2":map[string]interface{}{"a":1,"b":"val2"}}}}
@@ -578,7 +581,9 @@ func TestRouterCollectionEdit(t *testing.T) {
 		"node2":[]string{`{"key1":3,"key2":{"a":1,"b":"val2"}}`},
 		"node3":[]string{`{"key1":["val1val2",2],"key2":{"a":1,"b":"val2"}}`},
 		"node4":[]string{`{"key1":[[1,2],2],"key2":{"a":{"x":1},"b":"val2"}}`},
-		"node5":[]string{`{"key1":["val1",2],"key2":"val1val2"}`}}
+		"node5":[]string{`{"key1":["val1",2],"key2":"val1val2"}`},
+		"node6":[]string{`{"key1":["val1",2,3,4],"key2":{"a":1,"b":"val2"}}`},
+		"node7":[]string{`{"key1":["val1",2],"key2":{"a":1,"b":"val2","c":9}}`}}
 	RunMessagesThroughRoutes(t, routes, messages, expected)
 }
 
@@ -683,7 +688,7 @@ func TestRouterDeletionEdit(t *testing.T) {
 	RunMessagesThroughRoutes(t, routes, messages, expected)
 }
 
-func TestRouterLovalVarsEdit(t *testing.T) {
+func TestRouterLocalVarsEdit(t *testing.T) {
 	routes := []string{
 		"node0 > node1",
 		`node0 > % {var x;x=3;key2 *= x;} > node2`,
@@ -702,5 +707,37 @@ func TestRouterLovalVarsEdit(t *testing.T) {
 		"node4":[]string{`{"key1":"val1val3","key2":2}`},
 		"node5":[]string{`{"key1":"val1","key2":5}`},
 		"node6":[]string{`{"key1":"val1","key2":5}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
+
+func TestRouterTernaryEdit(t *testing.T) {
+	routes := []string{
+		"node0 > node1",
+		`node0 > % {key1 = key1 > "a" ? "val2" : "val3";} > node2`,
+		`node0 > % {key1 = key1 < "a" ? "val2" : "val3";} > node3`}
+	messages := map[string][]map[string]interface{}{
+		"node0":[]map[string]interface{}{
+			map[string]interface{}{"key1":"val1","key2":2}}}
+	expected := map[string][]string{
+		"node1":[]string{`{"key1":"val1","key2":2}`},
+		"node2":[]string{`{"key1":"val2","key2":2}`},
+		"node3":[]string{`{"key1":"val3","key2":2}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
+
+func TestRouterStringMatch(t *testing.T) {
+	routes := []string{
+		"node0 > node1",
+		`node0 > % {key2 = key1 ~ "val[0-9]" ? "is val" : "non-val";} > node2`,
+		`node0 > % {key2 = key1 ~ ".*v.*" ? "is val" : "non-val";} > node3`,
+		`node0 > % {key2 = key1 ~ ".*b.*" ? "is val" : "non-val";} > node4`}
+	messages := map[string][]map[string]interface{}{
+		"node0":[]map[string]interface{}{
+			map[string]interface{}{"key1":"val1"}}}
+	expected := map[string][]string{
+		"node1":[]string{`{"key1":"val1"}`},
+		"node2":[]string{`{"key1":"val1","key2":"is val"}`},
+		"node3":[]string{`{"key1":"val1","key2":"is val"}`},
+		"node4":[]string{`{"key1":"val1","key2":"non-val"}`}}
 	RunMessagesThroughRoutes(t, routes, messages, expected)
 }
