@@ -37,11 +37,13 @@
 
 %left ':'
 %left AND OR
-%left GE LE EQ '<' '>'
+%left NE GE LE EQ '<' '>'
 %left '|' '&' '^'
 %left '+'  '-'
 %left '*'  '/'  '%'
+%left '['
 %left UNARY '!' '~'
+%left '.'
 %%
 route   : node '>' node
 {

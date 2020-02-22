@@ -168,6 +168,22 @@ func TestRouterEqFilter(t *testing.T) {
 	RunMessagesThroughRoutes(t, routes, messages, expected)
 }
 
+func TestRouterNeFilter(t *testing.T) {
+	routes := []string{
+		"node0 > node2",
+		`node0 > ? {key1!="val1"} > node1`}
+	messages := map[string][]map[string]interface{}{
+		"node0":[]map[string]interface{}{
+			map[string]interface{}{"key1":"val1"},
+			map[string]interface{}{"key1":"val2"},
+			map[string]interface{}{"key2":"val3"}}}
+	expected := map[string][]string{
+		"node0":[]string{},
+		"node1":[]string{`{"key1":"val2"}`,`{"key1":"val3"}`},
+		"node2":[]string{`{"key1":"val1"}`,`{"key1":"val2"}`,`{"key2":"val3"}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
+
 func TestRouterGtFilter(t *testing.T) {
 	routes := []string{
 		"node0 > node2",
