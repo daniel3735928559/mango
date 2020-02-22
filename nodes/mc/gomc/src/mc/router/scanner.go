@@ -10,7 +10,7 @@ const (
 )
 
 var (
-	keywords = map[string]int{"var": VAR}
+	keywords = map[string]int{"del": DEL, "var": VAR, "true":TRUE, "false":FALSE}
 	syms = map[string]int{
 		"==":EQ,
 		"!=":NE,

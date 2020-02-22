@@ -15,6 +15,7 @@ const (
 	OP_MAPVAR
 	OP_LISTVAR
 	OP_NUM
+	OP_BOOL
 	OP_STRING
 	OP_CALL
 	OP_UMINUS
@@ -74,7 +75,7 @@ func (e *Expression) ToString() string {
 		return fmt.Sprintf("%s.%s", e.Args[0].ToString(), e.Args[1].ToString())
 	} else if e.Operation == OP_LISTVAR {
 		return fmt.Sprintf("%s[%s]", e.Args[0].ToString(), e.Args[1].ToString())
-	} else if e.Operation == OP_NUM || e.Operation == OP_STRING {
+	} else if e.Operation == OP_NUM || e.Operation == OP_STRING || e.Operation == OP_BOOL {
 		return e.Value.ToString()
 	} else if e.Operation == OP_CALL {
 		return fmt.Sprintf("%s(%s)", e.Args[0].ToString(), e.Args[1].ToString())

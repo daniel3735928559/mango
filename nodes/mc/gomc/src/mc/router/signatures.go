@@ -73,6 +73,11 @@ var (
 			ReturnType: VAL_NUM,
 			Handler: NumHandler},
 		&Signature{
+			Operation: OP_BOOL,
+			ArgTypes:[]ValueType{},
+			ReturnType: VAL_NUM,
+			Handler: BoolHandler},
+		&Signature{
 			Operation: OP_STRING,
 			ArgTypes:[]ValueType{},
 			ReturnType: VAL_STRING,
@@ -102,6 +107,11 @@ var (
 			ArgTypes:[]ValueType{VAL_LIST,VAL_NUM},
 			ReturnType: VAL_ANY,
 			Handler: ListGetHandler},
+		&Signature{
+			Operation: OP_LISTVAR,
+			ArgTypes:[]ValueType{VAL_STRING,VAL_NUM},
+			ReturnType: VAL_STRING,
+			Handler: StringGetHandler},
 		&Signature{
 			Operation: OP_VAR,
 			ArgTypes:[]ValueType{},

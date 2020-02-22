@@ -33,7 +33,7 @@
 %type<expression> mapexprs
 %type<expression> listexprs
 
-%token<token> IDENT VAR NUMBER STRING THIS AND OR EQ NE LE GE PE ME TE DE RE AE OE XE SUB '?' '%' '=' '{' '}' '[' ']' '<' '>' ':' '+' '-' '*' '/' '&' '|', '^', '!', '~'
+%token<token> IDENT VAR DEL NUMBER STRING THIS TRUE FALSE AND OR EQ NE LE GE PE ME TE DE RE AE OE XE SUB '?' '%' '=' '{' '}' '[' ']' '<' '>' ':' '+' '-' '*' '/' '&' '|', '^', '!', '~'
 
 %left ':'
 %left AND OR
@@ -150,55 +150,63 @@ script
 
 stmt : dstexpr '=' expr ';'
 {
-	$$ = MakeAssignment($1, $3)
+	$$ = MakeAssignmentStatement($1, $3)
 }
 | dstexpr AE expr ';'
 {
-	$$ = MakeAssignment($1, &Expression{
+	$$ = MakeAssignmentStatement($1, &Expression{
 		Operation: OP_BITWISEAND,
 		Args: []*Expression{$1.ToExpression(), $3}})
 }
 | dstexpr OE expr ';'
 {
-	$$ = MakeAssignment($1, &Expression{
+	$$ = MakeAssignmentStatement($1, &Expression{
 		Operation: OP_BITWISEOR,
 		Args: []*Expression{$1.ToExpression(), $3}})
 }
 | dstexpr XE expr ';'
 {
-	$$ = MakeAssignment($1, &Expression{
+	$$ = MakeAssignmentStatement($1, &Expression{
 		Operation: OP_BITWISEXOR,
 		Args: []*Expression{$1.ToExpression(), $3}})
 }
 | dstexpr PE expr ';'
 {
-	$$ = MakeAssignment($1, &Expression{
+	$$ = MakeAssignmentStatement($1, &Expression{
 		Operation: OP_PLUS,
 		Args: []*Expression{$1.ToExpression(), $3}})
 }
 | dstexpr ME expr ';'
 {
-	$$ = MakeAssignment($1, &Expression{
+	$$ = MakeAssignmentStatement($1, &Expression{
 		Operation: OP_MINUS,
 		Args: []*Expression{$1.ToExpression(), $3}})
 }
 | dstexpr TE expr ';'
 {
-	$$ = MakeAssignment($1, &Expression{
+	$$ = MakeAssignmentStatement($1, &Expression{
 		Operation: OP_MUL,
 		Args: []*Expression{$1.ToExpression(), $3}})
 }
 | dstexpr DE expr ';'
 {
-	$$ = MakeAssignment($1, &Expression{
+	$$ = MakeAssignmentStatement($1, &Expression{
 		Operation: OP_DIV,
 		Args: []*Expression{$1.ToExpression(), $3}})
 }
 | dstexpr RE expr ';'
 {
-	$$ = MakeAssignment($1, &Expression{
+	$$ = MakeAssignmentStatement($1, &Expression{
 		Operation: OP_MOD,
 		Args: []*Expression{$1.ToExpression(), $3}})
+}
+| VAR IDENT ';'
+{
+	$$ = MakeDeclarationStatement($2.literal)
+}
+| DEL IDENT ';'
+{
+	$$ = MakeDeletionStatement($2.literal)
 }
 
 expr : NUMBER
@@ -206,7 +214,19 @@ expr : NUMBER
 	x, _ := strconv.ParseFloat($1.literal, 64)
 	$$ = &Expression{
 		Operation: OP_NUM,
-		Value: &Value{Type: VAL_NUM, NumVal: x}}
+		Value: MakeFloatValue(x)}
+}
+| TRUE
+{
+	$$ = &Expression{
+		Operation: OP_BOOL,
+		Value: MakeBoolValue(true)}
+}
+| FALSE
+{
+	$$ = &Expression{
+		Operation: OP_BOOL,
+		Value: MakeBoolValue(false)}
 }
 | '{' mapexprs '}'
 {

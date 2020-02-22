@@ -13,11 +13,10 @@ const (
 	VAL_MAP ValueType = iota + 1
 	VAL_LIST
 	VAL_NAME
-	VAL_INT
-	VAL_FLOAT
 	VAL_NUM
 	VAL_STRING
 	VAL_BOOL
+	VAL_EMPTY
 	VAL_ANY
 	VAL_ANYANY
 )
@@ -27,8 +26,6 @@ type Value struct {
 	MapVal map[string]*Value
 	ListVal []*Value
 	NameVal string
-	IntVal int
-	FloatVal float64
 	NumVal float64
 	StringVal string
 	BoolVal bool
@@ -49,10 +46,6 @@ func (v *Value) ToPrimitive() interface{} {
 		return ans
 	} else if v.Type == VAL_NAME {
 		return v.NameVal
-	} else if v.Type == VAL_INT {
-		return v.IntVal
-	} else if v.Type == VAL_FLOAT {
-		return v.FloatVal
 	} else if v.Type == VAL_NUM {
 		return v.NumVal
 	} else if v.Type == VAL_STRING {
@@ -108,8 +101,6 @@ func (v *Value) Clone() *Value {
 	ans := &Value{
 		Type: v.Type,
 		NameVal: v.NameVal,
-		IntVal: v.IntVal,
-		FloatVal: v.FloatVal,
 		NumVal: v.NumVal,
 		StringVal: v.StringVal,
 		BoolVal: v.BoolVal}
@@ -179,6 +170,11 @@ func MakeIntValue(x int) *Value {
 		NumVal: float64(x)}
 }
 
+func MakeEmptyValue() *Value {
+	return &Value{
+		Type: VAL_EMPTY}
+}
+
 func MakeFloatValue(x float64) *Value {
 	return &Value{
 		Type: VAL_NUM,
@@ -196,26 +192,6 @@ func MakeBoolValue(x bool) *Value {
 		Type: VAL_BOOL,
 		BoolVal: x}
 }
-
-// func AssignValue(dst, src *Value, vars *map[string]*Value) {
-// 	if src.Type == VAL_MAP {
-// 		dst.MapVal = src.MapVal
-// 	} else if src.Type == VAL_LIST {
-// 		dst.ListVal = src.ListVal
-// 	} else if src.Type == VAL_NAME {
-// 		AssignValue(dst, (*vars)[src.NameVal], vars)
-// 	} else if src.Type == VAL_INT {
-// 		dst.IntVal = src.IntVal
-// 	} else if src.Type == VAL_FLOAT {
-// 		dst.FloatVal = src.FloatVal
-// 	} else if src.Type == VAL_NUM {
-// 		dst.NumVal = src.NumVal
-// 	} else if src.Type == VAL_STRING {
-// 		dst.StringVal = src.StringVal
-// 	} else if src.Type == VAL_BOOL {
-// 		dst.BoolVal = src.BoolVal
-// 	}
-// }
 
 func (v *Value) ToString() string {
 	if v.Type == VAL_MAP {
@@ -237,10 +213,6 @@ func (v *Value) ToString() string {
 		return fmt.Sprintf("[%s]",strings.Join(val_strs ,","))
 	} else if v.Type == VAL_NAME {
 		return fmt.Sprintf("VAR(%s)",v.NameVal)
-	} else if v.Type == VAL_INT {
-		return fmt.Sprintf("INT(%d)",v.IntVal)
-	} else if v.Type == VAL_FLOAT {
-		return fmt.Sprintf("FLOAT(%f)",v.FloatVal)
 	} else if v.Type == VAL_NUM {
 		return fmt.Sprintf("NUM(%f)",v.NumVal)
 	} else if v.Type == VAL_STRING {

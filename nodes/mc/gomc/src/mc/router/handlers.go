@@ -42,6 +42,15 @@ func ListGetHandler(this *Value, local_vars map[string]*Value, args []*Value, pr
 	}
 	return args[0].ListVal[idx], nil
 }
+func StringGetHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
+	idx := int(args[1].NumVal)
+	for i, rv := range args[0].StringVal {
+		if i == idx {
+			return MakeStringValue(string(rv)), nil
+		}
+	}
+	return nil, errors.New(fmt.Sprintf("Index out of bounds: %d for %s", idx, args[0].StringVal))
+}
 // func ExprHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 // 	return nil, nil, nil
 // }
@@ -65,6 +74,9 @@ func VarHandler(this *Value, local_vars map[string]*Value, args []*Value, primit
 }
 func NumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	return MakeFloatValue(primitive.NumVal), nil
+}
+func BoolHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
+	return MakeBoolValue(primitive.BoolVal), nil
 }
 func StringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	return MakeStringValue(primitive.StringVal), nil
@@ -93,7 +105,9 @@ func MulStringNumHandler(this *Value, local_vars map[string]*Value, args []*Valu
 	return MakeStringValue(ans), nil
 }
 func DivNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
-	// TODO: error arg[1] == 0
+	if args[1].NumVal == float64(0) {
+		return nil, errors.New("Division by zero")
+	}
 	return MakeFloatValue(args[0].NumVal / args[1].NumVal), nil
 }
 func ModNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {

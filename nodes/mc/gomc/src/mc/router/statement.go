@@ -10,6 +10,8 @@ type PathStepType int
 
 const (
 	STMT_ASSIGN StatementType = iota + 1
+	STMT_DECLARE
+	STMT_DELETE
 )
 
 const (
@@ -160,11 +162,21 @@ func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Express
 	return this, vars, errors.New("Something went wrong?")
 }
 
-func MakeAssignment(dest *WriteableValue, val *Expression) *Statement {
+func MakeAssignmentStatement(dest *WriteableValue, val *Expression) *Statement {
 	return &Statement {
 		Type: STMT_ASSIGN,
 		Destination: dest,
 		Args: []*Expression{val}}
+}
+func MakeDeclarationStatement(name string) *Statement {
+	return &Statement {
+		Type: STMT_DECLARE,
+		Destination: &WriteableValue{Base:name}}
+}
+func MakeDeletionStatement(name string) *Statement {
+	return &Statement {
+		Type: STMT_DELETE,
+		Destination: &WriteableValue{Base:name}}
 }
 
 func (s *Statement) ToString() string {
@@ -186,6 +198,31 @@ func (s *Statement) Execute(this *Value, vars map[string]*Value) (*Value, map[st
 	fmt.Println("EXEC",s.ToString())
 	if s.Type == STMT_ASSIGN {
 		return s.Destination.Write(this, vars, s.Args[0])
+	} else if s.Type == STMT_DECLARE {
+		name := s.Destination.Base
+		if this.Type == VAL_MAP {
+			if _, ok := this.MapVal[name]; ok {
+				return this, vars, errors.New(fmt.Sprintf("Variable already exists in this: %s", name))
+			}
+		}
+		if _, ok := vars[name]; ok {
+			return this, vars, errors.New(fmt.Sprintf("Variable already exists as local variable: %s", name))
+		}
+		vars[name] = MakeEmptyValue()
+		return this, vars, nil
+	} else if s.Type == STMT_DELETE {
+		name := s.Destination.Base
+		if this.Type == VAL_MAP {
+			if _, ok := this.MapVal[name]; ok {
+				delete(this.MapVal, name)
+				return this, vars, nil
+			}
+		}
+		if _, ok := vars[name]; ok {
+			delete(vars, name)
+			return this, vars, nil
+		}
+		return this, vars, errors.New(fmt.Sprintf("Could not find variable: %s", name))
 	}
 	return nil, nil, errors.New("Unknown statement type")
 }
