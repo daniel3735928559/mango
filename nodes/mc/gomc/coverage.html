@@ -54,26 +54,2644 @@
 			<div id="nav">
 				<select id="files">
 				
+				<option value="file0">mc/router/expression.go (75.6%)</option>
+				
+				<option value="file1">mc/router/handlers.go (73.2%)</option>
+				
+				<option value="file2">mc/router/lexer.go (85.7%)</option>
+				
+				<option value="file3">mc/router/node.go (0.0%)</option>
+				
+				<option value="file4">mc/router/parser.go (68.5%)</option>
+				
+				<option value="file5">mc/router/route.go (88.5%)</option>
+				
+				<option value="file6">mc/router/router.go (85.7%)</option>
+				
+				<option value="file7">mc/router/scanner.go (94.4%)</option>
+				
+				<option value="file8">mc/router/signatures.go (71.4%)</option>
+				
+				<option value="file9">mc/router/statement.go (69.9%)</option>
+				
+				<option value="file10">mc/router/transform.go (63.2%)</option>
+				
+				<option value="file11">mc/router/value.go (69.2%)</option>
+				
 				</select>
 			</div>
 			<div id="legend">
 				<span>not tracked</span>
 			
-				<span class="cov0">no coverage</span>
-				<span class="cov1">low coverage</span>
-				<span class="cov2">*</span>
-				<span class="cov3">*</span>
-				<span class="cov4">*</span>
-				<span class="cov5">*</span>
-				<span class="cov6">*</span>
-				<span class="cov7">*</span>
-				<span class="cov8">*</span>
-				<span class="cov9">*</span>
-				<span class="cov10">high coverage</span>
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
 			
 			</div>
 		</div>
 		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package router
+
+import (
+        "fmt"
+        "errors"
+        "strings"
+)
+
+type ExpressionOperationType int
+
+const (
+        OP_ASSIGN ExpressionOperationType = iota + 1
+        OP_VAR
+        OP_NAME
+        OP_MAPVAR
+        OP_LISTVAR
+        OP_NUM
+        OP_STRING
+        OP_CALL
+        OP_UMINUS
+        OP_MAPGET
+        OP_LISTGET
+        OP_PLUS
+        OP_MINUS
+        OP_MUL
+        OP_DIV
+        OP_MOD
+        OP_BITWISEAND
+        OP_BITWISEOR
+        OP_BITWISEXOR
+        OP_MATCH
+        OP_SUB
+        OP_MAP
+        OP_LIST
+        OP_EQ
+        OP_NE
+        OP_GT
+        OP_LT
+        OP_GE
+        OP_LE
+        OP_AND
+        OP_OR
+        OP_NOT
+)
+
+type Expression struct {
+        Operation ExpressionOperationType
+        Args []*Expression
+        Value *Value
+}                        
+
+func MakeNameExpression(name string) *Expression <span class="cov8" title="1">{
+        return &amp;Expression {
+                Operation: OP_NAME,
+                Value: &amp;Value {
+                        Type:VAL_NAME,
+                        NameVal:name}}
+}</span>
+
+func MakeVarExpression(name string) *Expression <span class="cov8" title="1">{
+        return &amp;Expression {
+                Operation: OP_VAR,
+                Value: &amp;Value {
+                        Type:VAL_NAME,
+                        NameVal:name}}
+}</span>
+
+func (e *Expression) ToString() string <span class="cov8" title="1">{
+        if e.Operation == OP_VAR </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s", e.Value.ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_NAME </span><span class="cov8" title="1">{
+                return fmt.Sprintf("NAME(%s)", e.Value.NameVal)
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_MAPVAR </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s.%s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_LISTVAR </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s[%s]", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_NUM || e.Operation == OP_STRING </span><span class="cov8" title="1">{
+                return e.Value.ToString()
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_CALL </span><span class="cov0" title="0">{
+                return fmt.Sprintf("%s(%s)", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_UMINUS </span><span class="cov8" title="1">{
+                return fmt.Sprintf("-%s", e.Args[0].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_MAPGET </span><span class="cov0" title="0">{
+                return fmt.Sprintf("%s[%s]", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_LISTGET </span><span class="cov0" title="0">{
+                return fmt.Sprintf("%s[%s]", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_MAP </span><span class="cov8" title="1">{
+                fmt.Println("MA",e.Args,len(e.Args))
+                mapargs := make([]string, len(e.Args)/2)
+                for i := 0; i &lt; len(e.Args)/2; i++ </span><span class="cov8" title="1">{
+                        mapargs[i] = fmt.Sprintf("%s:%s", e.Args[2*i].ToString(), e.Args[2*i+1].ToString())
+                        fmt.Println("ma",mapargs[i])
+                }</span>
+                <span class="cov8" title="1">return fmt.Sprintf("{%s}",strings.Join(mapargs, ","))</span>
+        } else<span class="cov8" title="1"> if e.Operation == OP_LIST </span><span class="cov8" title="1">{
+                listargs := make([]string, len(e.Args))
+                for i := 0; i &lt; len(e.Args); i++ </span><span class="cov8" title="1">{
+                        listargs[i] = e.Args[i].ToString()
+                }</span>
+                <span class="cov8" title="1">return fmt.Sprintf("[%s]",strings.Join(listargs, ","))</span>
+        } else<span class="cov8" title="1"> if e.Operation == OP_PLUS </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s + %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_MINUS </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s - %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_MUL </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s * %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_DIV </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s / %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_MOD </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s %% %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_BITWISEAND </span><span class="cov0" title="0">{
+                return fmt.Sprintf("%s &amp; %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_BITWISEOR </span><span class="cov0" title="0">{
+                return fmt.Sprintf("%s | %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_BITWISEXOR </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s ^ %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_MATCH </span><span class="cov0" title="0">{
+                return fmt.Sprintf("%s ~ %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_SUB </span><span class="cov0" title="0">{
+                return fmt.Sprintf("%s ~~ %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_EQ </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s == %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_GT </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s &gt; %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_LT </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s &lt; %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_GE </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s &gt;= %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_LE </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s &lt;= %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_AND </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s &amp;&amp; %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_OR </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%s || %s", e.Args[0].ToString(), e.Args[1].ToString())
+        }</span> else<span class="cov8" title="1"> if e.Operation == OP_NOT </span><span class="cov8" title="1">{
+                return fmt.Sprintf("!%s", e.Args[0].ToString())
+        }</span>
+        
+        <span class="cov8" title="1">subexprs := ""
+        val := ""
+        if e.Args != nil </span><span class="cov8" title="1">{
+                subexprs_strings := make([]string, len(e.Args))
+                for i, es := range e.Args </span><span class="cov8" title="1">{
+                        subexprs_strings[i] = es.ToString()
+                }</span>
+                <span class="cov8" title="1">subexprs = strings.Join(subexprs_strings, ",")</span>
+        }
+        <span class="cov8" title="1">if e.Value != nil </span><span class="cov0" title="0">{
+                val = e.Value.ToString()
+        }</span>
+        <span class="cov8" title="1">return fmt.Sprintf("%d(%s;%s)",e.Operation, subexprs, val)</span>
+}
+
+func (e *Expression) TypeCheck() *Signature <span class="cov0" title="0">{
+        fmt.Println("TypeCheck",e.ToString(),"op",e.Operation)
+        arg_types := make([]ValueType, len(e.Args))
+        for i, a := range e.Args </span><span class="cov0" title="0">{
+                fmt.Println("checking arg",a.ToString())
+                sig := a.TypeCheck()
+                if sig == nil </span><span class="cov0" title="0">{
+                        return nil
+                }</span>
+                <span class="cov0" title="0">arg_types[i] = sig.ReturnType
+                fmt.Println("arg type",i,sig.ReturnType)</span>
+        }
+        
+        <span class="cov0" title="0">for _, sig := range ExpressionSignatures </span><span class="cov0" title="0">{
+                if e.Operation == sig.Operation </span><span class="cov0" title="0">{
+                        ok := true
+                        for i, a := range arg_types </span><span class="cov0" title="0">{
+                                if i &gt; len(sig.ArgTypes) || (sig.ArgTypes[i] != VAL_ANY &amp;&amp; a != VAL_ANY &amp;&amp; a != sig.ArgTypes[i]) </span><span class="cov0" title="0">{
+                                        ok = false
+                                }</span>
+                        }
+                        <span class="cov0" title="0">if ok </span><span class="cov0" title="0">{
+                                fmt.Println("FOUND SIG",arg_types,sig.ArgTypes)
+                                return sig
+                        }</span>
+                }
+        }
+        <span class="cov0" title="0">fmt.Println("No type for ",e.ToString())
+        return nil</span>
+}
+
+func (e *Expression) Evaluate(this *Value, vars map[string]*Value) (*Value, error) <span class="cov8" title="1">{
+        if e == nil </span><span class="cov0" title="0">{
+                return nil, errors.New("Invalid expression")
+        }</span>
+        <span class="cov8" title="1">fmt.Println("EVAL",e.ToString())
+        args := make([]*Value, len(e.Args))
+        local_vars := vars
+        var err error
+        var arg *Value
+        for i, a := range e.Args </span><span class="cov8" title="1">{
+                arg, err = a.Evaluate(this, local_vars)
+                if err != nil </span><span class="cov8" title="1">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">args[i] = arg</span>
+        }
+        <span class="cov8" title="1">fmt.Println("Searching signature",e.ToString())
+        sig := FindSignature(e.Operation, args)
+        if sig == nil </span><span class="cov8" title="1">{
+                return nil, errors.New("No valid type found for expression")
+        }</span>
+        <span class="cov8" title="1">ans, err := sig.Handler(this, local_vars, args, e.Value)
+        if ans != nil </span><span class="cov8" title="1">{
+                fmt.Println("EVALed",e.ToString(),"=",ans.ToString())
+        }</span> else<span class="cov8" title="1"> {
+                fmt.Println("EVALed",e.ToString(),"= nil")
+        }</span>
+        //fmt.Println("EVALed",e.ToString(),"=",ans.ToString())
+        <span class="cov8" title="1">return ans, err</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package router
+
+import (
+        "fmt"
+        "errors"
+)
+
+func CallHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov0" title="0">{
+        // TODO: error if called function does not exist
+        fmt.Println("CALL",args[0].NameVal)
+        return this.Clone(), nil
+}</span>
+func NameHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return primitive, nil
+}</span>
+func MapHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        // TODO: Error if odd number of args or if keys are not Type:"name"
+        mapval := make(map[string]*Value)
+        for i := 0; i &lt; len(args); i += 2 </span><span class="cov8" title="1">{
+                mapval[args[i].NameVal] = args[i+1]
+        }</span>
+        <span class="cov8" title="1">return &amp;Value{
+                Type:VAL_MAP,
+                MapVal: mapval}, nil</span>
+}
+func ListHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return &amp;Value{
+                Type:VAL_LIST,
+                ListVal: args}, nil
+}</span>
+func MapGetHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        item := args[1].NameVal
+        if v, ok := args[0].MapVal[item]; ok </span><span class="cov8" title="1">{
+                return v, nil
+        }</span>
+        <span class="cov8" title="1">return nil, errors.New(fmt.Sprintf("No such key %s found in map",item))</span>
+}
+func ListGetHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        idx := uint(args[1].NumVal)
+        if idx &gt;= uint(len(args[0].ListVal)) </span><span class="cov8" title="1">{
+                return nil, errors.New(fmt.Sprintf("Index out of bounds: %d", idx))
+        }</span>
+        <span class="cov8" title="1">return args[0].ListVal[idx], nil</span>
+}
+// func ExprHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
+//         return nil, nil, nil
+// }
+// func ValHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
+//         return nil, nil, nil
+// }
+func VarHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        fmt.Println("VAR Handler",primitive)
+        if primitive.NameVal == "this" </span><span class="cov0" title="0">{
+                return this, nil
+        }</span>
+        <span class="cov8" title="1">if this.Type == VAL_MAP </span><span class="cov8" title="1">{
+                if v, ok := this.MapVal[primitive.NameVal]; ok </span><span class="cov8" title="1">{
+                        return v, nil
+                }</span>
+        }
+        <span class="cov8" title="1">if v, ok := local_vars[primitive.NameVal]; ok </span><span class="cov0" title="0">{
+                return v, nil
+        }</span>
+        <span class="cov8" title="1">return nil, errors.New(fmt.Sprintf("No such variable: %s",primitive.NameVal))</span>
+}
+func NumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeFloatValue(primitive.NumVal), nil
+}</span>
+func StringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeStringValue(primitive.StringVal), nil
+}</span>
+func UnaryMinusNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov0" title="0">{
+        return MakeFloatValue(-args[0].NumVal), nil
+}</span>
+func AddNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeFloatValue(args[0].NumVal + args[1].NumVal), nil
+}</span>
+func AddStringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov0" title="0">{
+        return MakeStringValue(args[0].StringVal + args[1].StringVal), nil
+}</span>
+func SubNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeFloatValue(args[0].NumVal - args[1].NumVal), nil
+}</span>
+func MulNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeFloatValue(args[0].NumVal * args[1].NumVal), nil
+}</span>
+func MulStringNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        ans := args[0].StringVal
+        // TODO: error if count &lt; 0 or count is not int
+        for i := 1; uint(i) &lt; uint(args[1].NumVal); i++ </span><span class="cov8" title="1">{
+                ans += args[0].StringVal
+        }</span>
+        <span class="cov8" title="1">return MakeStringValue(ans), nil</span>
+}
+func DivNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        // TODO: error arg[1] == 0
+        return MakeFloatValue(args[0].NumVal / args[1].NumVal), nil
+}</span>
+func ModNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeFloatValue(float64(int(args[0].NumVal) % int(args[1].NumVal))), nil
+}</span>
+func XorNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov0" title="0">{
+        return MakeFloatValue(float64(int(args[0].NumVal) ^ int(args[1].NumVal))), nil
+}</span>
+func AndNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov0" title="0">{
+        return MakeFloatValue(float64(int(args[0].NumVal) &amp; int(args[1].NumVal))), nil
+}</span>
+func OrNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov0" title="0">{
+        return MakeFloatValue(float64(int(args[0].NumVal) | int(args[1].NumVal))), nil
+}</span>
+func LtNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeBoolValue(args[0].NumVal &lt; args[1].NumVal), nil
+}</span>
+func LtStringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov0" title="0">{
+        return MakeBoolValue(args[0].StringVal &lt; args[1].StringVal), nil
+}</span>
+func GtNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeBoolValue(args[0].NumVal &gt; args[1].NumVal), nil
+}</span>
+func GtStringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov0" title="0">{
+        return MakeBoolValue(args[0].StringVal &gt; args[1].StringVal), nil
+}</span>
+func EqNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov0" title="0">{
+        return MakeBoolValue(args[0].NumVal == args[1].NumVal), nil
+}</span>
+func EqStringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeBoolValue(args[0].StringVal == args[1].StringVal), nil
+}</span>
+func NeNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov0" title="0">{
+        return MakeBoolValue(args[0].NumVal != args[1].NumVal), nil
+}</span>
+func NeStringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeBoolValue(args[0].StringVal != args[1].StringVal), nil
+}</span>
+func LeqNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeBoolValue(args[0].NumVal &lt;= args[1].NumVal), nil
+}</span>
+func LeqStringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov0" title="0">{
+        return MakeBoolValue(args[0].StringVal &lt;= args[1].StringVal), nil
+}</span>
+func GeqNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeBoolValue(args[0].NumVal &gt;= args[1].NumVal), nil
+}</span>
+func GeqStringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov0" title="0">{
+        return MakeBoolValue(args[0].StringVal &gt;= args[1].StringVal), nil
+}</span>
+func OrBoolHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeBoolValue(args[0].BoolVal || args[1].BoolVal), nil
+}</span>
+func AndBoolHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeBoolValue(args[0].BoolVal &amp;&amp; args[1].BoolVal), nil
+}</span>
+func NotBoolHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) <span class="cov8" title="1">{
+        return MakeBoolValue(!args[0].BoolVal), nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package router
+
+import (
+        "fmt"
+)
+
+type RouteLexer struct {
+        s *RouteScanner
+        result []*Route
+}
+
+func (l *RouteLexer) Lex(lval *yySymType) int <span class="cov8" title="1">{
+        tok, lit, pos := l.s.Scan()
+        if tok == EOF </span><span class="cov8" title="1">{
+                return 0
+        }</span>
+        <span class="cov8" title="1">lval.token = Token{token: tok, literal: lit, position: pos}
+        fmt.Println("Lexed",tok,lit,pos)
+        return tok</span>
+}
+
+func (l *RouteLexer) Error(e string) <span class="cov0" title="0">{
+        fmt.Println("ERROR",e)
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package router
+
+import (
+        "fmt"
+)
+
+type Node struct {
+        Name string
+        Group string
+        Handle func(map[string]string, map[string]interface{})
+}
+
+func (n *Node) ToString() string <span class="cov0" title="0">{
+        return fmt.Sprintf("%s/%s", n.Group, n.Name)
+}</span>
+
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">
+
+
+package router
+
+import __yyfmt__ "fmt"
+
+
+import (
+        "strconv"
+        //"fmt"
+)
+
+type Token struct {
+        token    int
+        literal  string
+        position Position
+}
+
+
+type yySymType struct {
+        yys        int
+        token      Token
+        routes     []*Route
+        transforms *Route
+        transform  *Transform
+        expression *Expression
+        statement  *Statement
+        writeable  *WriteableValue
+        script     []*Statement
+        node       *Node
+}
+
+const IDENT = 57346
+const VAR = 57347
+const NUMBER = 57348
+const STRING = 57349
+const THIS = 57350
+const AND = 57351
+const OR = 57352
+const EQ = 57353
+const NE = 57354
+const LE = 57355
+const GE = 57356
+const PE = 57357
+const ME = 57358
+const TE = 57359
+const DE = 57360
+const RE = 57361
+const XE = 57362
+const SUB = 57363
+const UNARY = 57364
+
+var yyToknames = [...]string{
+        "$end",
+        "error",
+        "$unk",
+        "IDENT",
+        "VAR",
+        "NUMBER",
+        "STRING",
+        "THIS",
+        "AND",
+        "OR",
+        "EQ",
+        "NE",
+        "LE",
+        "GE",
+        "PE",
+        "ME",
+        "TE",
+        "DE",
+        "RE",
+        "XE",
+        "SUB",
+        "'?'",
+        "'%'",
+        "'='",
+        "'{'",
+        "'}'",
+        "'['",
+        "']'",
+        "'&lt;'",
+        "'&gt;'",
+        "':'",
+        "'+'",
+        "'-'",
+        "'*'",
+        "'/'",
+        "'&amp;'",
+        "'|'",
+        "'^'",
+        "'!'",
+        "'~'",
+        "UNARY",
+        "'.'",
+        "';'",
+        "'('",
+        "')'",
+        "','",
+}
+var yyStatenames = [...]string{}
+
+const yyEofCode = 1
+const yyErrCode = 2
+const yyInitialStackSize = 16
+
+
+
+func Parse(exp string) []*Route <span class="cov8" title="1">{
+        l := new(RouteLexer)
+        l.s = new(RouteScanner)
+        l.s.Init(exp)
+        //l.Init(strings.NewReader(exp))
+        yyParse(l)
+        return l.result
+}</span>
+
+
+var yyExca = [...]int{
+        -1, 1,
+        1, -1,
+        -2, 0,
+}
+
+const yyPrivate = 57344
+
+const yyLast = 579
+
+var yyAct = [...]int{
+
+        38, 61, 33, 60, 116, 62, 69, 70, 71, 72,
+        73, 6, 77, 3, 58, 68, 48, 99, 74, 23,
+        58, 5, 4, 129, 16, 128, 59, 43, 44, 57,
+        98, 63, 64, 75, 65, 57, 76, 67, 66, 14,
+        113, 112, 19, 80, 81, 82, 83, 84, 85, 86,
+        87, 88, 89, 90, 91, 92, 93, 94, 95, 27,
+        97, 24, 28, 78, 79, 39, 101, 18, 17, 8,
+        103, 104, 105, 106, 107, 108, 109, 3, 110, 111,
+        25, 48, 26, 36, 96, 58, 22, 37, 29, 3,
+        41, 42, 43, 44, 32, 10, 11, 12, 15, 30,
+        57, 34, 31, 35, 115, 9, 53, 54, 49, 50,
+        52, 51, 1, 0, 126, 125, 0, 0, 0, 0,
+        48, 0, 0, 0, 58, 127, 56, 55, 0, 41,
+        42, 43, 44, 45, 46, 47, 2, 0, 0, 57,
+        0, 7, 13, 124, 53, 54, 49, 50, 52, 51,
+        0, 20, 0, 21, 0, 0, 0, 0, 48, 0,
+        0, 0, 58, 0, 56, 55, 0, 41, 42, 43,
+        44, 45, 46, 47, 0, 0, 0, 57, 0, 0,
+        0, 100, 53, 54, 49, 50, 52, 51, 0, 0,
+        0, 0, 0, 0, 0, 0, 48, 0, 0, 0,
+        58, 0, 56, 55, 0, 41, 42, 43, 44, 45,
+        46, 47, 0, 0, 0, 57, 0, 0, 102, 53,
+        54, 49, 50, 52, 51, 0, 0, 0, 0, 0,
+        0, 0, 0, 48, 0, 0, 0, 58, 0, 56,
+        55, 0, 41, 42, 43, 44, 45, 46, 47, 0,
+        0, 0, 57, 122, 53, 54, 49, 50, 52, 51,
+        0, 0, 0, 0, 0, 0, 0, 0, 48, 0,
+        0, 0, 58, 0, 56, 55, 0, 41, 42, 43,
+        44, 45, 46, 47, 0, 0, 0, 57, 121, 53,
+        54, 49, 50, 52, 51, 0, 0, 0, 0, 0,
+        0, 0, 0, 48, 0, 0, 0, 58, 0, 56,
+        55, 0, 41, 42, 43, 44, 45, 46, 47, 0,
+        0, 0, 57, 120, 53, 54, 49, 50, 52, 51,
+        0, 0, 0, 0, 0, 0, 0, 0, 48, 0,
+        0, 0, 58, 0, 56, 55, 0, 41, 42, 43,
+        44, 45, 46, 47, 0, 0, 0, 57, 119, 53,
+        54, 49, 50, 52, 51, 0, 0, 0, 0, 0,
+        0, 0, 0, 48, 0, 0, 0, 58, 0, 56,
+        55, 0, 41, 42, 43, 44, 45, 46, 47, 0,
+        0, 0, 57, 118, 53, 54, 49, 50, 52, 51,
+        0, 0, 0, 0, 0, 0, 0, 0, 48, 0,
+        0, 0, 58, 0, 56, 55, 0, 41, 42, 43,
+        44, 45, 46, 47, 0, 0, 0, 57, 117, 53,
+        54, 49, 50, 52, 51, 0, 0, 0, 0, 0,
+        0, 0, 0, 48, 0, 0, 0, 58, 123, 56,
+        55, 0, 41, 42, 43, 44, 45, 46, 47, 0,
+        0, 0, 57, 53, 54, 49, 50, 52, 51, 0,
+        0, 0, 0, 0, 0, 0, 0, 48, 0, 0,
+        0, 58, 114, 56, 55, 0, 41, 42, 43, 44,
+        45, 46, 47, 0, 0, 0, 57, 53, 54, 49,
+        50, 52, 51, 0, 0, 0, 0, 0, 0, 0,
+        0, 48, 0, 0, 40, 58, 0, 56, 55, 0,
+        41, 42, 43, 44, 45, 46, 47, 0, 0, 0,
+        57, 49, 50, 52, 51, 0, 0, 0, 0, 0,
+        0, 0, 0, 48, 0, 0, 0, 58, 0, 56,
+        55, 0, 41, 42, 43, 44, 45, 46, 47, 48,
+        0, 0, 57, 58, 0, 0, 0, 0, 41, 42,
+        43, 44, 45, 46, 47, 0, 0, 0, 57,
+}
+var yyPact = [...]int{
+
+        85, -1000, -8, -24, 73, 9, 94, -1000, -1000, -6,
+        43, 42, 17, -1000, 85, -1000, 73, 55, 79, 61,
+        -1000, -1000, -1000, 488, -1000, 61, 55, -39, -1000, 55,
+        55, -1000, 55, 12, 79, -9, -1000, -1000, 10, -19,
+        40, 55, 55, 55, 55, 55, 55, 55, 55, 55,
+        55, 55, 55, 55, 55, 55, 55, 80, 55, 4,
+        -11, 135, 55, -13, 173, -13, -1000, -1000, 55, 55,
+        55, 55, 55, 55, 55, 74, -1000, 55, 16, 15,
+        -7, -7, -13, -13, 58, 58, 58, -13, 536, 536,
+        536, 536, 520, 520, 536, 536, -1000, 454, -1000, -1000,
+        55, -41, -1000, 385, 350, 315, 280, 245, 210, 420,
+        -1000, 97, 79, 61, -1000, -1000, -1000, -1000, -1000, -1000,
+        -1000, -1000, -1000, -1000, 61, -1, -3, -1000, -1000, -1000,
+}
+var yyPgo = [...]int{
+
+        0, 112, 136, 69, 105, 2, 103, 102, 101, 1,
+        0, 3,
+}
+var yyR1 = [...]int{
+
+        0, 1, 1, 1, 1, 2, 2, 3, 3, 4,
+        4, 4, 4, 4, 5, 5, 8, 8, 8, 8,
+        8, 8, 9, 9, 9, 9, 9, 9, 9, 9,
+        9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
+        9, 9, 9, 9, 9, 9, 9, 10, 10, 11,
+        11, 7, 7, 7, 6, 6, 6, 6,
+}
+var yyR2 = [...]int{
+
+        0, 3, 3, 4, 3, 1, 3, 3, 3, 4,
+        4, 4, 8, 8, 1, 2, 4, 4, 4, 4,
+        4, 4, 1, 3, 3, 4, 1, 2, 3, 1,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 3, 2, 3, 3, 3, 5, 1,
+        3, 3, 4, 1, 1, 1, 4, 3,
+}
+var yyChk = [...]int{
+
+        -1000, -1, -2, 4, 30, 29, 35, -2, -3, -4,
+        22, 23, 24, -2, 30, 4, 30, 25, 25, 25,
+        -2, -2, -3, -9, 6, 25, 27, 4, 7, 33,
+        44, -7, 39, -5, -8, -6, 4, 8, -10, 4,
+        26, 32, 33, 34, 35, 36, 37, 38, 23, 11,
+        12, 14, 13, 9, 10, 30, 29, 42, 27, -10,
+        -11, -9, 44, -9, -9, -9, 26, -5, 24, 15,
+        16, 17, 18, 19, 27, 42, 26, 31, 23, 24,
+        -9, -9, -9, -9, -9, -9, -9, -9, -9, -9,
+        -9, -9, -9, -9, -9, -9, 4, -9, 26, 28,
+        46, -11, 45, -9, -9, -9, -9, -9, -9, -9,
+        4, -9, 25, 25, 28, -11, 45, 43, 43, 43,
+        43, 43, 43, 28, 46, -5, -10, -10, 26, 26,
+}
+var yyDef = [...]int{
+
+        0, -2, 0, 5, 0, 0, 0, 1, 4, 0,
+        0, 0, 0, 2, 0, 6, 0, 0, 0, 0,
+        3, 7, 8, 0, 22, 0, 0, 53, 26, 0,
+        0, 29, 0, 0, 14, 0, 54, 55, 0, 0,
+        9, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 49, 0, 27, 0, 44, 10, 15, 0, 0,
+        0, 0, 0, 0, 0, 0, 11, 0, 0, 0,
+        30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+        40, 41, 42, 43, 45, 46, 51, 0, 23, 24,
+        0, 0, 28, 0, 0, 0, 0, 0, 0, 0,
+        57, 47, 0, 0, 52, 50, 25, 16, 17, 18,
+        19, 20, 21, 56, 0, 0, 0, 48, 12, 13,
+}
+var yyTok1 = [...]int{
+
+        1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 39, 3, 3, 3, 23, 36, 3,
+        44, 45, 34, 32, 46, 33, 42, 35, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 31, 43,
+        29, 24, 30, 22, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 27, 3, 28, 38, 3, 3, 3, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 25, 37, 26, 40,
+}
+var yyTok2 = [...]int{
+
+        2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+        12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+        41,
+}
+var yyTok3 = [...]int{
+        0,
+}
+
+var yyErrorMessages = [...]struct {
+        state int
+        token int
+        msg   string
+}{}
+
+
+
+/*        parser for yacc output        */
+
+var (
+        yyDebug        = 0
+        yyErrorVerbose = false
+)
+
+type yyLexer interface {
+        Lex(lval *yySymType) int
+        Error(s string)
+}
+
+type yyParser interface {
+        Parse(yyLexer) int
+        Lookahead() int
+}
+
+type yyParserImpl struct {
+        lval  yySymType
+        stack [yyInitialStackSize]yySymType
+        char  int
+}
+
+func (p *yyParserImpl) Lookahead() int <span class="cov0" title="0">{
+        return p.char
+}</span>
+
+func yyNewParser() yyParser <span class="cov8" title="1">{
+        return &amp;yyParserImpl{}
+}</span>
+
+const yyFlag = -1000
+
+func yyTokname(c int) string <span class="cov0" title="0">{
+        if c &gt;= 1 &amp;&amp; c-1 &lt; len(yyToknames) </span><span class="cov0" title="0">{
+                if yyToknames[c-1] != "" </span><span class="cov0" title="0">{
+                        return yyToknames[c-1]
+                }</span>
+        }
+        <span class="cov0" title="0">return __yyfmt__.Sprintf("tok-%v", c)</span>
+}
+
+func yyStatname(s int) string <span class="cov0" title="0">{
+        if s &gt;= 0 &amp;&amp; s &lt; len(yyStatenames) </span><span class="cov0" title="0">{
+                if yyStatenames[s] != "" </span><span class="cov0" title="0">{
+                        return yyStatenames[s]
+                }</span>
+        }
+        <span class="cov0" title="0">return __yyfmt__.Sprintf("state-%v", s)</span>
+}
+
+func yyErrorMessage(state, lookAhead int) string <span class="cov0" title="0">{
+        const TOKSTART = 4
+
+        if !yyErrorVerbose </span><span class="cov0" title="0">{
+                return "syntax error"
+        }</span>
+
+        <span class="cov0" title="0">for _, e := range yyErrorMessages </span><span class="cov0" title="0">{
+                if e.state == state &amp;&amp; e.token == lookAhead </span><span class="cov0" title="0">{
+                        return "syntax error: " + e.msg
+                }</span>
+        }
+
+        <span class="cov0" title="0">res := "syntax error: unexpected " + yyTokname(lookAhead)
+
+        // To match Bison, suggest at most four expected tokens.
+        expected := make([]int, 0, 4)
+
+        // Look for shiftable tokens.
+        base := yyPact[state]
+        for tok := TOKSTART; tok-1 &lt; len(yyToknames); tok++ </span><span class="cov0" title="0">{
+                if n := base + tok; n &gt;= 0 &amp;&amp; n &lt; yyLast &amp;&amp; yyChk[yyAct[n]] == tok </span><span class="cov0" title="0">{
+                        if len(expected) == cap(expected) </span><span class="cov0" title="0">{
+                                return res
+                        }</span>
+                        <span class="cov0" title="0">expected = append(expected, tok)</span>
+                }
+        }
+
+        <span class="cov0" title="0">if yyDef[state] == -2 </span><span class="cov0" title="0">{
+                i := 0
+                for yyExca[i] != -1 || yyExca[i+1] != state </span><span class="cov0" title="0">{
+                        i += 2
+                }</span>
+
+                // Look for tokens that we accept or reduce.
+                <span class="cov0" title="0">for i += 2; yyExca[i] &gt;= 0; i += 2 </span><span class="cov0" title="0">{
+                        tok := yyExca[i]
+                        if tok &lt; TOKSTART || yyExca[i+1] == 0 </span><span class="cov0" title="0">{
+                                continue</span>
+                        }
+                        <span class="cov0" title="0">if len(expected) == cap(expected) </span><span class="cov0" title="0">{
+                                return res
+                        }</span>
+                        <span class="cov0" title="0">expected = append(expected, tok)</span>
+                }
+
+                // If the default action is to accept or reduce, give up.
+                <span class="cov0" title="0">if yyExca[i+1] != 0 </span><span class="cov0" title="0">{
+                        return res
+                }</span>
+        }
+
+        <span class="cov0" title="0">for i, tok := range expected </span><span class="cov0" title="0">{
+                if i == 0 </span><span class="cov0" title="0">{
+                        res += ", expecting "
+                }</span> else<span class="cov0" title="0"> {
+                        res += " or "
+                }</span>
+                <span class="cov0" title="0">res += yyTokname(tok)</span>
+        }
+        <span class="cov0" title="0">return res</span>
+}
+
+func yylex1(lex yyLexer, lval *yySymType) (char, token int) <span class="cov8" title="1">{
+        token = 0
+        char = lex.Lex(lval)
+        if char &lt;= 0 </span><span class="cov8" title="1">{
+                token = yyTok1[0]
+                goto out</span>
+        }
+        <span class="cov8" title="1">if char &lt; len(yyTok1) </span><span class="cov8" title="1">{
+                token = yyTok1[char]
+                goto out</span>
+        }
+        <span class="cov8" title="1">if char &gt;= yyPrivate </span><span class="cov8" title="1">{
+                if char &lt; yyPrivate+len(yyTok2) </span><span class="cov8" title="1">{
+                        token = yyTok2[char-yyPrivate]
+                        goto out</span>
+                }
+        }
+        <span class="cov0" title="0">for i := 0; i &lt; len(yyTok3); i += 2 </span><span class="cov0" title="0">{
+                token = yyTok3[i+0]
+                if token == char </span><span class="cov0" title="0">{
+                        token = yyTok3[i+1]
+                        goto out</span>
+                }
+        }
+
+out:
+        <span class="cov8" title="1">if token == 0 </span><span class="cov0" title="0">{
+                token = yyTok2[1] /* unknown char */
+        }</span>
+        <span class="cov8" title="1">if yyDebug &gt;= 3 </span><span class="cov0" title="0">{
+                __yyfmt__.Printf("lex %s(%d)\n", yyTokname(token), uint(char))
+        }</span>
+        <span class="cov8" title="1">return char, token</span>
+}
+
+func yyParse(yylex yyLexer) int <span class="cov8" title="1">{
+        return yyNewParser().Parse(yylex)
+}</span>
+
+func (yyrcvr *yyParserImpl) Parse(yylex yyLexer) int <span class="cov8" title="1">{
+        var yyn int
+        var yyVAL yySymType
+        var yyDollar []yySymType
+        _ = yyDollar // silence set and not used
+        yyS := yyrcvr.stack[:]
+
+        Nerrs := 0   /* number of errors */
+        Errflag := 0 /* error recovery flag */
+        yystate := 0
+        yyrcvr.char = -1
+        yytoken := -1 // yyrcvr.char translated into internal numbering
+        defer func() </span><span class="cov8" title="1">{
+                // Make sure we report no lookahead when not parsing.
+                yystate = -1
+                yyrcvr.char = -1
+                yytoken = -1
+        }</span>()
+        <span class="cov8" title="1">yyp := -1
+        goto yystack</span>
+
+ret0:
+        <span class="cov8" title="1">return 0
+
+</span>ret1:
+        <span class="cov0" title="0">return 1
+
+</span>yystack:
+        /* put a state and value onto the stack */
+        <span class="cov8" title="1">if yyDebug &gt;= 4 </span><span class="cov0" title="0">{
+                __yyfmt__.Printf("char %v in %v\n", yyTokname(yytoken), yyStatname(yystate))
+        }</span>
+
+        <span class="cov8" title="1">yyp++
+        if yyp &gt;= len(yyS) </span><span class="cov8" title="1">{
+                nyys := make([]yySymType, len(yyS)*2)
+                copy(nyys, yyS)
+                yyS = nyys
+        }</span>
+        <span class="cov8" title="1">yyS[yyp] = yyVAL
+        yyS[yyp].yys = yystate
+
+</span>yynewstate:
+        <span class="cov8" title="1">yyn = yyPact[yystate]
+        if yyn &lt;= yyFlag </span><span class="cov8" title="1">{
+                goto yydefault</span> /* simple state */
+        }
+        <span class="cov8" title="1">if yyrcvr.char &lt; 0 </span><span class="cov8" title="1">{
+                yyrcvr.char, yytoken = yylex1(yylex, &amp;yyrcvr.lval)
+        }</span>
+        <span class="cov8" title="1">yyn += yytoken
+        if yyn &lt; 0 || yyn &gt;= yyLast </span><span class="cov8" title="1">{
+                goto yydefault</span>
+        }
+        <span class="cov8" title="1">yyn = yyAct[yyn]
+        if yyChk[yyn] == yytoken </span><span class="cov8" title="1">{ /* valid shift */
+                yyrcvr.char = -1
+                yytoken = -1
+                yyVAL = yyrcvr.lval
+                yystate = yyn
+                if Errflag &gt; 0 </span><span class="cov0" title="0">{
+                        Errflag--
+                }</span>
+                <span class="cov8" title="1">goto yystack</span>
+        }
+
+yydefault:
+        /* default state action */
+        <span class="cov8" title="1">yyn = yyDef[yystate]
+        if yyn == -2 </span><span class="cov8" title="1">{
+                if yyrcvr.char &lt; 0 </span><span class="cov0" title="0">{
+                        yyrcvr.char, yytoken = yylex1(yylex, &amp;yyrcvr.lval)
+                }</span>
+
+                /* look through exception table */
+                <span class="cov8" title="1">xi := 0
+                for </span><span class="cov8" title="1">{
+                        if yyExca[xi+0] == -1 &amp;&amp; yyExca[xi+1] == yystate </span><span class="cov8" title="1">{
+                                break</span>
+                        }
+                        <span class="cov0" title="0">xi += 2</span>
+                }
+                <span class="cov8" title="1">for xi += 2; ; xi += 2 </span><span class="cov8" title="1">{
+                        yyn = yyExca[xi+0]
+                        if yyn &lt; 0 || yyn == yytoken </span><span class="cov8" title="1">{
+                                break</span>
+                        }
+                }
+                <span class="cov8" title="1">yyn = yyExca[xi+1]
+                if yyn &lt; 0 </span><span class="cov8" title="1">{
+                        goto ret0</span>
+                }
+        }
+        <span class="cov8" title="1">if yyn == 0 </span><span class="cov0" title="0">{
+                /* error ... attempt to resume parsing */
+                switch Errflag </span>{
+                case 0:<span class="cov0" title="0"> /* brand new error */
+                        yylex.Error(yyErrorMessage(yystate, yytoken))
+                        Nerrs++
+                        if yyDebug &gt;= 1 </span><span class="cov0" title="0">{
+                                __yyfmt__.Printf("%s", yyStatname(yystate))
+                                __yyfmt__.Printf(" saw %s\n", yyTokname(yytoken))
+                        }</span>
+                        <span class="cov0" title="0">fallthrough</span>
+
+                case 1, 2:<span class="cov0" title="0"> /* incompletely recovered error ... try again */
+                        Errflag = 3
+
+                        /* find a state where "error" is a legal shift action */
+                        for yyp &gt;= 0 </span><span class="cov0" title="0">{
+                                yyn = yyPact[yyS[yyp].yys] + yyErrCode
+                                if yyn &gt;= 0 &amp;&amp; yyn &lt; yyLast </span><span class="cov0" title="0">{
+                                        yystate = yyAct[yyn] /* simulate a shift of "error" */
+                                        if yyChk[yystate] == yyErrCode </span><span class="cov0" title="0">{
+                                                goto yystack</span>
+                                        }
+                                }
+
+                                /* the current p has no shift on "error", pop stack */
+                                <span class="cov0" title="0">if yyDebug &gt;= 2 </span><span class="cov0" title="0">{
+                                        __yyfmt__.Printf("error recovery pops state %d\n", yyS[yyp].yys)
+                                }</span>
+                                <span class="cov0" title="0">yyp--</span>
+                        }
+                        /* there is no state on the stack with an error shift ... abort */
+                        <span class="cov0" title="0">goto ret1</span>
+
+                case 3:<span class="cov0" title="0"> /* no shift yet; clobber input char */
+                        if yyDebug &gt;= 2 </span><span class="cov0" title="0">{
+                                __yyfmt__.Printf("error recovery discards %s\n", yyTokname(yytoken))
+                        }</span>
+                        <span class="cov0" title="0">if yytoken == yyEofCode </span><span class="cov0" title="0">{
+                                goto ret1</span>
+                        }
+                        <span class="cov0" title="0">yyrcvr.char = -1
+                        yytoken = -1
+                        goto yynewstate</span> /* try again in the same state */
+                }
+        }
+
+        /* reduction by production yyn */
+        <span class="cov8" title="1">if yyDebug &gt;= 2 </span><span class="cov0" title="0">{
+                __yyfmt__.Printf("reduce %v in:\n\t%v\n", yyn, yyStatname(yystate))
+        }</span>
+
+        <span class="cov8" title="1">yynt := yyn
+        yypt := yyp
+        _ = yypt // guard against "declared and not used"
+
+        yyp -= yyR2[yyn]
+        // yyp is now the index of $0. Perform the default action. Iff the
+        // reduced production is ε, $1 is possibly out of range.
+        if yyp+1 &gt;= len(yyS) </span><span class="cov0" title="0">{
+                nyys := make([]yySymType, len(yyS)*2)
+                copy(nyys, yyS)
+                yyS = nyys
+        }</span>
+        <span class="cov8" title="1">yyVAL = yyS[yyp+1]
+
+        /* consult goto table to find next state */
+        yyn = yyR1[yyn]
+        yyg := yyPgo[yyn]
+        yyj := yyg + yyS[yyp].yys + 1
+
+        if yyj &gt;= yyLast </span><span class="cov0" title="0">{
+                yystate = yyAct[yyg]
+        }</span> else<span class="cov8" title="1"> {
+                yystate = yyAct[yyj]
+                if yyChk[yystate] != -yyn </span><span class="cov8" title="1">{
+                        yystate = yyAct[yyg]
+                }</span>
+        }
+        // dummy call; replaced with literal code
+        <span class="cov8" title="1">switch yynt </span>{
+
+        case 1:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        // fmt.Println("C")
+                        yyVAL.routes = nil
+                        if l, ok := yylex.(*RouteLexer); ok </span><span class="cov8" title="1">{
+                                l.result = []*Route{&amp;Route{Source: yyDollar[1].node.Name, Dest: yyDollar[3].node.Name}}
+                        }</span>
+                }
+        case 2:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        // fmt.Println("B")
+                        yyVAL.routes = nil
+                        if l, ok := yylex.(*RouteLexer); ok </span><span class="cov8" title="1">{
+                                l.result = []*Route{&amp;Route{Source: yyDollar[3].node.Name, Dest: yyDollar[1].node.Name}}
+                        }</span>
+                }
+        case 3:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-4 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.routes = nil
+                        if l, ok := yylex.(*RouteLexer); ok </span><span class="cov8" title="1">{
+                                l.result = []*Route{
+                                        &amp;Route{Source: yyDollar[1].node.Name, Dest: yyDollar[4].node.Name},
+                                        &amp;Route{Source: yyDollar[4].node.Name, Dest: yyDollar[1].node.Name}}
+                        }</span>
+                }
+        case 4:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.routes = nil
+                        // fmt.Println("A")
+                        if l, ok := yylex.(*RouteLexer); ok </span><span class="cov8" title="1">{
+                                l.result = []*Route{
+                                        &amp;Route{
+                                                Source:     yyDollar[1].node.Name,
+                                                Dest:       yyDollar[3].transforms.Dest,
+                                                Transforms: yyDollar[3].transforms.Transforms}}
+                        }</span>
+                }
+        case 5:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-1 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.node = &amp;Node{Name: yyDollar[1].token.literal}
+                }</span>
+        case 6:<span class="cov0" title="0">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov0" title="0">{
+                        yyVAL.node = &amp;Node{Group: yyDollar[1].token.literal, Name: yyDollar[3].token.literal}
+                }</span>
+        case 7:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.transforms = &amp;Route{
+                                Dest:       yyDollar[3].node.Name,
+                                Transforms: []*Transform{yyDollar[1].transform}}
+                }</span>
+        case 8:<span class="cov0" title="0">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov0" title="0">{
+                        yyVAL.transforms = &amp;Route{
+                                Dest:       yyDollar[3].transforms.Dest,
+                                Transforms: append([]*Transform{yyDollar[1].transform}, yyDollar[3].transforms.Transforms...)}
+                }</span>
+        case 9:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-4 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.transform = &amp;Transform{
+                                Type:      TR_FILTER,
+                                Condition: yyDollar[3].expression}
+                }</span>
+        case 10:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-4 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.transform = &amp;Transform{
+                                Type:   TR_EDIT,
+                                Script: yyDollar[3].script}
+                }</span>
+        case 11:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-4 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.transform = &amp;Transform{
+                                Type:    TR_REPLACE,
+                                Replace: yyDollar[3].expression}
+                }</span>
+        case 12:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-8 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.transform = &amp;Transform{
+                                Type:      TR_COND_EDIT,
+                                Condition: yyDollar[3].expression,
+                                Script:    yyDollar[7].script}
+                }</span>
+        case 13:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-8 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.transform = &amp;Transform{
+                                Type:      TR_COND_REPLACE,
+                                Condition: yyDollar[3].expression,
+                                Replace:   yyDollar[7].expression}
+                }</span>
+        case 14:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-1 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.script = []*Statement{yyDollar[1].statement}
+                }</span>
+        case 15:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-2 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.script = append([]*Statement{yyDollar[1].statement}, yyDollar[2].script...)
+                }</span>
+        case 16:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-4 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.statement = MakeAssignment(yyDollar[1].writeable, yyDollar[3].expression)
+                }</span>
+        case 17:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-4 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.statement = MakeAssignment(yyDollar[1].writeable, &amp;Expression{
+                                Operation: OP_PLUS,
+                                Args:      []*Expression{yyDollar[1].writeable.ToExpression(), yyDollar[3].expression}})
+                }</span>
+        case 18:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-4 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.statement = MakeAssignment(yyDollar[1].writeable, &amp;Expression{
+                                Operation: OP_MINUS,
+                                Args:      []*Expression{yyDollar[1].writeable.ToExpression(), yyDollar[3].expression}})
+                }</span>
+        case 19:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-4 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.statement = MakeAssignment(yyDollar[1].writeable, &amp;Expression{
+                                Operation: OP_MUL,
+                                Args:      []*Expression{yyDollar[1].writeable.ToExpression(), yyDollar[3].expression}})
+                }</span>
+        case 20:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-4 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.statement = MakeAssignment(yyDollar[1].writeable, &amp;Expression{
+                                Operation: OP_DIV,
+                                Args:      []*Expression{yyDollar[1].writeable.ToExpression(), yyDollar[3].expression}})
+                }</span>
+        case 21:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-4 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.statement = MakeAssignment(yyDollar[1].writeable, &amp;Expression{
+                                Operation: OP_MOD,
+                                Args:      []*Expression{yyDollar[1].writeable.ToExpression(), yyDollar[3].expression}})
+                }</span>
+        case 22:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-1 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        x, _ := strconv.Atoi(yyDollar[1].token.literal)
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_NUM,
+                                Value:     &amp;Value{Type: VAL_NUM, NumVal: float64(x)}}
+                }</span>
+        case 23:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = yyDollar[2].expression
+                }</span>
+        case 24:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = yyDollar[2].expression
+                }</span>
+        case 25:<span class="cov0" title="0">
+                yyDollar = yyS[yypt-4 : yypt+1]
+
+                </span><span class="cov0" title="0">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_CALL,
+                                Args: []*Expression{
+                                        MakeNameExpression(yyDollar[1].token.literal),
+                                        yyDollar[3].expression}}
+                }</span>
+        case 26:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-1 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_STRING,
+                                Value:     &amp;Value{Type: VAL_STRING, StringVal: yyDollar[1].token.literal}}
+                }</span>
+        case 27:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-2 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_UMINUS,
+                                Args:      []*Expression{yyDollar[2].expression}}
+                }</span>
+        case 28:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = yyDollar[2].expression
+                }</span>
+        case 29:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-1 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = yyDollar[1].expression
+                }</span>
+        case 30:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_PLUS,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 31:<span class="cov0" title="0">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov0" title="0">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_MINUS,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 32:<span class="cov0" title="0">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov0" title="0">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_MUL,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 33:<span class="cov0" title="0">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov0" title="0">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_DIV,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 34:<span class="cov0" title="0">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov0" title="0">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_BITWISEAND,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 35:<span class="cov0" title="0">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov0" title="0">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_BITWISEOR,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 36:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_BITWISEXOR,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 37:<span class="cov0" title="0">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov0" title="0">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_MOD,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 38:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_EQ,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 39:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_NE,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 40:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_GE,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 41:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_LE,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 42:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_AND,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 43:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_OR,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 44:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-2 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_NOT,
+                                Args:      []*Expression{yyDollar[2].expression}}
+                }</span>
+        case 45:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_GT,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 46:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_LT,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 47:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_MAP,
+                                Args: []*Expression{
+                                        MakeNameExpression(yyDollar[1].token.literal),
+                                        yyDollar[3].expression}}
+                }</span>
+        case 48:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-5 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        args := []*Expression{
+                                MakeNameExpression(yyDollar[1].token.literal),
+                                yyDollar[3].expression}
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_MAP,
+                                Args:      append(args, yyDollar[5].expression.Args...)}
+                }</span>
+        case 49:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-1 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_LIST,
+                                Args:      []*Expression{yyDollar[1].expression}}
+                }</span>
+        case 50:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        args := []*Expression{yyDollar[1].expression}
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_LIST,
+                                Args:      append(args, yyDollar[3].expression.Args...)}
+                }</span>
+        case 51:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_MAPVAR,
+                                Args:      []*Expression{yyDollar[1].expression, MakeNameExpression(yyDollar[3].token.literal)}}
+                }</span>
+        case 52:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-4 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = &amp;Expression{
+                                Operation: OP_LISTVAR,
+                                Args:      []*Expression{yyDollar[1].expression, yyDollar[3].expression}}
+                }</span>
+        case 53:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-1 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.expression = MakeVarExpression(yyDollar[1].token.literal)
+                }</span>
+        case 54:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-1 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyVAL.writeable = &amp;WriteableValue{
+                                Base: yyDollar[1].token.literal,
+                                Path: []PathEntry{}}
+                }</span>
+        case 55:<span class="cov0" title="0">
+                yyDollar = yyS[yypt-1 : yypt+1]
+
+                </span><span class="cov0" title="0">{
+                        yyVAL.writeable = &amp;WriteableValue{
+                                Base: "this",
+                                Path: []PathEntry{}}
+                }</span>
+        case 56:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-4 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyDollar[1].writeable.Path = append(yyDollar[1].writeable.Path, PathEntry{Type: PATH_LIST, ListIndex: yyDollar[3].expression})
+                        yyVAL.writeable = yyDollar[1].writeable
+                }</span>
+        case 57:<span class="cov8" title="1">
+                yyDollar = yyS[yypt-3 : yypt+1]
+
+                </span><span class="cov8" title="1">{
+                        yyDollar[1].writeable.Path = append(yyDollar[1].writeable.Path, PathEntry{Type: PATH_MAP, MapKey: yyDollar[3].token.literal})
+                        yyVAL.writeable = yyDollar[1].writeable
+                }</span>
+        }
+        <span class="cov8" title="1">goto yystack</span> /* stack new state and value */
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package router
+
+import (
+        "fmt"
+        "strings"
+        "errors"
+)
+
+type Route struct {
+        Source string
+        Transforms []*Transform
+        Dest string
+}
+
+func (rt *Route) ToString() string <span class="cov8" title="1">{
+        if rt.Transforms != nil &amp;&amp; len(rt.Transforms) &gt; 0 </span><span class="cov8" title="1">{
+                tforms_strings := make([]string, len(rt.Transforms))
+                for i, t := range rt.Transforms </span><span class="cov8" title="1">{
+                        tforms_strings[i] = t.ToString()
+                }</span>
+                <span class="cov8" title="1">tforms := strings.Join(tforms_strings, " &gt; ")
+                return fmt.Sprintf("%s &gt; %s &gt; %s", rt.Source, tforms, rt.Dest)</span>
+        }
+        <span class="cov8" title="1">return fmt.Sprintf("%s &gt; %s", rt.Source, rt.Dest)</span>
+}
+
+func (rt *Route) Send(args map[string]interface{}) (map[string]interface{}, error) <span class="cov8" title="1">{
+        // Convert args to a *Value to be the "this" object
+        this, err := MakeValue(args)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">if this.Type != VAL_MAP </span><span class="cov0" title="0">{
+                return nil, errors.New("args must be a map")
+        }</span>
+        <span class="cov8" title="1">fmt.Println("MV",this)
+        
+        // Apply transforms
+        
+        for _, t := range rt.Transforms </span><span class="cov8" title="1">{
+                new_this, err := t.Execute(this)
+                if err != nil </span><span class="cov8" title="1">{
+                        fmt.Println("Error executing transform",t.ToString(),"on",this.ToString(),"ERROR",err)
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">if new_this == nil </span><span class="cov8" title="1">{
+                        return nil, nil
+                }</span>
+                
+                <span class="cov8" title="1">fmt.Println("TRANSFORMED",new_this.ToString())
+                this = new_this</span>
+        }
+        
+        <span class="cov8" title="1">output_prim := this.ToPrimitive()
+        if output_args, ok := output_prim.(map[string]interface{}); ok </span><span class="cov8" title="1">{
+                return output_args, nil
+        }</span>
+        <span class="cov0" title="0">return nil, errors.New(fmt.Sprintf("Failed sending on %s",rt.ToString()))</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package router
+
+import (
+        "fmt"
+)
+
+type Router struct {
+        Routes []*Route
+        Nodes map[string]*Node
+}
+
+func MakeRouter() *Router <span class="cov8" title="1">{
+        return &amp;Router {
+                Routes: make([]*Route, 0),
+                Nodes: make(map[string]*Node)}
+}</span>
+
+func (r *Router) AddNode(n *Node) <span class="cov8" title="1">{
+        r.Nodes[n.Name] = n
+}</span>
+
+func (r *Router) ParseAndAddRoutes(spec string) <span class="cov8" title="1">{
+        rs := Parse(spec)
+        r.Routes = append(r.Routes, rs...)
+}</span>
+
+func (r *Router) AddRoute(rt *Route) <span class="cov0" title="0">{
+        fmt.Println("adding route")
+        r.Routes = append(r.Routes, rt)
+}</span>
+
+func (r *Router) Send(src_node string, header map[string]string, args map[string]interface{}) <span class="cov8" title="1">{
+        for _, rt := range r.Routes </span><span class="cov8" title="1">{
+                if rt.Source == src_node </span><span class="cov8" title="1">{
+                        output, err := rt.Send(args)
+                        if err != nil </span><span class="cov8" title="1">{
+                                fmt.Println("ERROR SENDING ON",rt.ToString(), err)
+                        }</span> else<span class="cov8" title="1"> if output != nil </span><span class="cov8" title="1">{
+                                fmt.Println("SENDING",output,"TO",r.Nodes[rt.Dest].Name)
+                                // Send the result to the destination
+                                r.Nodes[rt.Dest].Handle(header, output)
+                        }</span>
+                }
+        }
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package router
+
+import (
+        //"fmt"
+)
+
+const (
+        EOF     = -1
+        UNKNOWN = 0
+)
+
+var (
+        keywords = map[string]int{"var": VAR}
+        syms = map[string]int{
+                "==":EQ,
+                "!=":NE,
+                "&lt;=":LE,
+                "&gt;=":GE,
+                "+=":PE,
+                "-=":ME,
+                "*=":TE,
+                "/=":DE,
+                "%=":RE,
+                "^=":XE,
+                "~=":SUB,
+                "&amp;&amp;":AND,
+                "||":OR,
+                "$_":THIS}
+        charsyms = map[rune]int {
+                '.':'.',
+                ',':',',
+                '{':'{',
+                '}':'}',
+                '[':'[',
+                ']':']',
+                '(':'(',
+                ')':')',
+                ';':';',
+                ':':':',
+                '+':'+',
+                '-':'-',
+                '*':'*',
+                '/':'/',
+                '%':'%',
+                '?':'?',
+                '~':'~',
+                '!':'!',
+                '&amp;':'&amp;',
+                '|':'|',
+                '^':'^',
+                '$':-1} // -1 means this is a prefix of a longer symbol
+)
+
+type Position struct {
+        Line   int
+        Column int
+}
+
+type RouteScanner struct {
+        src      []rune
+        offset   int
+        lineHead int
+        line     int
+}
+
+func (s *RouteScanner) Init(src string) <span class="cov8" title="1">{
+        s.src = []rune(src)
+}</span>
+
+func (s *RouteScanner) Scan() (tok int, lit string, pos Position) <span class="cov8" title="1">{
+        s.skipWhiteSpace()
+        pos = s.position()
+        switch ch := s.peek(); </span>{
+        case isLetter(ch):<span class="cov8" title="1">
+                lit = s.scanIdentifier()
+                if keyword, ok := keywords[lit]; ok </span><span class="cov0" title="0">{
+                        tok = keyword
+                }</span> else<span class="cov8" title="1"> {
+                        tok = IDENT
+                }</span>
+        case isDigit(ch):<span class="cov8" title="1">
+                tok, lit = NUMBER, s.scanNumber()</span>
+        case ch == '"':<span class="cov8" title="1">
+                tok, lit = STRING, s.scanString()</span>
+                //fmt.Println("STRING",lit)
+        case ch == '=' || ch == '&lt;' || ch == '&gt;':<span class="cov8" title="1">
+                tok, lit = s.scanTest()</span>
+                //fmt.Println("TEST",tok,lit)
+        default:<span class="cov8" title="1">
+                tok, lit = s.scanSym()</span>
+        }
+        <span class="cov8" title="1">return</span>
+}
+
+// ========================================
+
+func isLetter(ch rune) bool <span class="cov8" title="1">{
+        return 'a' &lt;= ch &amp;&amp; ch &lt;= 'z' || 'A' &lt;= ch &amp;&amp; ch &lt;= 'Z' || ch == '_'
+}</span>
+
+func isDigit(ch rune) bool <span class="cov8" title="1">{
+        return '0' &lt;= ch &amp;&amp; ch &lt;= '9'
+}</span>
+
+func isWhiteSpace(ch rune) bool <span class="cov8" title="1">{
+        return ch == ' ' || ch == '\t' || ch == '\n'
+}</span>
+
+func (s *RouteScanner) peek() rune <span class="cov8" title="1">{
+        if !s.reachEOF() </span><span class="cov8" title="1">{
+                return s.src[s.offset]
+        }</span> else<span class="cov8" title="1"> {
+                return -1
+        }</span>
+}
+
+func (s *RouteScanner) next() <span class="cov8" title="1">{
+        if !s.reachEOF() </span><span class="cov8" title="1">{
+                if s.peek() == '\n' </span><span class="cov0" title="0">{
+                        s.lineHead = s.offset + 1
+                        s.line++
+                }</span>
+                <span class="cov8" title="1">s.offset++</span>
+        }
+}
+
+func (s *RouteScanner) reachEOF() bool <span class="cov8" title="1">{
+        return len(s.src) &lt;= s.offset
+}</span>
+
+func (s *RouteScanner) position() Position <span class="cov8" title="1">{
+        return Position{Line: s.line + 1, Column: s.offset - s.lineHead + 1}
+}</span>
+
+func (s *RouteScanner) skipWhiteSpace() <span class="cov8" title="1">{
+        for isWhiteSpace(s.peek()) </span><span class="cov8" title="1">{
+                s.next()
+        }</span>
+}
+
+func (s *RouteScanner) scanIdentifier() string <span class="cov8" title="1">{
+        var ret []rune
+        for isLetter(s.peek()) || isDigit(s.peek()) </span><span class="cov8" title="1">{
+                ret = append(ret, s.peek())
+                s.next()
+        }</span>
+        <span class="cov8" title="1">return string(ret)</span>
+}
+
+
+func (s *RouteScanner) scanSym() (int, string) <span class="cov8" title="1">{
+        fc := s.peek()
+        if fc == -1 </span><span class="cov8" title="1">{
+                return EOF, ""
+        }</span> else<span class="cov8" title="1"> if tok, ok := charsyms[fc]; ok </span><span class="cov8" title="1">{
+                s.next()
+                lit := string(fc)
+                long_lit := lit + string(s.peek())
+                if long_tok, long_ok := syms[long_lit]; long_ok </span><span class="cov8" title="1">{
+                        s.next()
+                        return long_tok, long_lit
+                }</span>
+                <span class="cov8" title="1">return tok, lit</span>
+        }
+        <span class="cov0" title="0">return -1, "error"</span>
+}
+
+func (s *RouteScanner) scanTest() (int, string) <span class="cov8" title="1">{
+        fc := s.peek()
+        if fc == '=' || fc == '&lt;' || fc == '&gt;' </span><span class="cov8" title="1">{
+                s.next()
+                //fmt.Printf("peek, fc:%s,p:%s\n",string(fc),string(s.peek()))
+                if s.peek() == '=' </span><span class="cov8" title="1">{
+                        s.next()
+                        if fc == '=' </span><span class="cov8" title="1">{
+                                return EQ, "=="
+                        }</span> else<span class="cov8" title="1"> if fc == '&lt;' </span><span class="cov8" title="1">{
+                                return LE, "&lt;="
+                        }</span> else<span class="cov8" title="1"> if fc == '&gt;' </span><span class="cov8" title="1">{
+                                return GE, "&gt;="
+                        }</span>
+                }
+        }
+        <span class="cov8" title="1">return int(fc), string(fc)</span>
+}
+        
+func (s *RouteScanner) scanNumber() string <span class="cov8" title="1">{
+        var ret []rune
+        hasDecimal := false
+        for isDigit(s.peek()) || (s.peek() == '.' &amp;&amp; !hasDecimal) </span><span class="cov8" title="1">{
+                ret = append(ret, s.peek())
+                if s.peek() == '.' </span><span class="cov8" title="1">{
+                        hasDecimal = true
+                }</span>
+                <span class="cov8" title="1">s.next()</span>
+        }
+        <span class="cov8" title="1">return string(ret)</span>
+}
+
+func (s *RouteScanner) scanString() string <span class="cov8" title="1">{
+        var ret []rune
+        s.next()
+        for s.peek() != '"' || (len(ret) &gt; 0 &amp;&amp; ret[len(ret)-1] == '\\') </span><span class="cov8" title="1">{
+                ret = append(ret, s.peek())
+                s.next()
+        }</span>
+        <span class="cov8" title="1">s.next()
+        return string(ret)</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package router
+
+import (
+        "fmt"
+        "errors"
+)
+
+type Signature struct {
+        Operation ExpressionOperationType
+        ArgTypes []ValueType
+        ReturnType ValueType
+        Handler func(*Value, map[string]*Value, []*Value, *Value) (*Value, error) // this, local_vars, args, primitive -&gt; result, err
+}
+
+func FindSignature(op ExpressionOperationType, args []*Value) *Signature <span class="cov8" title="1">{
+        for i, a := range args </span><span class="cov8" title="1">{
+                fmt.Printf("arg[%d]:%d\n",i,a.Type)
+        }</span>
+        <span class="cov8" title="1">for _, s := range ExpressionSignatures </span><span class="cov8" title="1">{
+                if s.Operation == op </span><span class="cov8" title="1">{
+                        if len(s.ArgTypes) == 1 &amp;&amp; s.ArgTypes[0] == VAL_ANYANY </span><span class="cov8" title="1">{
+                                return s
+                        }</span>
+                        <span class="cov8" title="1">if len(s.ArgTypes) == len(args) </span><span class="cov8" title="1">{
+                                ok := true
+                                fmt.Println("AT",s.ArgTypes)
+                                for i, a := range args </span><span class="cov8" title="1">{
+                                        if a.Type != s.ArgTypes[i] </span><span class="cov8" title="1">{
+                                                ok = false
+                                        }</span>
+                                }
+                                <span class="cov8" title="1">if ok </span><span class="cov8" title="1">{
+                                        return s
+                                }</span>
+                        }
+                }
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (s *Signature) TypeCheck(args []*Value) error <span class="cov0" title="0">{
+        if len(args) != len(s.ArgTypes) </span><span class="cov0" title="0">{
+                return errors.New(fmt.Sprintf("Signature has arity %d, got %d args", len(s.ArgTypes), len(args)))
+        }</span>
+        <span class="cov0" title="0">for i, a := range args </span><span class="cov0" title="0">{
+                if s.ArgTypes[i] != a.Type </span><span class="cov0" title="0">{
+                        return errors.New(fmt.Sprintf("Argument %d has type mismatch: Wanted %d, got %d", i, s.ArgTypes[i], a.Type))
+                }</span>
+        }
+        <span class="cov0" title="0">return nil</span>
+}
+
+type StatementSignature struct {
+        Operation StatementType
+        ArgTypes []ValueType
+        Handler func(*Value, map[string]*Value, []*Value) (*Value, map[string]*Value, error) // this, local_vars, args -&gt; updated_this, updated_local_vars, err
+}
+
+var (
+        // StatementSignatures = []*StatementSignature{
+        //         &amp;StatementSignature{
+        //                 Operation: STMT_ASSIGN,
+        //                 ArgTypes:[]ValueType{VAL_ANY},
+        //                 Handler: AssignHandler}}
+        ExpressionSignatures = []*Signature{
+                &amp;Signature{
+                        Operation: OP_NAME,
+                        ArgTypes:[]ValueType{},
+                        ReturnType: VAL_NAME,
+                        Handler: NameHandler},
+                &amp;Signature{
+                        Operation: OP_NUM,
+                        ArgTypes:[]ValueType{},
+                        ReturnType: VAL_NUM,
+                        Handler: NumHandler},
+                &amp;Signature{
+                        Operation: OP_STRING,
+                        ArgTypes:[]ValueType{},
+                        ReturnType: VAL_STRING,
+                        Handler: StringHandler},
+                &amp;Signature{
+                        Operation: OP_CALL,
+                        ArgTypes:[]ValueType{VAL_NAME,VAL_LIST},
+                        ReturnType: VAL_ANY,
+                        Handler: CallHandler},
+                &amp;Signature{
+                        Operation: OP_MAP,
+                        ArgTypes:[]ValueType{VAL_ANYANY},
+                        ReturnType: VAL_MAP,
+                        Handler: MapHandler},
+                &amp;Signature{
+                        Operation: OP_LIST,
+                        ArgTypes:[]ValueType{VAL_ANYANY},
+                        ReturnType: VAL_LIST,
+                        Handler: ListHandler},
+                &amp;Signature{
+                        Operation: OP_MAPVAR,
+                        ArgTypes:[]ValueType{VAL_MAP,VAL_NAME},
+                        ReturnType: VAL_ANY,
+                        Handler: MapGetHandler},
+                &amp;Signature{
+                        Operation: OP_LISTVAR,
+                        ArgTypes:[]ValueType{VAL_LIST,VAL_NUM},
+                        ReturnType: VAL_ANY,
+                        Handler: ListGetHandler},
+                &amp;Signature{
+                        Operation: OP_VAR,
+                        ArgTypes:[]ValueType{},
+                        ReturnType: VAL_ANY,
+                        Handler: VarHandler},
+                &amp;Signature{
+                        Operation: OP_UMINUS,
+                        ArgTypes:[]ValueType{VAL_NUM},
+                        ReturnType: VAL_NUM,
+                        Handler: UnaryMinusNumHandler},
+                &amp;Signature{
+                        Operation: OP_PLUS,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_NUM,
+                        Handler: AddNumHandler},
+                &amp;Signature{
+                        Operation: OP_PLUS,
+                        ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
+                        ReturnType: VAL_STRING,
+                        Handler: AddStringHandler},
+                &amp;Signature{
+                        Operation: OP_MINUS,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_NUM,
+                        Handler: SubNumHandler},
+                &amp;Signature{
+                        Operation: OP_MUL,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_NUM,
+                        Handler: MulNumHandler},
+                &amp;Signature{
+                        Operation: OP_MUL,
+                        ArgTypes:[]ValueType{VAL_STRING,VAL_NUM},
+                        ReturnType: VAL_STRING,
+                        Handler: MulStringNumHandler},
+                &amp;Signature{
+                        Operation: OP_DIV,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_NUM,
+                        Handler: DivNumHandler},
+                &amp;Signature{
+                        Operation: OP_MOD,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_NUM,
+                        Handler: ModNumHandler},
+                &amp;Signature{
+                        Operation: OP_BITWISEXOR,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_NUM,
+                        Handler: XorNumHandler},
+                &amp;Signature{
+                        Operation: OP_BITWISEAND,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_NUM,
+                        Handler: AndNumHandler},
+                &amp;Signature{
+                        Operation: OP_BITWISEOR,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_NUM,
+                        Handler: OrNumHandler},
+                &amp;Signature{
+                        Operation: OP_GT,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_BOOL,
+                        Handler: GtNumHandler},
+                &amp;Signature{
+                        Operation: OP_GT,
+                        ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
+                        ReturnType: VAL_BOOL,
+                        Handler: GtStringHandler},
+                &amp;Signature{
+                        Operation: OP_LT,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_BOOL,
+                        Handler: LtNumHandler},
+                &amp;Signature{
+                        Operation: OP_LT,
+                        ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
+                        ReturnType: VAL_BOOL,
+                        Handler: LtStringHandler},
+                &amp;Signature{
+                        Operation: OP_EQ,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_BOOL,
+                        Handler: EqNumHandler},
+                &amp;Signature{
+                        Operation: OP_EQ,
+                        ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
+                        ReturnType: VAL_BOOL,
+                        Handler: EqStringHandler},
+                &amp;Signature{
+                        Operation: OP_NE,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_BOOL,
+                        Handler: NeNumHandler},
+                &amp;Signature{
+                        Operation: OP_NE,
+                        ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
+                        ReturnType: VAL_BOOL,
+                        Handler: NeStringHandler},
+                &amp;Signature{
+                        Operation: OP_LE,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_BOOL,
+                        Handler: LeqNumHandler},
+                &amp;Signature{
+                        Operation: OP_LE,
+                        ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
+                        ReturnType: VAL_BOOL,
+                        Handler: LeqStringHandler},
+                &amp;Signature{
+                        Operation: OP_GE,
+                        ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+                        ReturnType: VAL_BOOL,
+                        Handler: GeqNumHandler},
+                &amp;Signature{
+                        Operation: OP_GE,
+                        ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
+                        ReturnType: VAL_BOOL,
+                        Handler: GeqStringHandler},
+                &amp;Signature{
+                        Operation: OP_OR,
+                        ArgTypes:[]ValueType{VAL_BOOL,VAL_BOOL},
+                        ReturnType: VAL_BOOL,
+                        Handler: OrBoolHandler},
+                &amp;Signature{
+                        Operation: OP_AND,
+                        ArgTypes:[]ValueType{VAL_BOOL,VAL_BOOL},
+                        ReturnType: VAL_BOOL,
+                        Handler: AndBoolHandler},
+                &amp;Signature{
+                        Operation: OP_NOT,
+                        ArgTypes:[]ValueType{VAL_BOOL},
+                        ReturnType: VAL_BOOL,
+                        Handler: NotBoolHandler}}
+
+)
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package router
+
+import (
+        "fmt"
+        "errors"
+)
+
+type StatementType int
+type PathStepType int
+
+const (
+        STMT_ASSIGN StatementType = iota + 1
+)
+
+const (
+        PATH_MAP PathStepType = iota + 1
+        PATH_LIST
+)
+
+type Statement struct {
+        Type StatementType
+        Destination *WriteableValue
+        Args []*Expression
+}
+
+type PathEntry struct {
+        Type PathStepType
+        ListIndex *Expression
+        MapKey string
+}
+
+type WriteableValue struct {
+        Base string
+        Path []PathEntry
+}
+
+func (w *WriteableValue) ToExpression() *Expression <span class="cov8" title="1">{
+        base := &amp;Expression{
+                Operation:OP_VAR,
+                Value:&amp;Value{
+                        Type:VAL_NAME,
+                        NameVal:w.Base}}
+        current := base
+        for _, pe := range w.Path </span><span class="cov8" title="1">{
+                if pe.Type == PATH_MAP </span><span class="cov8" title="1">{
+                        current = &amp;Expression{
+                                Operation:OP_MAPVAR,
+                                Args:[]*Expression{current, MakeNameExpression(pe.MapKey)}}
+                }</span> else<span class="cov8" title="1"> if pe.Type  == PATH_LIST </span><span class="cov8" title="1">{
+                        current = &amp;Expression{
+                                Operation:OP_LISTVAR,
+                                Args:[]*Expression{current, pe.ListIndex}}
+                }</span>
+        }
+        <span class="cov8" title="1">return current</span>
+}
+
+func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Expression) (*Value, map[string]*Value, error) <span class="cov8" title="1">{
+        content, err := arg.Evaluate(this, vars)
+        if err != nil </span><span class="cov8" title="1">{
+                return this, vars, err
+        }</span>
+        <span class="cov8" title="1">var dest *Value
+        dest_name := w.Base
+        is_this_var := true
+        is_local_var := true
+        if dest_name == "this" </span><span class="cov0" title="0">{
+                dest = this.Clone()
+                is_this_var = false
+                is_local_var = false
+        }</span> else<span class="cov8" title="1"> if v, ok := vars[dest_name]; ok </span><span class="cov0" title="0">{
+                dest = v.Clone()
+                is_this_var = false
+                is_local_var = true
+        }</span> else<span class="cov8" title="1"> if v, ok := this.MapVal[dest_name]; ok &amp;&amp; this.Type == VAL_MAP </span><span class="cov8" title="1">{
+                dest = v.Clone()
+                is_this_var = true
+                is_local_var = false
+        }</span> else<span class="cov0" title="0"> {
+                return this, vars, errors.New(fmt.Sprintf("No such variable: %s", dest_name))
+        }</span>
+
+        <span class="cov8" title="1">new_this := this.Clone()
+        target_base := dest
+        target := target_base
+        if len(w.Path) == 0 </span><span class="cov8" title="1">{
+                if is_this_var </span><span class="cov8" title="1">{
+                        // We're assigning to a value in this
+                        new_this.MapVal[dest_name] = content
+                        return new_this, vars, nil
+                }</span> else<span class="cov0" title="0"> if is_local_var </span><span class="cov0" title="0">{
+                        // We're assigning an existing local variable
+                        vars[dest_name] = content
+                        return new_this, vars, nil
+                }</span> else<span class="cov0" title="0"> {
+                        // We're returning a wholesale this object
+                        return content, vars, nil
+                }</span>
+        }
+        <span class="cov8" title="1">for i, e := range w.Path </span><span class="cov8" title="1">{
+                if e.Type == PATH_MAP </span><span class="cov8" title="1">{
+                        if target.Type != VAL_MAP </span><span class="cov0" title="0">{
+                                return this, vars, errors.New(fmt.Sprintf("Attempted to access key %s in non-map %d != %d", e.MapKey,target.Type,VAL_MAP))
+                        }</span>
+                        <span class="cov8" title="1">if i == len(w.Path) - 1 </span><span class="cov8" title="1">{
+                                target.MapVal[e.MapKey] = content
+                                if is_this_var </span><span class="cov8" title="1">{
+                                        // We're assigning to a value in this
+                                        new_this.MapVal[dest_name] = target_base
+                                        return new_this, vars, nil
+                                }</span> else<span class="cov0" title="0"> if is_local_var </span><span class="cov0" title="0">{
+                                        // We're assigning an existing local variable
+                                        vars[dest_name] = target_base
+                                        return new_this, vars, nil
+                                }</span> else<span class="cov0" title="0"> {
+                                        // We're returning a wholesale this object
+                                        return content, vars, nil
+                                }</span>
+                        } else<span class="cov8" title="1"> if new_target, ok := target.MapVal[e.MapKey]; ok </span><span class="cov8" title="1">{
+                                fmt.Println("Descending into map by key",e.MapKey,"new type",new_target.Type)
+                                target = new_target
+                        }</span> else<span class="cov0" title="0"> {
+                                return this, vars, errors.New(fmt.Sprintf("Attempted to access non-existent key %s", e.MapKey))
+                        }</span>
+                } else<span class="cov8" title="1"> if e.Type == PATH_LIST </span><span class="cov8" title="1">{
+                        if target.Type != VAL_LIST </span><span class="cov0" title="0">{
+                                return this, vars, errors.New(fmt.Sprintf("Attempted to access index in non-list type %d != %d",target.Type,VAL_LIST))
+                        }</span>
+                        <span class="cov8" title="1">idx, err := e.ListIndex.Evaluate(this, vars)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return this, vars, err
+                        }</span>
+                        <span class="cov8" title="1">if idx.Type != VAL_NUM </span><span class="cov0" title="0">{
+                                return this, vars, errors.New("List subscript must be integer")
+                        }</span>
+                        <span class="cov8" title="1">list_index := int(idx.NumVal)
+                        if list_index &gt;= len(target.ListVal) || list_index &lt; 0 </span><span class="cov0" title="0">{
+                                return this, vars, errors.New(fmt.Sprintf("Attempted to access out-of-bounds index %d", list_index))
+                        }</span>
+                        <span class="cov8" title="1">if i == len(w.Path) - 1 </span><span class="cov8" title="1">{
+                                target.ListVal[list_index] = content
+                                if is_this_var </span><span class="cov8" title="1">{
+                                        // We're assigning to a value in this
+                                        new_this.MapVal[dest_name] = target_base
+                                        return new_this, vars, nil
+                                }</span> else<span class="cov0" title="0"> if is_local_var </span><span class="cov0" title="0">{
+                                        // We're assigning an existing local variable
+                                        vars[dest_name] = target_base
+                                        return new_this, vars, nil
+                                }</span> else<span class="cov0" title="0"> {
+                                        // We're returning a wholesale this object
+                                        return content, vars, nil
+                                }</span>
+                        } else<span class="cov8" title="1"> {
+                                fmt.Println("Descending into list by index",list_index,"new type",target.ListVal[list_index].Type)
+                                target = target.ListVal[list_index]
+                        }</span>
+                }
+        }
+        <span class="cov0" title="0">return this, vars, errors.New("Something went wrong?")</span>
+}
+
+func MakeAssignment(dest *WriteableValue, val *Expression) *Statement <span class="cov8" title="1">{
+        return &amp;Statement {
+                Type: STMT_ASSIGN,
+                Destination: dest,
+                Args: []*Expression{val}}
+}</span>
+
+func (s *Statement) ToString() string <span class="cov8" title="1">{
+        if s.Type == STMT_ASSIGN </span><span class="cov8" title="1">{
+                path_str := s.Destination.Base
+                for _, e := range s.Destination.Path </span><span class="cov8" title="1">{
+                        if e.Type == PATH_MAP </span><span class="cov8" title="1">{
+                                path_str += fmt.Sprintf(".%s", e.MapKey)
+                        }</span> else<span class="cov8" title="1"> if e.Type == PATH_LIST </span><span class="cov8" title="1">{
+                                path_str += fmt.Sprintf("[%s]", e.ListIndex.ToString())
+                        }</span>
+                }
+                <span class="cov8" title="1">return fmt.Sprintf("%s = %s", path_str, s.Args[0].ToString())</span>
+        }
+        <span class="cov0" title="0">return "[unknown statement type]"</span>
+}
+
+func (s *Statement) Execute(this *Value, vars map[string]*Value) (*Value, map[string]*Value, error) <span class="cov8" title="1">{
+        fmt.Println("EXEC",s.ToString())
+        if s.Type == STMT_ASSIGN </span><span class="cov8" title="1">{
+                return s.Destination.Write(this, vars, s.Args[0])
+        }</span>
+        <span class="cov0" title="0">return nil, nil, errors.New("Unknown statement type")</span>
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package router
+
+import (
+        "fmt"
+        "errors"
+)
+
+type TransformType int
+
+const (
+        TR_FILTER TransformType = iota + 1
+        TR_EDIT
+        TR_REPLACE
+        TR_COND_EDIT
+        TR_COND_REPLACE
+)
+
+type Transform struct {
+        Type TransformType
+        Condition *Expression
+        Replace *Expression
+        Script []*Statement
+}
+
+func (t *Transform) ToString() string <span class="cov8" title="1">{
+        if t.Type == TR_FILTER </span><span class="cov8" title="1">{
+                fmt.Println(t.Condition)
+                return fmt.Sprintf("pass if {%s}", t.Condition.ToString())
+        }</span> else<span class="cov8" title="1"> if t.Type == TR_EDIT </span><span class="cov8" title="1">{
+                script := ""
+                for _, e := range t.Script </span><span class="cov8" title="1">{
+                        script += fmt.Sprintf("%s;", e.ToString())
+                }</span>
+                <span class="cov8" title="1">return fmt.Sprintf("edit {%s}", script)</span>
+        } else<span class="cov8" title="1"> if t.Type == TR_REPLACE </span><span class="cov8" title="1">{
+                return fmt.Sprintf("replace %s", t.Replace.ToString())
+        }</span> else<span class="cov8" title="1"> if t.Type == TR_COND_EDIT </span><span class="cov8" title="1">{
+                script := ""
+                for _, e := range t.Script </span><span class="cov8" title="1">{
+                        script += fmt.Sprintf("%s;", e.ToString())
+                }</span>
+                <span class="cov8" title="1">return fmt.Sprintf("edit {%s} if {%s}", script, t.Condition.ToString())</span>
+        } else<span class="cov8" title="1"> if t.Type == TR_COND_REPLACE </span><span class="cov8" title="1">{
+                return fmt.Sprintf("replace %s if {%s}", t.Replace.ToString(), t.Condition.ToString())
+        }</span> 
+        <span class="cov0" title="0">return "[unknown transform type]"</span>
+}
+
+func (t *Transform) EvaluateCondition(this *Value) (bool, error) <span class="cov8" title="1">{
+        fmt.Println("Condition",t.Condition.ToString(),"on",this.ToString())
+        if t.Condition == nil </span><span class="cov0" title="0">{
+                return false, errors.New("Tried to evaluate nil condition")
+        }</span>
+        <span class="cov8" title="1">res, err := t.Condition.Evaluate(this, make(map[string]*Value))
+        if err != nil </span><span class="cov8" title="1">{
+                return false, err
+        }</span>
+        <span class="cov8" title="1">if res.Type != VAL_BOOL </span><span class="cov0" title="0">{
+                return false, errors.New("condition does not evaluate to a boolean")
+        }</span>
+        <span class="cov8" title="1">fmt.Println("Condition result",res.BoolVal)
+        return res.BoolVal, nil</span>
+}
+
+func (t *Transform) EvaluateScript(this *Value) (*Value, error) <span class="cov8" title="1">{
+        vars := make(map[string]*Value)
+        var err error
+        for _, s := range t.Script </span><span class="cov8" title="1">{
+                fmt.Println("Statement",s.ToString(),"on",this.ToString())
+                this, vars, err = s.Execute(this, vars)
+                if err != nil </span><span class="cov8" title="1">{
+                        return nil, err
+                }</span>
+        }
+        <span class="cov8" title="1">return this, nil</span>
+}
+
+func (t *Transform) EvaluateReplacement(this *Value) (*Value, error) <span class="cov0" title="0">{
+        fmt.Println("Replacement",t.Replace.ToString(),"on",this.ToString())
+        replacement, err := t.Replace.Evaluate(this, make(map[string]*Value))
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return replacement, nil</span>
+}
+
+
+
+func (t *Transform) Execute(args *Value) (*Value, error) <span class="cov8" title="1">{
+        this := args.Clone()
+        if t.Type == TR_FILTER </span><span class="cov8" title="1">{
+                to_pass, err := t.EvaluateCondition(this)
+                if err != nil </span><span class="cov8" title="1">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">if to_pass </span><span class="cov8" title="1">{
+                        return this, nil
+                }</span>
+                <span class="cov8" title="1">return nil, nil</span>
+        } else<span class="cov8" title="1"> if t.Type == TR_EDIT </span><span class="cov8" title="1">{
+                return t.EvaluateScript(this)
+        }</span> else<span class="cov0" title="0"> if t.Type == TR_REPLACE </span><span class="cov0" title="0">{
+                return t.EvaluateReplacement(this)
+        }</span> else<span class="cov0" title="0"> if t.Type == TR_COND_EDIT </span><span class="cov0" title="0">{
+                to_pass, err := t.EvaluateCondition(this)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov0" title="0">if to_pass </span><span class="cov0" title="0">{
+                        return t.EvaluateScript(this)
+                }</span>
+                <span class="cov0" title="0">return this, nil</span>
+        } else<span class="cov0" title="0"> if t.Type == TR_COND_REPLACE </span><span class="cov0" title="0">{
+                to_pass, err := t.EvaluateCondition(this)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov0" title="0">if to_pass </span><span class="cov0" title="0">{
+                        return t.EvaluateReplacement(this)
+                }</span>
+                <span class="cov0" title="0">return this, nil</span>
+        }        
+        <span class="cov0" title="0">return nil, errors.New("Transform of unknown type")</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package router
+
+import (
+        "fmt"
+        "sort"
+        "strings"
+        "errors"
+)
+
+type ValueType int
+
+const (
+        VAL_MAP ValueType = iota + 1
+        VAL_LIST
+        VAL_NAME
+        VAL_INT
+        VAL_FLOAT
+        VAL_NUM
+        VAL_STRING
+        VAL_BOOL
+        VAL_ANY
+        VAL_ANYANY
+)
+
+type Value struct {
+        Type ValueType
+        MapVal map[string]*Value
+        ListVal []*Value
+        NameVal string
+        IntVal int
+        FloatVal float64
+        NumVal float64
+        StringVal string
+        BoolVal bool
+}
+
+func (v *Value) ToPrimitive() interface{} <span class="cov8" title="1">{
+        if v.Type == VAL_MAP </span><span class="cov8" title="1">{
+                ans := make(map[string]interface{})
+                for key, val := range v.MapVal </span><span class="cov8" title="1">{
+                        ans[key] = val.ToPrimitive()
+                }</span>
+                <span class="cov8" title="1">return ans</span>
+        } else<span class="cov8" title="1"> if v.Type == VAL_LIST </span><span class="cov8" title="1">{
+                ans := make([]interface{}, len(v.ListVal))
+                for idx, val := range v.ListVal </span><span class="cov8" title="1">{
+                        ans[idx] = val.ToPrimitive()
+                }</span>
+                <span class="cov8" title="1">return ans</span>
+        } else<span class="cov8" title="1"> if v.Type == VAL_NAME </span><span class="cov0" title="0">{
+                return v.NameVal
+        }</span> else<span class="cov8" title="1"> if v.Type == VAL_INT </span><span class="cov0" title="0">{
+                return v.IntVal
+        }</span> else<span class="cov8" title="1"> if v.Type == VAL_FLOAT </span><span class="cov0" title="0">{
+                return v.FloatVal
+        }</span> else<span class="cov8" title="1"> if v.Type == VAL_NUM </span><span class="cov8" title="1">{
+                return v.NumVal
+        }</span> else<span class="cov8" title="1"> if v.Type == VAL_STRING </span><span class="cov8" title="1">{
+                return v.StringVal
+        }</span> else<span class="cov0" title="0"> if v.Type == VAL_BOOL </span><span class="cov0" title="0">{
+                return v.BoolVal
+        }</span> else<span class="cov0" title="0"> if v.Type == VAL_ANY </span><span class="cov0" title="0">{
+                return "any"
+        }</span>
+        <span class="cov0" title="0">return "[unknown value type]"</span>
+        
+}
+
+
+func (v *Value) Clone() *Value <span class="cov8" title="1">{
+        ans := &amp;Value{
+                Type: v.Type,
+                NameVal: v.NameVal,
+                IntVal: v.IntVal,
+                FloatVal: v.FloatVal,
+                NumVal: v.NumVal,
+                StringVal: v.StringVal,
+                BoolVal: v.BoolVal}
+        if v.MapVal != nil </span><span class="cov8" title="1">{
+                ans.MapVal = make(map[string]*Value)
+                for key, val := range v.MapVal </span><span class="cov8" title="1">{
+                        ans.MapVal[key] = val.Clone()
+                }</span>
+        }
+        <span class="cov8" title="1">if v.ListVal != nil </span><span class="cov8" title="1">{
+                ans.ListVal = make([]*Value, len(v.ListVal))
+                for i, val := range v.ListVal </span><span class="cov8" title="1">{
+                        ans.ListVal[i] = val.Clone()
+                }</span>
+        }
+        <span class="cov8" title="1">return ans</span>
+}
+
+func MakeValue(args interface{}) (*Value, error) <span class="cov8" title="1">{
+        var err error
+        if mapvals, ok := args.(map[string]interface{}); ok </span><span class="cov8" title="1">{
+                mapval := make(map[string]*Value)
+                for k, v := range mapvals </span><span class="cov8" title="1">{
+                        mapval[k], err = MakeValue(v)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return nil, err
+                        }</span>
+                }
+                <span class="cov8" title="1">return &amp;Value{
+                        Type: VAL_MAP,
+                        MapVal: mapval}, nil</span>
+        } else<span class="cov8" title="1"> if listvals, ok := args.([]interface{}); ok </span><span class="cov8" title="1">{
+                fmt.Println("MAKEVALUE list")
+                listval := make([]*Value, len(listvals))
+                for i, v := range listvals </span><span class="cov8" title="1">{
+                        listval[i], err = MakeValue(v)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return nil, err
+                        }</span>
+                }
+                <span class="cov8" title="1">return &amp;Value{
+                        Type: VAL_LIST,
+                        ListVal: listval}, nil</span>
+        } else<span class="cov8" title="1"> if boolval, ok := args.(bool); ok </span><span class="cov0" title="0">{
+                return &amp;Value{
+                        Type: VAL_BOOL,
+                        BoolVal: boolval}, nil
+        }</span> else<span class="cov8" title="1"> if numval, ok := args.(float64); ok </span><span class="cov0" title="0">{
+                return &amp;Value{
+                        Type: VAL_NUM,
+                        NumVal: numval}, nil
+        }</span> else<span class="cov8" title="1"> if numval, ok := args.(int); ok </span><span class="cov8" title="1">{
+                return &amp;Value{
+                        Type: VAL_NUM,
+                        NumVal: float64(numval)}, nil
+        }</span> else<span class="cov8" title="1"> if strval, ok := args.(string); ok </span><span class="cov8" title="1">{
+                return &amp;Value{
+                        Type: VAL_STRING,
+                        StringVal: strval}, nil
+        }</span>
+        <span class="cov0" title="0">return nil, errors.New(fmt.Sprintf("No conversion found for %v",args))</span>
+}
+
+func MakeIntValue(x int) *Value <span class="cov0" title="0">{
+        return &amp;Value{
+                Type: VAL_NUM,
+                NumVal: float64(x)}
+}</span>
+
+func MakeFloatValue(x float64) *Value <span class="cov8" title="1">{
+        return &amp;Value{
+                Type: VAL_NUM,
+                NumVal: float64(x)}
+}</span>
+
+func MakeStringValue(x string) *Value <span class="cov8" title="1">{
+        return &amp;Value{
+                Type: VAL_STRING,
+                StringVal: x}
+}</span>
+
+func MakeBoolValue(x bool) *Value <span class="cov8" title="1">{
+        return &amp;Value{
+                Type: VAL_BOOL,
+                BoolVal: x}
+}</span>
+
+func AssignValue(dst, src *Value, vars *map[string]*Value) <span class="cov0" title="0">{
+        if src.Type == VAL_MAP </span><span class="cov0" title="0">{
+                dst.MapVal = src.MapVal
+        }</span> else<span class="cov0" title="0"> if src.Type == VAL_LIST </span><span class="cov0" title="0">{
+                dst.ListVal = src.ListVal
+        }</span> else<span class="cov0" title="0"> if src.Type == VAL_NAME </span><span class="cov0" title="0">{
+                AssignValue(dst, (*vars)[src.NameVal], vars)
+        }</span> else<span class="cov0" title="0"> if src.Type == VAL_INT </span><span class="cov0" title="0">{
+                dst.IntVal = src.IntVal
+        }</span> else<span class="cov0" title="0"> if src.Type == VAL_FLOAT </span><span class="cov0" title="0">{
+                dst.FloatVal = src.FloatVal
+        }</span> else<span class="cov0" title="0"> if src.Type == VAL_NUM </span><span class="cov0" title="0">{
+                dst.NumVal = src.NumVal
+        }</span> else<span class="cov0" title="0"> if src.Type == VAL_STRING </span><span class="cov0" title="0">{
+                dst.StringVal = src.StringVal
+        }</span> else<span class="cov0" title="0"> if src.Type == VAL_BOOL </span><span class="cov0" title="0">{
+                dst.BoolVal = src.BoolVal
+        }</span>
+}
+
+func (v *Value) ToString() string <span class="cov8" title="1">{
+        if v.Type == VAL_MAP </span><span class="cov8" title="1">{
+                map_keys := make([]string, 0)
+                for k, _ := range v.MapVal </span><span class="cov8" title="1">{
+                        map_keys = append(map_keys, k)
+                }</span>
+                <span class="cov8" title="1">sort.Strings(map_keys)
+                val_strs := make([]string, len(map_keys))
+                for i, k := range map_keys </span><span class="cov8" title="1">{
+                        val_strs[i] = fmt.Sprintf("%s:%s",k,v.MapVal[k].ToString())
+                }</span>
+                <span class="cov8" title="1">return fmt.Sprintf("{%s}",strings.Join(val_strs ,","))</span>
+        } else<span class="cov8" title="1"> if v.Type == VAL_LIST </span><span class="cov8" title="1">{
+                val_strs := make([]string, len(v.ListVal))
+                for i, val := range v.ListVal </span><span class="cov8" title="1">{
+                        val_strs[i] = val.ToString()
+                }</span>
+                <span class="cov8" title="1">return fmt.Sprintf("[%s]",strings.Join(val_strs ,","))</span>
+        } else<span class="cov8" title="1"> if v.Type == VAL_NAME </span><span class="cov8" title="1">{
+                return fmt.Sprintf("VAR(%s)",v.NameVal)
+        }</span> else<span class="cov8" title="1"> if v.Type == VAL_INT </span><span class="cov0" title="0">{
+                return fmt.Sprintf("INT(%d)",v.IntVal)
+        }</span> else<span class="cov8" title="1"> if v.Type == VAL_FLOAT </span><span class="cov0" title="0">{
+                return fmt.Sprintf("FLOAT(%f)",v.FloatVal)
+        }</span> else<span class="cov8" title="1"> if v.Type == VAL_NUM </span><span class="cov8" title="1">{
+                return fmt.Sprintf("NUM(%f)",v.NumVal)
+        }</span> else<span class="cov8" title="1"> if v.Type == VAL_STRING </span><span class="cov8" title="1">{
+                return fmt.Sprintf("STRING(%s)",v.StringVal)
+        }</span> else<span class="cov8" title="1"> if v.Type == VAL_BOOL </span><span class="cov8" title="1">{
+                return fmt.Sprintf("BOOL(%v)",v.BoolVal)
+        }</span>
+        <span class="cov0" title="0">return "[unknown type]"</span>
+}
+</pre>
 		
 		</div>
 	</body>

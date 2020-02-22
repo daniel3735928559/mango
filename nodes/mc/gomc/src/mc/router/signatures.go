@@ -18,11 +18,14 @@ func FindSignature(op ExpressionOperationType, args []*Value) *Signature {
 	}
 	for _, s := range ExpressionSignatures {
 		if s.Operation == op {
+			if len(s.ArgTypes) == 1 && s.ArgTypes[0] == VAL_ANYANY {
+				return s
+			}
 			if len(s.ArgTypes) == len(args) {
 				ok := true
 				fmt.Println("AT",s.ArgTypes)
 				for i, a := range args {
-					if a.Type != s.ArgTypes[i] {
+					if a.Type != s.ArgTypes[i] && s.ArgTypes[i] != VAL_ANY {
 						ok = false
 					}
 				}
@@ -82,13 +85,13 @@ var (
 			Handler: CallHandler},
 		&Signature{
 			Operation: OP_MAP,
-			ArgTypes:[]ValueType{VAL_ANY},
-			ReturnType: VAL_ANY,
+			ArgTypes:[]ValueType{VAL_ANYANY},
+			ReturnType: VAL_MAP,
 			Handler: MapHandler},
 		&Signature{
 			Operation: OP_LIST,
-			ArgTypes:[]ValueType{VAL_ANY},
-			ReturnType: VAL_ANY,
+			ArgTypes:[]ValueType{VAL_ANYANY},
+			ReturnType: VAL_LIST,
 			Handler: ListHandler},
 		&Signature{
 			Operation: OP_MAPVAR,
@@ -182,24 +185,14 @@ var (
 			Handler: LtStringHandler},
 		&Signature{
 			Operation: OP_EQ,
-			ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+			ArgTypes:[]ValueType{VAL_ANY,VAL_ANY},
 			ReturnType: VAL_BOOL,
-			Handler: EqNumHandler},
-		&Signature{
-			Operation: OP_EQ,
-			ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
-			ReturnType: VAL_BOOL,
-			Handler: EqStringHandler},
+			Handler: EqHandler},
 		&Signature{
 			Operation: OP_NE,
-			ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},
+			ArgTypes:[]ValueType{VAL_ANY,VAL_ANY},
 			ReturnType: VAL_BOOL,
-			Handler: NeNumHandler},
-		&Signature{
-			Operation: OP_NE,
-			ArgTypes:[]ValueType{VAL_STRING,VAL_STRING},
-			ReturnType: VAL_BOOL,
-			Handler: NeStringHandler},
+			Handler: NeHandler},
 		&Signature{
 			Operation: OP_LE,
 			ArgTypes:[]ValueType{VAL_NUM,VAL_NUM},

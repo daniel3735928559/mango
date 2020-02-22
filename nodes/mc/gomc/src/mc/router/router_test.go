@@ -184,7 +184,6 @@ func TestRouterEqFilter(t *testing.T) {
 			map[string]interface{}{"key1":"val2"},
 			map[string]interface{}{"key2":"val3"}}}
 	expected := map[string][]string{
-		"node0":[]string{},
 		"node1":[]string{`{"key1":"val1"}`},
 		"node2":[]string{`{"key1":"val1"}`,`{"key1":"val2"}`,`{"key2":"val3"}`}}
 	RunMessagesThroughRoutes(t, routes, messages, expected)
@@ -192,17 +191,19 @@ func TestRouterEqFilter(t *testing.T) {
 
 func TestRouterNeFilter(t *testing.T) {
 	routes := []string{
-		"node0 > node2",
-		`node0 > ? {key1 != "val1"} > node1`}
+		"node0 > node1",
+		`node0 > ? {key1 != "val1"} > node2`,
+		`node0 > ? {key1 != 4} > node3`}
 	messages := map[string][]map[string]interface{}{
 		"node0":[]map[string]interface{}{
 			map[string]interface{}{"key1":"val1"},
 			map[string]interface{}{"key1":"val2"},
-			map[string]interface{}{"key2":"val3"}}}
+			map[string]interface{}{"key1":3},
+			map[string]interface{}{"key1":4}}}
 	expected := map[string][]string{
-		"node0":[]string{},
-		"node1":[]string{`{"key1":"val2"}`},
-		"node2":[]string{`{"key1":"val1"}`,`{"key1":"val2"}`,`{"key2":"val3"}`}}
+		"node1":[]string{`{"key1":"val1"}`,`{"key1":"val2"}`,`{"key1":3}`,`{"key1":4}`},
+		"node2":[]string{`{"key1":"val2"}`,`{"key1":3}`,`{"key1":4}`},
+		"node3":[]string{`{"key1":"val1"}`,`{"key1":"val2"}`,`{"key1":3}`}}
 	RunMessagesThroughRoutes(t, routes, messages, expected)
 }
 
@@ -398,6 +399,25 @@ func TestRouterListListEdit(t *testing.T) {
 	RunMessagesThroughRoutes(t, routes, messages, expected)
 }
 
+func TestRouterMapMapEdit(t *testing.T) {
+	routes := []string{
+		"node0 > node2",
+		`node0 > % {key1.foo1.foo2 += 1;} > node1`}
+	messages := map[string][]map[string]interface{}{
+		"node0":[]map[string]interface{}{
+			map[string]interface{}{"key1":"val1"},
+			map[string]interface{}{"key1":map[string]interface{}{"foo1":map[string]interface{}{"foo2":9, "bar2":-8}, "bar1":map[string]interface{}{"foo2":9, "bar2":-8}}},
+			map[string]interface{}{"key1":map[string]interface{}{"foo1":map[string]interface{}{"bar2":-8}, "bar1":map[string]interface{}{"foo2":9, "bar2":-8}}},
+			map[string]interface{}{"key1":map[string]interface{}{"bar1":map[string]interface{}{"foo2":9, "bar2":-8}}}}}
+	expected := map[string][]string{
+		"node1":[]string{`{"key1":{"bar1":{"bar2":-8,"foo2":9},"foo1":{"bar2":-8,"foo2":10}}}`},
+		"node2":[]string{`{"key1":"val1"}`,
+			`{"key1":{"bar1":{"bar2":-8,"foo2":9},"foo1":{"bar2":-8,"foo2":9}}}`,
+			`{"key1":{"bar1":{"bar2":-8,"foo2":9},"foo1":{"bar2":-8}}}`,
+			`{"key1":{"bar1":{"bar2":-8,"foo2":9}}}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
+
 func TestRouterMapListEdit(t *testing.T) {
 	routes := []string{
 		"node0 > node2",
@@ -411,5 +431,22 @@ func TestRouterMapListEdit(t *testing.T) {
 	expected := map[string][]string{
 		"node1":[]string{`{"key1":{"bar":[8,6],"foo":[0,-8]}}`,`{"key1":{"bar":[-8,-6],"foo":[101,-8]}}`},
 		"node2":[]string{`{"key1":"val1"}`,`{"key1":{"bar":[8,6],"foo":[-1,-8]}}`,`{"key1":{"bar":[-8,-6],"foo":[100,-8]}}`,`{"key1":{"bar":[8,6]}}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
+
+func TestRouterCollectionAssign(t *testing.T) {
+	routes := []string{
+		"node0 > node1",
+		`node0 > % {key1 = {a:1,b:2};} > node2`,
+		`node0 > % {key1 = ["a",2];} > node3`,
+		`node0 > % {key1 = [[1,2],[3,4]];} > node4`}
+	messages := map[string][]map[string]interface{}{
+		"node0":[]map[string]interface{}{
+			map[string]interface{}{"key1":"val1"}}}
+	expected := map[string][]string{
+		"node1":[]string{`{"key1":"val1"}`},
+		"node2":[]string{`{"key1":{"a":1,"b":2}}`},
+		"node3":[]string{`{"key1":["a",2]}`},
+		"node4":[]string{`{"key1":[[1,2],[3,4]]}`}}
 	RunMessagesThroughRoutes(t, routes, messages, expected)
 }

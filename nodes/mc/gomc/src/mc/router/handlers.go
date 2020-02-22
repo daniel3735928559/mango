@@ -120,17 +120,11 @@ func GtNumHandler(this *Value, local_vars map[string]*Value, args []*Value, prim
 func GtStringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	return MakeBoolValue(args[0].StringVal > args[1].StringVal), nil
 }
-func EqNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
-	return MakeBoolValue(args[0].NumVal == args[1].NumVal), nil
+func EqHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
+	return MakeBoolValue(args[0].Equals(args[1])), nil
 }
-func EqStringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
-	return MakeBoolValue(args[0].StringVal == args[1].StringVal), nil
-}
-func NeNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
-	return MakeBoolValue(args[0].NumVal != args[1].NumVal), nil
-}
-func NeStringHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
-	return MakeBoolValue(args[0].StringVal != args[1].StringVal), nil
+func NeHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
+	return MakeBoolValue(!args[0].Equals(args[1])), nil
 }
 func LeqNumHandler(this *Value, local_vars map[string]*Value, args []*Value, primitive *Value) (*Value, error) {
 	return MakeBoolValue(args[0].NumVal <= args[1].NumVal), nil

@@ -19,6 +19,7 @@ const (
 	VAL_STRING
 	VAL_BOOL
 	VAL_ANY
+	VAL_ANYANY
 )
 
 type Value struct {
@@ -65,6 +66,43 @@ func (v *Value) ToPrimitive() interface{} {
 	
 }
 
+func (v *Value) Equals(x *Value) bool {
+	fmt.Println("CMP",v,x)
+	if v.Type != x.Type {
+		return false
+	} else if v.Type == VAL_NUM {
+		return v.NumVal == x.NumVal
+	} else if v.Type == VAL_STRING {
+		return v.StringVal == x.StringVal
+	} else if v.Type == VAL_LIST {
+		if len(v.ListVal) == len(x.ListVal) {
+			for i, item := range v.ListVal {
+				if !item.Equals(x.ListVal[i]) {
+					return false
+				}
+			}
+			return true
+		}
+		return false
+	} else if v.Type == VAL_MAP {
+		if len(v.MapVal) == len(x.MapVal) {
+			for key, val := range v.MapVal {
+				if other_val, ok := x.MapVal[key]; ok {
+					if !val.Equals(other_val) {
+						return false
+					}
+				} else {
+					return false
+				}
+			}
+			return true
+		}
+		return false
+	} else if v.Type == VAL_BOOL {
+		return v.BoolVal == x.BoolVal
+	}
+	return false
+}
 
 func (v *Value) Clone() *Value {
 	ans := &Value{
@@ -196,7 +234,7 @@ func (v *Value) ToString() string {
 		for i, val := range v.ListVal {
 			val_strs[i] = val.ToString()
 		}
-		return fmt.Sprintf("{%s}",strings.Join(val_strs ,","))
+		return fmt.Sprintf("[%s]",strings.Join(val_strs ,","))
 	} else if v.Type == VAL_NAME {
 		return fmt.Sprintf("VAR(%s)",v.NameVal)
 	} else if v.Type == VAL_INT {

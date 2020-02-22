@@ -120,6 +120,8 @@ func (e *Expression) ToString() string {
 		return fmt.Sprintf("%s ~~ %s", e.Args[0].ToString(), e.Args[1].ToString())
 	} else if e.Operation == OP_EQ {
 		return fmt.Sprintf("%s == %s", e.Args[0].ToString(), e.Args[1].ToString())
+	} else if e.Operation == OP_NE {
+		return fmt.Sprintf("%s != %s", e.Args[0].ToString(), e.Args[1].ToString())
 	} else if e.Operation == OP_GT {
 		return fmt.Sprintf("%s > %s", e.Args[0].ToString(), e.Args[1].ToString())
 	} else if e.Operation == OP_LT {
