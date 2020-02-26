@@ -1,10 +1,11 @@
-package main
+package msocket
 
 import (
 	"fmt"
 	"strings"
 	"net"
 	"time"
+	mprotocol "libmango/protocol"
 )
 
 type SocketTransport struct {
@@ -14,10 +15,10 @@ type SocketTransport struct {
 	SockidToSocket map[int]net.Conn
 	SockidToNode map[int]string
 	NodeToSockid map[string]int
-	MessageInput chan MCMessage
+	MessageInput chan mprotocol.MangoMessage
 }
 
-func MakeSocketTransport(port int, msgs chan MCMessage) *SocketTransport {
+func MakeSocketTransport(port int, msgs chan mprotocol.MangoMessage) *SocketTransport {
 	return &SocketTransport {
 		Port: port,
 		CurrentId: 0,
@@ -31,7 +32,7 @@ func (t *SocketTransport) Tx(dest string, data []byte) {
 	t.SockidToSocket[t.NodeToSockid[dest]].Write(data)
 }
 
-func (t *SocketTransport) HandleConnection(c net.Conn, sockid int, register func(*MCMessage, MCTransport) bool) {
+func (t *SocketTransport) HandleConnection(c net.Conn, sockid int, register func(*mprotocol.MangoMessage, mprotocol.MangoTransport) bool) {
         fmt.Printf("Serving %s\n", c.RemoteAddr().String())
 	buf_len := 65536
 	buf_index := 0
@@ -40,7 +41,7 @@ func (t *SocketTransport) HandleConnection(c net.Conn, sockid int, register func
 	body_raw := make([]byte, buf_len)
 	var header_str string
 	var body_str string
-	var msg *MCMessage
+	var msg *mprotocol.MangoMessage
 	state := 0 // 0 = header, 1 = body
         for {
 		recv_len, err := c.Read(buf[buf_index:])
@@ -69,7 +70,7 @@ func (t *SocketTransport) HandleConnection(c net.Conn, sockid int, register func
 				}
 				body_str = string(body_raw[:delim_index])
 				fmt.Println("body",body_str)
-				msg, err = ParseMessage(string(header_str), string(body_str))
+				msg, err = mprotocol.ParseMessage(string(header_str), string(body_str))
 				fmt.Println("got",msg)
 				if err != nil {
 					fmt.Println(err)
@@ -103,7 +104,7 @@ func (t *SocketTransport) HandleConnection(c net.Conn, sockid int, register func
         c.Close()
 }
 
-func (t *SocketTransport) RunServer(register func(*MCMessage, MCTransport) bool) {
+func (t *SocketTransport) RunServer(register func(*mprotocol.MangoMessage, mprotocol.MangoTransport) bool) {
 	var err error
 	t.Socket, err = net.Listen("tcp4", fmt.Sprintf("127.0.0.1:%d",t.Port))
         if err != nil {

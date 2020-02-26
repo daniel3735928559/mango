@@ -6,116 +6,126 @@ import (
 	// "strconv"
 	// "github.com/docopt/docopt-go"
 	// "github.com/google/shlex"
+	// "time"
+	serializer "mc/serializer"
+	mzmq "mc/transport/mzmq"
+	router "mc/router"
+	// "libmango/transport/msocket"
+	// "encoding/json"
 )
 
 // Each server is responsible for registration and mapping node
 
-type MCMessage struct {
-	Sender string
-	MessageId string
-	Command string
-	Data interface{}
-}
-
-type MCHeader struct {
-	Source string  `json:"source"`
-	MessageId string  `json:"mid"`
-	Command string `json:"command"`
-	Format string  `json:"format"`
-}
-
-type MCNode struct {
-	NodeId string
-	GroupId string
-	Transport *MCTransport
-	CurrentMid int
-	State int // alive, stalled, dead
-}
-
-type MCTransport interface {
-	RunServer(register func(*MCMessage, MCTransport) bool)
-	Tx(string, []byte)
-}
-
-func (n *MCNode) heartbeat_worker() {
-	for {
-		time.Sleep(5*time.Second)
-		n.Transport.Tx("asda")
-	}
-}
-
-func (n *MCNode) send_message(command string, args interface{}) {
-	header := n.MakeHeader(command)
-	body := JSON.Marsal(args)
-	n.Transport.Send(header, body)
-}
-
-func (mc *MangoCommander) send_message(dest, command string, args interface{}) {
-	mc.Nodes[dest].Send(command, )
-}
-
-func (mc *MangoCommander) reap(n *MCNode) {
-	
-}
-
-func (mc *MangoCommander) reaper_worker() {	
-	for {
-		time.Sleep(5*time.Second)
-		for _, n := range mc.Nodes {
-			if n.State == 2 {
-				mc.reap(n)
-			}
-		}
-	}
-}
+// type MCNode struct {
+// 	NodeId string
+// 	GroupId string
+// 	Transport serializer.MCTransport
+// 	State int // alive, stalled, dead
+// }
 
 type MangoCommander struct {
-	zmqTransport *ZMQTransport
-	socketTransport *SocketTransport
-	MessageInput chan MCMessage
-	Nodes map[string]*MCNode
-	Routes map[string]map[string]string // node_id -> command_name -> dst node_id
+	zmqTransport *mzmq.ZMQTransport
+	//socketTransport *msocket.SocketTransport
+	MessageInput chan serializer.MCMessage
+	Router *router.Router
 }
 
-func (mc *MangoCommander) Register(msg *MCMessage, t MCTransport) bool {
+
+// func (n *MCNode) heartbeat_worker() {
+// 	for {
+// 		time.Sleep(5*time.Second)
+// 		n.Transport.Tx("heartbeat", []byte(""))
+// 	}
+// }
+
+// func (n *MCNode) sendMessage(command string, args map[string]interface{}) {
+// 	header := n.MakeHeader(command)
+// 	body, _ := json.Marshal(args)
+// 	n.Transport.Tx(header, body)
+// }
+
+// func (mc *MangoCommander) reap(n *MCNode) {
+	
+// }
+
+// func (mc *MangoCommander) reaperWorker() {	
+// 	for {
+// 		time.Sleep(5*time.Second)
+// 		for _, n := range mc.Nodes {
+// 			if n.State == 2 {
+// 				mc.reap(n)
+// 			}
+// 		}
+// 	}
+// }
+
+func (mc *MangoCommander) Register(msg *serializer.MCMessage, t serializer.MCTransport) bool {
 	fmt.Println("Register")
 	// Peel off registration commands directly
 	var group string
-	var ok bool
-	if group, ok = msg.Data.(map[string]interface{})["group"].(string); !ok {
-		group = "root"
-	}
-	mc.Nodes[msg.Sender] = &MCNode{
-		NodeId: msg.Sender,
-		GroupId: group,
-		Transport: &t}
+	// if group, ok = msg.Data.(map[string]interface{})["group"].(string); !ok {
+	// 	group = "root"
+	// }
+	group = "root"
+
+	new_node := &router.Node{
+		Name: msg.Sender,
+		Group: group,
+		Transport: t}
+	mc.Router.AddNode(new_node)
+
 	return true
 }
 
 func (mc *MangoCommander) Run() {
 	go mc.zmqTransport.RunServer(mc.Register)
-	go mc.socketTransport.RunServer(mc.Register)
+	//go mc.socketTransport.RunServer(mc.Register)
 
 	for msg := range mc.MessageInput {
 		fmt.Println("FROM",msg.Sender)
 		fmt.Println("DATA",msg.Data)
-		if _, ok := mc.Nodes[msg.Sender]; ok {
+		if src := mc.Router.FindNode(msg.Sender); src != nil {
 			fmt.Println("Processing from",msg.Sender)
+			mc.Router.Send(src, msg.MessageId, "cmd", msg.Data)
 		} else {
 			fmt.Println("No such node",msg.Sender)
 		}
 	}
 }
 
+type MCLoopbackTransport struct {
+	MC *MangoCommander
+}
+
+func (t *MCLoopbackTransport) Tx(dest string, data []byte) {
+	if dest == "root/mc" {
+		msg, err := serializer.ParseMessage(string(data))
+		if err == nil {
+			if msg.Command == "routeadd" {
+				spec := msg.Data["spec"].(string)
+				t.MC.Router.ParseAndAddRoutes(spec)
+			}
+		}
+	}
+}
+
+func (t *MCLoopbackTransport) RunServer(register func(*serializer.MCMessage, serializer.MCTransport) bool) {
+}
+
+
 func main() {
 	fmt.Println("hi")
-	go test_zmq_client(1919)
-	go test_socket_client(1920)
-	message_aggregator := make(chan MCMessage, 100)
+	go mzmq.TestZmqClient(1919)
+	//go test_socket_client(1920)
+	message_aggregator := make(chan serializer.MCMessage, 100)
 	MC := &MangoCommander{
-		zmqTransport: MakeZMQTransport(1919, message_aggregator),
-		socketTransport: MakeSocketTransport(1920, message_aggregator),
-		Nodes: make(map[string]*MCNode),
+		Router: router.MakeRouter(),
+		zmqTransport: mzmq.MakeZMQTransport(1919, message_aggregator),
+		//socketTransport: MakeSocketTransport(1920, message_aggregator),
 		MessageInput: message_aggregator}
+	MC.Router.AddNode(&router.Node{
+		Name: "mc",
+		Group: "root",
+		Transport: &MCLoopbackTransport{MC: MC}})
 	MC.Run()
 }

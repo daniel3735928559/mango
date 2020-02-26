@@ -25,6 +25,9 @@
 %type<node> node
 %type<transforms> transforms
 %type<transform> transform
+%type<transform> transform_filter
+%type<transform> transform_edit
+%type<transform> transform_replace
 %type<script> script
 %type<writeable> dstexpr
 %type<expression> varexpr
@@ -52,7 +55,7 @@ route   : node '>' node
 	// fmt.Println("C")
 	$$ = nil
 	if l, ok := yylex.(*RouteLexer); ok {
-		l.result = []*Route{&Route{Source: $1.Name, Dest: $3.Name}}
+		l.result = []*Route{&Route{Source: $1, Dest: $3}}
 	}
 }
 | node '<' node
@@ -60,7 +63,7 @@ route   : node '>' node
 	// fmt.Println("B")
 	$$ = nil
 	if l, ok := yylex.(*RouteLexer); ok {
-		l.result = []*Route{&Route{Source: $3.Name, Dest: $1.Name}}
+		l.result = []*Route{&Route{Source: $3, Dest: $1}}
 	}
 }
 | node '<' '>' node
@@ -68,8 +71,8 @@ route   : node '>' node
 	$$ = nil
 	if l, ok := yylex.(*RouteLexer); ok {
 		l.result = []*Route{
-			&Route{Source: $1.Name, Dest: $4.Name},
-			&Route{Source: $4.Name, Dest: $1.Name}}
+			&Route{Source: $1, Dest: $4},
+			&Route{Source: $4, Dest: $1}}
 	}
 }
 | node '>' transforms
@@ -79,7 +82,7 @@ route   : node '>' node
 	if l, ok := yylex.(*RouteLexer); ok {
 		l.result = []*Route{
 				    &Route{
-				    Source: $1.Name,
+				    Source: $1,
 				    Dest: $3.Dest,
 				    Transforms: $3.Transforms}}
 }
@@ -87,7 +90,7 @@ route   : node '>' node
 ;
 node    : IDENT
 {
-	$$ = &Node{Name: $1.literal}
+	$$ = &Node{Group: "root", Name: $1.literal}
 }
 | IDENT '/' IDENT
 {
@@ -97,7 +100,7 @@ node    : IDENT
 transforms : transform '>' node
 {
 	$$ = &Route{
-		Dest: $3.Name,
+		Dest: $3,
 		Transforms: []*Transform{$1}}
 }
 | transform '>' transforms
@@ -107,37 +110,103 @@ transforms : transform '>' node
 		Transforms: append([]*Transform{$1}, $3.Transforms...)}
 }
 ;
-transform : '?' '{' expr '}'
+transform : '?' transform_filter
 {
 	$$ = &Transform{
 		Type: TR_FILTER,
-		Condition: $3}
+		CommandCondition: $2.CommandCondition,
+		Condition: $2.Condition}
 }
-| '%' '{' script '}'
+| '%' transform_edit
 {
 	$$ = &Transform{
 		Type: TR_EDIT,
-		Script: $3}
+		CommandReplace: $2.CommandReplace,
+		Script: $2.Script}
 }
-| '=' '{' mapexprs '}'
+| '=' transform_replace
 {
 	$$ = &Transform{
 		Type: TR_REPLACE,
-		Replace: $3}
+		CommandReplace: $2.CommandReplace,
+		Replace: $2.Replace}
 }
-| '?' '{' expr '}' '%' '{' script '}'
+| '?' transform_filter '%' transform_edit
 {
 	$$ = &Transform{
 		Type: TR_COND_EDIT,
-		Condition: $3,
-		Script: $7}
+		CommandCondition: $2.CommandCondition,
+		CommandReplace: $4.CommandReplace,
+		Condition: $2.Condition,
+		Script: $4.Script}
 }
-| '?' '{' expr '}' '=' '{' mapexprs '}'
+| '?' transform_filter '=' transform_replace
 {
 	$$ = &Transform{
 		Type: TR_COND_REPLACE,
-		Condition: $3,
-		Replace: $7}
+		CommandCondition: $2.CommandCondition,
+		Condition: $2.Condition,
+		CommandReplace: $4.CommandReplace,
+		Replace: $4.Replace}
+}
+;
+transform_filter : '{' expr '}'
+{
+	$$ = &Transform{
+		Type: TR_FILTER,
+		CommandCondition: "",
+		Condition: $2}
+}
+| IDENT '{' expr '}'
+{
+	$$ = &Transform{
+		Type: TR_EDIT,
+		CommandCondition: $1.literal,
+		Condition: $3}
+}
+| IDENT
+{
+	$$ = &Transform{
+		Type: TR_EDIT,
+		CommandCondition: $1.literal,
+		Condition: nil}
+}
+;
+transform_replace : '{' mapexprs '}'
+{
+	$$ = &Transform{
+		Type: TR_REPLACE,
+		CommandReplace: "",
+		Replace: $2}
+}
+| IDENT '{' mapexprs '}'
+{
+	$$ = &Transform{
+		Type: TR_REPLACE,
+		CommandReplace: $1.literal,
+		Replace: $3}
+}
+| IDENT
+{
+	$$ = &Transform{
+		Type: TR_REPLACE,
+		CommandReplace: $1.literal,
+		Replace: nil}
+}
+;
+transform_edit : '{' script '}'
+{
+	$$ = &Transform{
+		Type: TR_EDIT,
+		CommandReplace: "",
+		Script: $2}
+}
+| IDENT '{' script '}'
+{
+	$$ = &Transform{
+		Type: TR_EDIT,
+		CommandReplace: $1.literal,
+		Script: $3}
 }
 ;
 script

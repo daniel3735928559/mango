@@ -1,8 +1,9 @@
-package main
+package mzmq
 
 import (
 	"fmt"
 	"math/rand"
+	serializer "mc/serializer"
 	zmq "github.com/pebbe/zmq4"
 )
 
@@ -11,10 +12,10 @@ type ZMQTransport struct {
 	Socket *zmq.Socket
 	IdentityToNode map[string]string
 	NodeToIdentity map[string]string
-	MessageInput chan MCMessage
+	MessageInput chan serializer.MCMessage
 }
 
-func MakeZMQTransport(port int, msgs chan MCMessage) *ZMQTransport {
+func MakeZMQTransport(port int, msgs chan serializer.MCMessage) *ZMQTransport {
 	return &ZMQTransport {
 		Port: port,
 		IdentityToNode: make(map[string]string),
@@ -27,17 +28,15 @@ func (t *ZMQTransport) Tx(dest string, data []byte) {
 	t.Socket.Send(string(data), 0)
 }
 
-func (t *ZMQTransport) RunServer(register func(*MCMessage, MCTransport) bool) {
+func (t *ZMQTransport) RunServer(register func(*serializer.MCMessage, serializer.MCTransport) bool) {
 	t.Socket, _ = zmq.NewSocket(zmq.ROUTER)
 	t.Socket.Bind(fmt.Sprintf("tcp://*:%d", t.Port))
 	for {
 		identity, _ := t.Socket.Recv(0)
 		t.Socket.Recv(0)
-		header, _ := t.Socket.Recv(0)
-		fmt.Println(header)
-		body, _ := t.Socket.Recv(0)
-		fmt.Println(body)
-		msg, err := ParseMessage(header, body)
+		data, _ := t.Socket.Recv(0)
+		fmt.Println(data)
+		msg, err := serializer.ParseMessage(data)
 
 		if err != nil {
 			fmt.Println(err)
@@ -65,19 +64,19 @@ func (t *ZMQTransport) RunServer(register func(*MCMessage, MCTransport) bool) {
 	
 }
 
-func test_zmq_client(port int) {
+func TestZmqClient(port int) {
 	worker, _ := zmq.NewSocket(zmq.DEALER)
 	defer worker.Close()
 	set_id(worker) //  Set a printable identity
 	worker.Connect(fmt.Sprintf("tcp://localhost:%d",port))
 
 	worker.Send("",zmq.SNDMORE)
-	worker.Send(`{"source":"exciter","format":"json","command":"hellomango"}`,zmq.SNDMORE)
-	worker.Send(`{"group":"foo"}`,0)
+	worker.Send(`{"source":"exciter","format":"json","command":"hellomango"}
+{"group":"foo"}`,0)
 	
 	worker.Send("",zmq.SNDMORE)
-	worker.Send(`{"source":"exciter","format":"json","command":"excite"}`,zmq.SNDMORE)
-	worker.Send(`{"message":"asda"}`,0)
+	worker.Send(`{"source":"exciter","format":"json","command":"excite"}
+{"message":"asda"}`,0)
 }
 
 func set_id(soc *zmq.Socket) {

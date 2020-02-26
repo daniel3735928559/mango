@@ -17,6 +17,8 @@ const (
 
 type Transform struct {
 	Type TransformType
+	CommandCondition string
+	CommandReplace string
 	Condition *Expression
 	Replace *Expression
 	Script []*Statement
@@ -25,29 +27,63 @@ type Transform struct {
 func (t *Transform) ToString() string {
 	if t.Type == TR_FILTER {
 		fmt.Println(t.Condition)
-		return fmt.Sprintf("pass if {%s}", t.Condition.ToString())
+		cond := ""
+		if t.Condition != nil {
+			cond = t.Condition.ToString()
+		}
+		return fmt.Sprintf("pass if %s{%s}", t.CommandCondition, cond)
 	} else if t.Type == TR_EDIT {
 		script := ""
-		for _, e := range t.Script {
-			script += fmt.Sprintf("%s;", e.ToString())
+		if t.Script != nil {
+			for _, e := range t.Script {
+				script += fmt.Sprintf("%s;", e.ToString())
+			}
 		}
-		return fmt.Sprintf("edit {%s}", script)
+		return fmt.Sprintf("edit %s{%s}", t.CommandReplace, script)
 	} else if t.Type == TR_REPLACE {
-		return fmt.Sprintf("replace %s", t.Replace.ToString())
+		repl := ""
+		if t.Replace != nil {
+			repl = t.Replace.ToString()
+		}
+		return fmt.Sprintf("replace %s%s", t.CommandReplace, repl)
 	} else if t.Type == TR_COND_EDIT {
 		script := ""
-		for _, e := range t.Script {
-			script += fmt.Sprintf("%s;", e.ToString())
+		if t.Script != nil {
+			for _, e := range t.Script {
+				script += fmt.Sprintf("%s;", e.ToString())
+			}
 		}
-		return fmt.Sprintf("edit {%s} if {%s}", script, t.Condition.ToString())
+		cond := ""
+		if t.Condition != nil {
+			cond = t.Condition.ToString()
+		}
+		return fmt.Sprintf("edit %s{%s} if %s{%s}", t.CommandReplace, script, t.CommandCondition, cond)
 	} else if t.Type == TR_COND_REPLACE {
-		return fmt.Sprintf("replace %s if {%s}", t.Replace.ToString(), t.Condition.ToString())
-	} 
+		cond := ""
+		repl := ""
+		if t.Replace != nil {
+			repl = t.Replace.ToString()
+		}
+		if t.Condition != nil {
+			cond = t.Condition.ToString()
+		}
+		return fmt.Sprintf("replace %s%s if %s{%s}", t.CommandReplace, repl, t.CommandCondition, cond)
+	}
 	return "[unknown transform type]"
 }
 
-func (t *Transform) EvaluateCondition(this *Value) (bool, error) {
-	fmt.Println("Condition",t.Condition.ToString(),"on",this.ToString())
+func (t *Transform) EvaluateCondition(command string, this *Value) (bool, error) {
+	fmt.Println("Filter",t.ToString(),"on",command, this.ToString())
+	if len(t.CommandCondition) > 0 {
+		if t.CommandCondition != command {
+			// The command has not matched--no need to check the condition
+			return false, nil
+		} else if t.Condition == nil {
+			// We are only checking the command type, and so need not evaluate the condition
+			return true, nil
+		}
+	}
+	// The command has matched or was not checked
 	if t.Condition == nil {
 		return false, errors.New("Tried to evaluate nil condition")
 	}
@@ -62,63 +98,76 @@ func (t *Transform) EvaluateCondition(this *Value) (bool, error) {
 	return res.BoolVal, nil
 }
 
-func (t *Transform) EvaluateScript(this *Value) (*Value, error) {
+func (t *Transform) EvaluateScript(command string, this *Value) (string, *Value, error) {
 	vars := make(map[string]*Value)
 	var err error
-	for _, s := range t.Script {
-		fmt.Println("Statement",s.ToString(),"on",this.ToString())
-		this, vars, err = s.Execute(this, vars)
-		if err != nil {
-			return nil, err
+	if t.Script != nil && len(t.Script) > 0 {
+		for _, s := range t.Script {
+			fmt.Println("Statement",s.ToString(),"on",this.ToString())
+			this, vars, err = s.Execute(this, vars)
+			if err != nil {
+				return "", nil, err
+			}
 		}
 	}
-	return this, nil
-}
-
-func (t *Transform) EvaluateReplacement(this *Value) (*Value, error) {
-	fmt.Println("Replacement",t.Replace.ToString(),"on",this.ToString())
-	replacement, err := t.Replace.Evaluate(this, make(map[string]*Value))
-	if err != nil {
-		return nil, err
+	// If there was no error (or no script), replace the command if needed
+	if len(t.CommandReplace) > 0 {
+		command = t.CommandReplace
 	}
-	return replacement, nil
+	return command, this, nil
 }
 
+func (t *Transform) EvaluateReplacement(command string, this *Value) (string, *Value, error) {
+	fmt.Println("Replacement",t.ToString(),"on",command,this.ToString())
+	if len(t.CommandReplace) > 0 {
+		command = t.CommandReplace
+	}
+	if t.Replace != nil {
+		replacement, err := t.Replace.Evaluate(this, make(map[string]*Value))
+		if err != nil {
+			return "", nil, err
+		}
+		return command, replacement, nil
+	} else {
+		return command, this, nil
+	}
+}
 
-
-func (t *Transform) Execute(args *Value) (*Value, error) {
+func (t *Transform) Execute(command string, args *Value) (string, *Value, error) {
 	this := args.Clone()
 	if t.Type == TR_FILTER {
-		to_pass, err := t.EvaluateCondition(this)
+		to_pass, err := t.EvaluateCondition(command, this)
 		if err != nil {
-			return nil, err
+			return "", nil, err
 		}
 		if to_pass {
-			return this, nil
+			return command, this, nil
 		}
-		return nil, nil
+		return "", nil, nil
 	} else if t.Type == TR_EDIT {
-		return t.EvaluateScript(this)
+		return t.EvaluateScript(command, this)
 	} else if t.Type == TR_REPLACE {
-		return t.EvaluateReplacement(this)
+		return t.EvaluateReplacement(command, this)
 	} else if t.Type == TR_COND_EDIT {
-		to_pass, err := t.EvaluateCondition(this)
+		to_edit, err := t.EvaluateCondition(command, this)
 		if err != nil {
-			return nil, err
+			return "", nil, err
 		}
-		if to_pass {
-			return t.EvaluateScript(this)
+		if to_edit {
+			return t.EvaluateScript(command, this)
 		}
-		return this, nil
+		// The filter did not match--just pass through unedited
+		return command, this, nil
 	} else if t.Type == TR_COND_REPLACE {
-		to_pass, err := t.EvaluateCondition(this)
+		to_replace, err := t.EvaluateCondition(command, this)
 		if err != nil {
-			return nil, err
+			return "", nil, err
 		}
-		if to_pass {
-			return t.EvaluateReplacement(this)
+		if to_replace {
+			return t.EvaluateReplacement(command, this)
 		}
-		return this, nil
+		// The filter did not match--just pass through unreplaced
+		return command, this, nil
 	}	
-	return nil, errors.New("Transform of unknown type")
+	return "", nil, errors.New("Transform of unknown type")
 }
