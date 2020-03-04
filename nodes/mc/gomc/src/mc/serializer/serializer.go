@@ -33,6 +33,10 @@ func (msg *MCMessage) Serialize() string {
 	return fmt.Sprintf("%s\n%s", header, body)
 }
 
+func (msg *MCMessage) RawHeader() map[string]string {
+	return map[string]string{"source": msg.Sender, "mid": msg.MessageId, "command": msg.Command}
+}
+
 func MakeMessage(src, mid, command string, args map[string]interface{}) *MCMessage {
 	return &MCMessage {
 		Sender: src,

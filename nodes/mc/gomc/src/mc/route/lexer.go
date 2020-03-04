@@ -6,10 +6,11 @@ import (
 
 type RouteLexer struct {
 	s *RouteScanner
+	lexerErrors *[]string
 	result []*Route
 }
 
-func (l *RouteLexer) Lex(lval *yySymType) int {
+func (l *RouteLexer) Lex(lval *RouteParserSymType) int {
 	tok, lit, pos := l.s.Scan()
 	if tok == EOF {
 		return 0
@@ -20,5 +21,7 @@ func (l *RouteLexer) Lex(lval *yySymType) int {
 }
 
 func (l *RouteLexer) Error(e string) {
+	le := *(l.lexerErrors)
+	*(l.lexerErrors) = append(le, e)
 	fmt.Println("ERROR",e)
 }

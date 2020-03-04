@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"errors"
+	value "mc/value"
 )
 
 type TransformType int
@@ -72,7 +73,7 @@ func (t *Transform) ToString() string {
 	return "[unknown transform type]"
 }
 
-func (t *Transform) EvaluateCondition(command string, this *Value) (bool, error) {
+func (t *Transform) EvaluateCondition(command string, this *value.Value) (bool, error) {
 	fmt.Println("Filter",t.ToString(),"on",command, this.ToString())
 	if len(t.CommandCondition) > 0 {
 		if t.CommandCondition != command {
@@ -87,19 +88,19 @@ func (t *Transform) EvaluateCondition(command string, this *Value) (bool, error)
 	if t.Condition == nil {
 		return false, errors.New("Tried to evaluate nil condition")
 	}
-	res, err := t.Condition.Evaluate(this, make(map[string]*Value))
+	res, err := t.Condition.Evaluate(this, make(map[string]*value.Value))
 	if err != nil {
 		return false, err
 	}
-	if res.Type != VAL_BOOL {
+	if res.Type != value.VAL_BOOL {
 		return false, errors.New("condition does not evaluate to a boolean")
 	}
 	fmt.Println("Condition result",res.BoolVal)
 	return res.BoolVal, nil
 }
 
-func (t *Transform) EvaluateScript(command string, this *Value) (string, *Value, error) {
-	vars := make(map[string]*Value)
+func (t *Transform) EvaluateScript(command string, this *value.Value) (string, *value.Value, error) {
+	vars := make(map[string]*value.Value)
 	var err error
 	if t.Script != nil && len(t.Script) > 0 {
 		for _, s := range t.Script {
@@ -117,13 +118,13 @@ func (t *Transform) EvaluateScript(command string, this *Value) (string, *Value,
 	return command, this, nil
 }
 
-func (t *Transform) EvaluateReplacement(command string, this *Value) (string, *Value, error) {
+func (t *Transform) EvaluateReplacement(command string, this *value.Value) (string, *value.Value, error) {
 	fmt.Println("Replacement",t.ToString(),"on",command,this.ToString())
 	if len(t.CommandReplace) > 0 {
 		command = t.CommandReplace
 	}
 	if t.Replace != nil {
-		replacement, err := t.Replace.Evaluate(this, make(map[string]*Value))
+		replacement, err := t.Replace.Evaluate(this, make(map[string]*value.Value))
 		if err != nil {
 			return "", nil, err
 		}
@@ -133,7 +134,7 @@ func (t *Transform) EvaluateReplacement(command string, this *Value) (string, *V
 	}
 }
 
-func (t *Transform) Execute(command string, args *Value) (string, *Value, error) {
+func (t *Transform) Execute(command string, args *value.Value) (string, *value.Value, error) {
 	this := args.Clone()
 	if t.Type == TR_FILTER {
 		to_pass, err := t.EvaluateCondition(command, this)
@@ -171,3 +172,41 @@ func (t *Transform) Execute(command string, args *Value) (string, *Value, error)
 	}	
 	return "", nil, errors.New("Transform of unknown type")
 }
+
+
+// func (t *Transform) TransformType(ty *TypeDesc) []*TypeDesc {
+// 	this := args.Clone()
+// 	if t.Type == TR_FILTER {
+// 		// Assume (generously) any command of the correct kind
+// 		// can pass the expression check
+// 		if t.CommandCondition == ty.Name {
+// 			return []*TypeDesc{ty}
+// 		}
+// 		return []*TypeDesc{}
+// 	} else if t.Type == TR_EDIT {
+// 		return t.EvaluateScript(command, this)
+// 	} else if t.Type == TR_REPLACE {
+// 		return t.EvaluateReplacement(command, this)
+// 	} else if t.Type == TR_COND_EDIT {
+// 		to_edit, err := t.EvaluateCondition(command, this)
+// 		if err != nil {
+// 			return "", nil, err
+// 		}
+// 		if to_edit {
+// 			return t.EvaluateScript(command, this)
+// 		}
+// 		// The filter did not match--just pass through unedited
+// 		return command, this, nil
+// 	} else if t.Type == TR_COND_REPLACE {
+// 		to_replace, err := t.EvaluateCondition(command, this)
+// 		if err != nil {
+// 			return "", nil, err
+// 		}
+// 		if to_replace {
+// 			return t.EvaluateReplacement(command, this)
+// 		}
+// 		// The filter did not match--just pass through unreplaced
+// 		return command, this, nil
+// 	}	
+// 	return "", nil, errors.New("Transform of unknown type")
+// }

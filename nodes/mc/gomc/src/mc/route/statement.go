@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"errors"
+	value "mc/value"
 )
 
 type StatementType int
@@ -39,8 +40,8 @@ type WriteableValue struct {
 func (w *WriteableValue) ToExpression() *Expression {
 	base := &Expression{
 		Operation:OP_VAR,
-		Value:&Value{
-			Type:VAL_NAME,
+		Value:&value.Value{
+			Type:value.VAL_NAME,
 			NameVal:w.Base}}
 	current := base
 	for _, pe := range w.Path {
@@ -57,12 +58,12 @@ func (w *WriteableValue) ToExpression() *Expression {
 	return current
 }
 
-func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Expression) (*Value, map[string]*Value, error) {
+func (w *WriteableValue) Write(this *value.Value, vars map[string]*value.Value, arg *Expression) (*value.Value, map[string]*value.Value, error) {
 	content, err := arg.Evaluate(this, vars)
 	if err != nil {
 		return this, vars, err
 	}
-	var dest *Value
+	var dest *value.Value
 	dest_name := w.Base
 	is_this_var := true
 	is_local_var := true
@@ -74,12 +75,12 @@ func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Express
 		dest = v.Clone()
 		is_this_var = false
 		is_local_var = true
-	} else if v, ok := this.MapVal[dest_name]; ok && this.Type == VAL_MAP {
+	} else if v, ok := this.MapVal[dest_name]; ok && this.Type == value.VAL_MAP {
 		dest = v.Clone()
 		is_this_var = true
 		is_local_var = false
 	} else if len(w.Path) == 0 {
-		dest = MakeEmptyValue()
+		dest = value.MakeEmptyValue()
 		is_this_var = true
 		is_local_var = false
 	} else {
@@ -105,8 +106,8 @@ func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Express
 	}
 	for i, e := range w.Path {
 		if e.Type == PATH_MAP {
-			if target.Type != VAL_MAP {
-				return this, vars, errors.New(fmt.Sprintf("Attempted to access key %s in non-map %d != %d", e.MapKey,target.Type,VAL_MAP))
+			if target.Type != value.VAL_MAP {
+				return this, vars, errors.New(fmt.Sprintf("Attempted to access key %s in non-map %d != %d", e.MapKey,target.Type, value.VAL_MAP))
 			}
 			if i == len(w.Path) - 1 {
 				target.MapVal[e.MapKey] = content
@@ -129,14 +130,14 @@ func (w *WriteableValue) Write(this *Value, vars map[string]*Value, arg *Express
 				return this, vars, errors.New(fmt.Sprintf("Attempted to access non-existent key %s", e.MapKey))
 			}
 		} else if e.Type == PATH_LIST {
-			if target.Type != VAL_LIST {
-				return this, vars, errors.New(fmt.Sprintf("Attempted to access index in non-list type %d != %d",target.Type,VAL_LIST))
+			if target.Type != value.VAL_LIST {
+				return this, vars, errors.New(fmt.Sprintf("Attempted to access index in non-list type %d != %d",target.Type,value.VAL_LIST))
 			}
 			idx, err := e.ListIndex.Evaluate(this, vars)
 			if err != nil {
 				return this, vars, err
 			}
-			if idx.Type != VAL_NUM {
+			if idx.Type != value.VAL_NUM {
 				return this, vars, errors.New("List subscript must be integer")
 			}
 			list_index := int(idx.NumVal)
@@ -198,13 +199,13 @@ func (s *Statement) ToString() string {
 	return "[unknown statement type]"
 }
 
-func (s *Statement) Execute(this *Value, vars map[string]*Value) (*Value, map[string]*Value, error) {
+func (s *Statement) Execute(this *value.Value, vars map[string]*value.Value) (*value.Value, map[string]*value.Value, error) {
 	fmt.Println("EXEC",s.ToString())
 	if s.Type == STMT_ASSIGN {
 		return s.Destination.Write(this, vars, s.Args[0])
 	} else if s.Type == STMT_DECLARE {
 		name := s.Destination.Base
-		if this.Type == VAL_MAP {
+		if this.Type == value.VAL_MAP {
 			if _, ok := this.MapVal[name]; ok {
 				return this, vars, errors.New(fmt.Sprintf("Variable already exists in this: %s", name))
 			}
@@ -212,11 +213,11 @@ func (s *Statement) Execute(this *Value, vars map[string]*Value) (*Value, map[st
 		if _, ok := vars[name]; ok {
 			return this, vars, errors.New(fmt.Sprintf("Variable already exists as local variable: %s", name))
 		}
-		vars[name] = MakeEmptyValue()
+		vars[name] = value.MakeEmptyValue()
 		return this, vars, nil
 	} else if s.Type == STMT_DELETE {
 		name := s.Destination.Base
-		if this.Type == VAL_MAP {
+		if this.Type == value.VAL_MAP {
 			if _, ok := this.MapVal[name]; ok {
 				delete(this.MapVal, name)
 				return this, vars, nil

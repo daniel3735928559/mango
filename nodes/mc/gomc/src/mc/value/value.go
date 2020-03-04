@@ -1,4 +1,4 @@
-package router
+package value
 
 import (
 	"fmt"
@@ -7,10 +7,10 @@ import (
 	"errors"
 )
 
-type ValueType int
+type ValueKind int
 
 const (
-	VAL_MAP ValueType = iota + 1
+	VAL_MAP ValueKind = iota + 1
 	VAL_LIST
 	VAL_NAME
 	VAL_NUM
@@ -22,7 +22,7 @@ const (
 )
 
 type Value struct {
-	Type ValueType
+	Type ValueKind
 	MapVal map[string]*Value
 	ListVal []*Value
 	NameVal string
@@ -117,12 +117,12 @@ func (v *Value) Clone() *Value {
 	return ans
 }
 
-func MakeValue(args interface{}) (*Value, error) {
+func FromObject(args interface{}) (*Value, error) {
 	var err error
 	if mapvals, ok := args.(map[string]interface{}); ok {
 		mapval := make(map[string]*Value)
 		for k, v := range mapvals {
-			mapval[k], err = MakeValue(v)
+			mapval[k], err = FromObject(v)
 			if err != nil {
 				return nil, err
 			}
@@ -134,7 +134,7 @@ func MakeValue(args interface{}) (*Value, error) {
 		fmt.Println("MAKEVALUE list")
 		listval := make([]*Value, len(listvals))
 		for i, v := range listvals {
-			listval[i], err = MakeValue(v)
+			listval[i], err = FromObject(v)
 			if err != nil {
 				return nil, err
 			}
@@ -200,7 +200,7 @@ func (v *Value) ToString() string {
 		sort.Strings(map_keys)
 		val_strs := make([]string, len(map_keys))
 		for i, k := range map_keys {
-			val_strs[i] = fmt.Sprintf("%s:%s",k,v.MapVal[k].ToString())
+			val_strs[i] = fmt.Sprintf(`"%s":%s`,k,v.MapVal[k].ToString())
 		}
 		return fmt.Sprintf("{%s}",strings.Join(val_strs ,","))
 	} else if v.Type == VAL_LIST {
@@ -210,13 +210,16 @@ func (v *Value) ToString() string {
 		}
 		return fmt.Sprintf("[%s]",strings.Join(val_strs ,","))
 	} else if v.Type == VAL_NAME {
-		return fmt.Sprintf("VAR(%s)",v.NameVal)
+		return fmt.Sprintf("%s",v.NameVal)
 	} else if v.Type == VAL_NUM {
-		return fmt.Sprintf("NUM(%f)",v.NumVal)
+		return fmt.Sprintf("%v",v.NumVal)
 	} else if v.Type == VAL_STRING {
-		return fmt.Sprintf("STRING(%s)",v.StringVal)
+		return fmt.Sprintf(`"%s"`,v.StringVal)
 	} else if v.Type == VAL_BOOL {
-		return fmt.Sprintf("BOOL(%v)",v.BoolVal)
+		if v.BoolVal {
+			return "true"
+		}
+		return "false"
 	}
 	return "[unknown type]"
 }

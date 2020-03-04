@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"errors"
 	"strings"
+	value "mc/value"
 )
 
 type ExpressionOperationType int
@@ -49,22 +50,22 @@ const (
 type Expression struct {
 	Operation ExpressionOperationType
 	Args []*Expression
-	Value *Value
+	Value *value.Value
 }			
 
 func MakeNameExpression(name string) *Expression {
 	return &Expression {
 		Operation: OP_NAME,
-		Value: &Value {
-			Type:VAL_NAME,
+		Value: &value.Value {
+			Type:value.VAL_NAME,
 			NameVal:name}}
 }
 
 func MakeVarExpression(name string) *Expression {
 	return &Expression {
 		Operation: OP_VAR,
-		Value: &Value {
-			Type:VAL_NAME,
+		Value: &value.Value {
+			Type:value.VAL_NAME,
 			NameVal:name}}
 }
 
@@ -72,7 +73,7 @@ func (e *Expression) ToString() string {
 	if e.Operation == OP_VAR {
 		return fmt.Sprintf("%s", e.Value.ToString())
 	} else if e.Operation == OP_NAME {
-		return fmt.Sprintf("NAME(%s)", e.Value.NameVal)
+		return fmt.Sprintf("%s", e.Value.NameVal)
 	} else if e.Operation == OP_MAPVAR {
 		return fmt.Sprintf("%s.%s", e.Args[0].ToString(), e.Args[1].ToString())
 	} else if e.Operation == OP_LISTVAR {
@@ -189,15 +190,40 @@ func (e *Expression) ToString() string {
 // 	return nil
 // }
 
-func (e *Expression) Evaluate(this *Value, vars map[string]*Value) (*Value, error) {
+// Get possible output types from an expression (for eventually being able to validate statically that a route between two possible specifications is safe
+// func (e *Expression) PossibleTypes(var_types map[string]*TypeDesc) []*TypeDesc {
+// 	if e.Operation == OP_NAME {
+// 		if ty, ok := var_types[e.Value.NameVal]; ok {
+// 			return []*TypeDesc{ty}
+// 		} else {
+// 			return []*TypeDesc{}
+// 		}
+// 	} else if e.Operation == OP_NUM {
+// 		return MakeNumType()
+// 	} else if e.Operation == OP_STRING {
+// 		return MakeStringType()
+// 	} else if e.Operation == OP_BOOL {
+// 		return MakeBoolType()
+// 	} else if e.Operation == OP_MAPVAR {
+		
+// 	} else if e.Operation == OP_LISTVAR {
+		
+// 	} else if e.Operation == OP_TERNARY {
+		
+// 	} else if e.Operation == OP_UMINUS {
+		
+// 	}
+// }
+
+func (e *Expression) Evaluate(this *value.Value, vars map[string]*value.Value) (*value.Value, error) {
 	if e == nil {
 		return nil, errors.New("Invalid expression")
 	}
 	fmt.Println("EVAL",e.ToString())
-	args := make([]*Value, len(e.Args))
+	args := make([]*value.Value, len(e.Args))
 	local_vars := vars
 	var err error
-	var arg *Value
+	var arg *value.Value
 	for i, a := range e.Args {
 		arg, err = a.Evaluate(this, local_vars)
 		if err != nil {

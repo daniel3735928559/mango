@@ -2,7 +2,10 @@
 	package router
 	import (
 		"strconv"
-		//"fmt"
+		"strings"
+		"errors"
+		"fmt"
+		value "mc/value"
 	)
 	type Token struct {
 		token   int
@@ -19,7 +22,7 @@
 	statement *Statement
 	writeable *WriteableValue
 	script []*Statement
-	node *Node
+	node string
 }
 %type<routes> route
 %type<node> node
@@ -54,7 +57,7 @@ route   : node '>' node
 {
 	// fmt.Println("C")
 	$$ = nil
-	if l, ok := yylex.(*RouteLexer); ok {
+	if l, ok := RouteParserlex.(*RouteLexer); ok {
 		l.result = []*Route{&Route{Source: $1, Dest: $3}}
 	}
 }
@@ -62,14 +65,14 @@ route   : node '>' node
 {
 	// fmt.Println("B")
 	$$ = nil
-	if l, ok := yylex.(*RouteLexer); ok {
+	if l, ok := RouteParserlex.(*RouteLexer); ok {
 		l.result = []*Route{&Route{Source: $3, Dest: $1}}
 	}
 }
 | node '<' '>' node
 {
 	$$ = nil
-	if l, ok := yylex.(*RouteLexer); ok {
+	if l, ok := RouteParserlex.(*RouteLexer); ok {
 		l.result = []*Route{
 			&Route{Source: $1, Dest: $4},
 			&Route{Source: $4, Dest: $1}}
@@ -79,7 +82,7 @@ route   : node '>' node
 {
 	$$ = nil
 	// fmt.Println("A")
-	if l, ok := yylex.(*RouteLexer); ok {
+	if l, ok := RouteParserlex.(*RouteLexer); ok {
 		l.result = []*Route{
 				    &Route{
 				    Source: $1,
@@ -90,11 +93,11 @@ route   : node '>' node
 ;
 node    : IDENT
 {
-	$$ = &Node{Group: "root", Name: $1.literal}
+	$$ = $1.literal
 }
 | IDENT '/' IDENT
 {
-	$$ = &Node{Group: $1.literal, Name: $3.literal}
+  $$ = fmt.Sprintf("%s/%s",$1.literal, $3.literal)
 }
 ;
 transforms : transform '>' node
@@ -285,19 +288,19 @@ expr : NUMBER
 	x, _ := strconv.ParseFloat($1.literal, 64)
 	$$ = &Expression{
 		Operation: OP_NUM,
-		Value: MakeFloatValue(x)}
+		Value: value.MakeFloatValue(x)}
 }
 | TRUE
 {
 	$$ = &Expression{
 		Operation: OP_BOOL,
-		Value: MakeBoolValue(true)}
+		Value: value.MakeBoolValue(true)}
 }
 | FALSE
 {
 	$$ = &Expression{
 		Operation: OP_BOOL,
-		Value: MakeBoolValue(false)}
+		Value: value.MakeBoolValue(false)}
 }
 | '{' mapexprs '}'
 {
@@ -319,7 +322,7 @@ expr : NUMBER
 {
 	$$ = &Expression{
 		Operation: OP_STRING,
-		Value: &Value{Type: VAL_STRING, StringVal: $1.literal}}
+		Value: &value.Value{Type: value.VAL_STRING, StringVal: $1.literal}}
 }
 | expr '~' expr
 {
@@ -529,11 +532,16 @@ dstexpr : IDENT
 }
 ;
 %%
-func Parse(exp string) []*Route {
+func Parse(exp string) ([]*Route, error) {
 	l := new(RouteLexer)
+	lexerErrors := make([]string, 0)
+	l.lexerErrors = &lexerErrors
 	l.s = new(RouteScanner)
 	l.s.Init(exp)
 	//l.Init(strings.NewReader(exp))
-	yyParse(l)
-	return l.result
+	RouteParserParse(l)
+	if len(lexerErrors) > 0 {
+		return nil, errors.New(strings.Join(lexerErrors, "\n"))
+	}
+	return l.result, nil
 }

@@ -23,11 +23,14 @@ import (
 // 	State int // alive, stalled, dead
 // }
 
+type MangoHandler func(header map[string]string, args map[string]interface{})
+
 type MangoCommander struct {
 	zmqTransport *mzmq.ZMQTransport
 	//socketTransport *msocket.SocketTransport
 	MessageInput chan serializer.MCMessage
 	Router *router.Router
+	Commands map[string]MangoHandler
 }
 
 
@@ -101,9 +104,8 @@ func (t *MCLoopbackTransport) Tx(dest string, data []byte) {
 	if dest == "root/mc" {
 		msg, err := serializer.ParseMessage(string(data))
 		if err == nil {
-			if msg.Command == "routeadd" {
-				spec := msg.Data["spec"].(string)
-				t.MC.Router.ParseAndAddRoutes(spec)
+			if handler, ok := t.MC.Commands[msg.Command]; ok {
+				handler(msg.RawHeader(), msg.Data)
 			}
 		}
 	}
@@ -112,6 +114,11 @@ func (t *MCLoopbackTransport) Tx(dest string, data []byte) {
 func (t *MCLoopbackTransport) RunServer(register func(*serializer.MCMessage, serializer.MCTransport) bool) {
 }
 
+
+func (mc *MangoCommander) RouteAdd(header map[string]string, args map[string]interface{}) {
+	spec := args["spec"].(string)
+	mc.Router.ParseAndAddRoutes(spec)
+}
 
 func main() {
 	fmt.Println("hi")
@@ -123,6 +130,8 @@ func main() {
 		zmqTransport: mzmq.MakeZMQTransport(1919, message_aggregator),
 		//socketTransport: MakeSocketTransport(1920, message_aggregator),
 		MessageInput: message_aggregator}
+	MC.Commands = map[string]MangoHandler{
+		"routeadd":MC.RouteAdd}
 	MC.Router.AddNode(&router.Node{
 		Name: "mc",
 		Group: "root",
