@@ -1,8 +1,8 @@
 %{
 	package valuetype
 	import (
-		"strconv"
 		"strings"
+		"strconv"
 		"errors"
 		value "mc/value"
 	)
@@ -11,19 +11,20 @@
 		literal string
 		position Position
 	}
-	type MapEntrySpec stuct {
+	type MapEntrySpec struct {
 		Name string
 		Required bool
-		DefaultVal *Value
-		ValType *ValueType}
+		DefaultVal *value.Value
+		ValType *ValueType
+	}
 %}
 %union{
+	token Token
 	typedesc *ValueType
 	mapentries []*MapEntrySpec
 	mapentry *MapEntrySpec
 	val *value.Value
 }
-%type<typedesc> typespec
 %type<typedesc> typedesc
 %type<typedesc> oneofentries
 %type<mapentries> mapentries
@@ -32,28 +33,11 @@
 %type<val> listvals
 %type<val> mapvals
 
+%token<token> IDENT NUMBER STRING TRUE FALSE NUM STR BOOL ONEOF '*' ',' '=' '{' '}' '[' ']' '(' ')'
 
-%token<token> IDENT NUMBER STRING TRUE FALSE EXP NUM BOOL ONEOF '?' '%' '=' '{' '}' '[' ']' '<' '>' ':' '+' '-' '*' '/' '&' '|', '^', '!', '~' '(' ')'
-
-%left '='
-%left ':' '?'
-%left AND OR
-%left NE GE LE EQ '<' '>'
-%left '|' '&' '^'
-%left '~'
-%left '+'  '-'
-%left '*'  '/'  '%'
-%left EXP
-%left UNARY '!'
-%left '['
-%left '.'
+%left '*'
+%left '[' '{' '('
 %%
-typespec : IDENT typedesc
-{
-	$2.Name == $1.literal
-	$$ = $2
-}
-;
 typedesc : STRING
 {
 	$$ = MakeStringType()
@@ -73,15 +57,15 @@ typedesc : STRING
 }
 | ONEOF '(' oneofentries ')'
 {
-	$$ = MakeOneofType($2)
+	$$ = $3
 }
 | '{' mapentries '}'
 {
-	map_defaults := make(map[string]*Value)
+	map_defaults := make(map[string]*value.Value)
 	map_required := make(map[string]bool)
 	map_types := make(map[string]*ValueType)
 	for _, e := range $2 {
-		map_required = e.Required
+		map_required[e.Name] = e.Required
 		if e.DefaultVal != nil {
 			map_defaults[e.Name] = e.DefaultVal
 		}
@@ -104,7 +88,7 @@ oneofentries : typedesc
 {
 	$$ = &ValueType{
 		Type: TY_ONEOF,
-		OneofTypes: append([]*ValueType{$1}, $3...)}
+		OneofTypes: append([]*ValueType{$1}, $3.OneofTypes...)}
 }
 ;
 mapentries : mapentry
@@ -120,7 +104,7 @@ mapentry : IDENT ':' typedesc
 {
 	$$ = &MapEntrySpec{
 		Name: $1.literal,
-		Required: trues,
+		Required: true,
 		DefaultVal: nil,
 		ValType: $3}
 }
@@ -154,6 +138,7 @@ mapentry : IDENT ':' typedesc
 ;
 value : NUMBER
 {
+	x, _ := strconv.ParseFloat($1.literal, 64)
 	$$ = value.MakeFloatValue(x)
 }
 | STRING
@@ -181,7 +166,7 @@ mapvals : IDENT ':' value
 {
 	$$ = &value.Value{
 		Type: value.VAL_MAP,
-		MapVal: map[string]*Value{$1.literal:$3}}
+		MapVal: map[string]*value.Value{$1.literal:$3}}
 }
 | IDENT ':' value ',' mapvals
 {
@@ -196,23 +181,23 @@ listvals : value
 {
 	$$ = &value.Value{
 		Type: value.VAL_LIST,
-		ListVal: []*Value{$1}}
+		ListVal: []*value.Value{$1}}
 }
 | value ',' listvals
 {
 	$$ = &value.Value{
 		Type: value.VAL_LIST,
-		ListVal: append([]*Value{$1}, $3.ListVal...)}
+		ListVal: append([]*value.Value{$1}, $3.ListVal...)}
 }
 %%
-func Parse(exp string) ([]*Route, error) {
-	l := new(RouteLexer)
+func Parse(exp string) (*ValueType, error) {
+	l := new(ValueTypeLexer)
 	lexerErrors := make([]string, 0)
 	l.lexerErrors = &lexerErrors
-	l.s = new(RouteScanner)
+	l.s = new(ValueTypeScanner)
 	l.s.Init(exp)
 	//l.Init(strings.NewReader(exp))
-	yyParse(l)
+	ValueTypeParserParse(l)
 	if len(lexerErrors) > 0 {
 		return nil, errors.New(strings.Join(lexerErrors, "\n"))
 	}
