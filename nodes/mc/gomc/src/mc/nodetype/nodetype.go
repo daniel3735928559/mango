@@ -2,6 +2,7 @@ package nodetype
 
 import (
 	"fmt"
+	"strings"
 )
 
 type NodeType struct {
@@ -16,7 +17,7 @@ func Parse(spec string) (*NodeType, error) {
 	ans := &NodeType{
 		Name: "",
 		Usage: ""}
-	for line := range strings.Split(spec, "\n") {
+	for lineno, line := range strings.Split(spec, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "[config]" {
 			mode = "config"
@@ -27,16 +28,24 @@ func Parse(spec string) (*NodeType, error) {
 		} else if mode == "config" {
 			fs := strings.Fields(line)
 			if fs[0] == "name" {
+				if len(fs) != 2 {
+					return nil, fmt.Errorf("Error on line %d: config name line should be of the form `name <node_name>`", lineno)
+				}
 				ans.Name = fs[1]
+			} else {
+				return nil, fmt.Errorf(`Error on line %d: config lines supported: 
+name <node_name>`, lineno)
 			}
 		} else if mode == "interface" {
 			interface_spec += line + "\n"
 		} else if mode == "usage" {
 			ans.Usage += line + "\n"
 		}
-		ans.Interface, err = ParseNodeInterface(interface_spec)
+		new_if, err := ParseNodeInterface(interface_spec)
 		if err != nil {
 			return nil, err
+		} else {
+			ans.Interface = new_if
 		}
 	}
 	return ans, nil

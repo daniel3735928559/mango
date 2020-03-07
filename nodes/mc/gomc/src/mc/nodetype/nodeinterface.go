@@ -1,32 +1,37 @@
-package router
+package nodetype
 
 import (
 	"fmt"
 	"strings"
 	"errors"
+	valuetype "mc/valuetype"
+	value "mc/value"
 )
 
 type NodeInterface struct {
-	Types map[string]*ValueType
-	Inputs map[string]*ValueType
-	Outputs map[string]*ValueType
+	Imports []string
+	Types map[string]*valuetype.ValueType
+	Inputs map[string]*valuetype.ValueType
+	Outputs map[string]*valuetype.ValueType
 	ReturnTypes map[string]string // Input name -> Output name
 }
 
 func ParseNodeInterface(spec string) (*NodeInterface, error) {
 	ans := &NodeInterface{
-		Types: make(map[string]*ValueType),
-		Inputs: make(map[string]*ValueType),
-		Outputs: make(map[string]*ValueType),
+		Imports: make([]string, 0),
+		Types: make(map[string]*valuetype.ValueType),
+		Inputs: make(map[string]*valuetype.ValueType),
+		Outputs: make(map[string]*valuetype.ValueType),
 		ReturnTypes: make(map[string]string)}
 	lines := strings.Split(spec, "\n")
 	for lineno, line := range lines {
-		fs := strings.Fields(spec)
+		fs := strings.Fields(line)
 		if fs[0] == "import" {
 			fn := strings.SplitN(line, " ", 2)[1]
 			return nil, errors.New(fmt.Sprintf("Error at line %d: `%s`: import not yet implemented: %s", lineno, line, fn))
 		} else if fs[0] == "type" || fs[0] == "input" || fs[0] == "output" {
 			type_name := fs[1]
+			fmt.Println("FS",line,fs)
 			type_spec := strings.SplitN(line, " ", 3)[2]
 			ty, err := valuetype.Parse(type_spec)
 			if err != nil {
@@ -58,16 +63,36 @@ func ParseNodeInterface(spec string) (*NodeInterface, error) {
 	return ans, nil
 }
 
-func (ni *NodeInterface) ValidateInput(name string, val *Value) *Value {
-	if ty, ok := ni.Inputs[name]; ok {
-		return ty.Validate(val)
+func (ni *NodeInterface) ToString() string {
+	ans := ""
+	for _, imp := range ni.Imports {
+		ans += fmt.Sprintf("import %s\n",imp)
 	}
-	return nil
+	for name, ty := range ni.Types {
+		ans += fmt.Sprintf("type %s %s\n",name, ty.ToString())
+	}
+	for name, ty := range ni.Inputs {
+		ans += fmt.Sprintf("input %s %s\n",name, ty.ToString())
+	}
+	for name, ty := range ni.Outputs {
+		ans += fmt.Sprintf("output %s %s\n",name, ty.ToString())
+	}
+	for name, retname := range ni.ReturnTypes {
+		ans += fmt.Sprintf("return %s %s\n",name, retname)
+	}
+	return ans
 }
 
-func (ni *NodeInterface) ValidateOutput(name string, val *Value) *Value {
-	if ty, ok := ni.Outputs[name]; ok {
-		return ty.Validate(val)
+func (ni *NodeInterface) ValidateInput(name string, val *value.Value) (*value.Value, error) {
+	if ty, ok := ni.Inputs[name]; ok {
+		return ty.Validate(val, ni.Types, "")
 	}
-	return nil
+	return nil, fmt.Errorf("No such input type found: %s", name)
+}
+
+func (ni *NodeInterface) ValidateOutput(name string, val *value.Value) (*value.Value, error) {
+	if ty, ok := ni.Outputs[name]; ok {
+		return ty.Validate(val, ni.Types, "")
+	}
+	return nil, fmt.Errorf("No such output type found: %s", name)
 }

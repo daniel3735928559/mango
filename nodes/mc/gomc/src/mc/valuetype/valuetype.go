@@ -87,6 +87,7 @@ func (ty *ValueType) ToString() string {
 func MakeExtType(name string) *ValueType {
 	return &ValueType{Type: TY_EXT, ExternalTypeName: name}
 }
+
 func MakeBoolType() *ValueType {
 	return &ValueType{Type: TY_BOOL}
 }
@@ -108,28 +109,28 @@ func MakeOneofType(subtypes []*ValueType) *ValueType {
 }
 
 // Get the value types possibly conforming to ty
-func (ty *ValueType) PossibleValueTypes() []value.ValueKind {
-	possible := map[value.ValueKind]bool{
-		value.VAL_MAP:false,
-		value.VAL_LIST:false,
-		value.VAL_NAME:false,
-		value.VAL_NUM:false,
-		value.VAL_STRING:false,
-		value.VAL_BOOL:false}
-	if ty.Type == TY_ONEOF {
-		ans := []value.ValueKind{}
-		for _, sty := range ty.OneofTypes {
-			for _, tyty := range sty.PossibleValueTypes() {
-				if !possible[tyty] {
-					possible[tyty] = true
-					ans = append(ans, tyty)
-				}
-			}
-		}
-		return ans
-	}
-	return []value.ValueKind{ValueTypeMapping[ty.Type]}
-}
+// func (ty *ValueType) PossibleValueTypes() []value.ValueKind {
+// 	possible := map[value.ValueKind]bool{
+// 		value.VAL_MAP:false,
+// 		value.VAL_LIST:false,
+// 		value.VAL_NAME:false,
+// 		value.VAL_NUM:false,
+// 		value.VAL_STRING:false,
+// 		value.VAL_BOOL:false}
+// 	if ty.Type == TY_ONEOF {
+// 		ans := []value.ValueKind{}
+// 		for _, sty := range ty.OneofTypes {
+// 			for _, tyty := range sty.PossibleValueTypes() {
+// 				if !possible[tyty] {
+// 					possible[tyty] = true
+// 					ans = append(ans, tyty)
+// 				}
+// 			}
+// 		}
+// 		return ans
+// 	}
+// 	return []value.ValueKind{ValueTypeMapping[ty.Type]}
+// }
 
 // Does v conform to ty?
 func (ty *ValueType) Validate(v *value.Value, ext_types map[string]*ValueType, path string) (*value.Value, error) {

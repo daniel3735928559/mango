@@ -2,22 +2,28 @@ package nodetype
 
 import (
 	"fmt"
+	"strings"
 	"testing"
-	value "mc/value"
 )
 
 func TestInterfaceParser(t *testing.T) {
-	
-        examples := map[string][]string{
-		"node0 >":[]string{"node0 > node1"},
-		"node0 <>":[]string{"node0 > node1", "node1 > node0"},
-		"node0 < {}":[]string{"node1 > node0"}}
-        for s, ans := range examples {
-		fmt.Println("PARSING",s)
-		rs, _ := Parse(s)
-		fmt.Println("RS",rs,ans)
-		if len(rs) > 0 {
-			t.Errorf("expected no routes, got: %d", len(rs))
+        examples := []string{
+		`type foo num
+input inp1 {key1:foo}
+output out1 oneof([foo],num)`,
+	`input inp1 num
+input inp2 oneof(string,{k1:[string],k2:bool})
+output out1 oneof(num,string,bool,[num],[string],[bool])`}
+        for _, ans := range examples {
+		fmt.Println("PARSING",ans)
+		ni, err := ParseNodeInterface(ans)
+		if err != nil {
+			t.Errorf("Failed to parse: %v", err)
+		} else {
+			obs := strings.TrimSpace(ni.ToString())
+			if obs != ans {
+				t.Errorf("expected %s, got: %s", ans, obs)
+			}
 		}
         }
 }

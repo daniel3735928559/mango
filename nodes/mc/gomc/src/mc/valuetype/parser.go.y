@@ -57,6 +57,10 @@ typedesc : STR
 {
 	$$ = MakeNumType()
 }
+| IDENT
+{
+	$$ = MakeExtType($1.literal)
+}
 | BOOL
 {
 	$$ = MakeBoolType()
@@ -158,9 +162,21 @@ value : NUMBER
 {
 	$$ = $2
 }
+| '{' '}'
+{
+	$$ = &value.Value{
+		Type: value.VAL_MAP,
+		MapVal: map[string]*value.Value{}}
+}
 | '[' listvals ']'
 {
 	$$ = $2
+}
+| '[' ']'
+{
+	$$ = &value.Value{
+		Type: value.VAL_LIST,
+		ListVal: []*value.Value{}}
 }
 ;
 mapvals : IDENT ':' value
