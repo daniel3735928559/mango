@@ -2,6 +2,7 @@ package valuetype
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	value "mc/value"
 )
@@ -48,9 +49,15 @@ func (ty *ValueType) ToString() string {
 		}
 		return fmt.Sprintf("oneof(%s)", strings.Join(subtypes, ","))
 	} else if ty.Type == TY_MAP {
+		keys := make([]string, 0)
+		for k, _ := range ty.MapArgTypes {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
 		entries := make([]string, 0)
 		// Check if all the keys in v are expected
-		for k, sty := range ty.MapArgTypes {
+		for _, k := range keys {
+			sty := ty.MapArgTypes[k]
 			req := "*"
 			if ty.MapArgRequired[k] {
 				req = ""

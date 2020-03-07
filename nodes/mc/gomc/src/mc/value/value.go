@@ -31,17 +31,17 @@ type Value struct {
 	BoolVal bool
 }
 
-func (v *Value) ToPrimitive() interface{} {
+func (v *Value) ToObject() interface{} {
 	if v.Type == VAL_MAP {
 		ans := make(map[string]interface{})
 		for key, val := range v.MapVal {
-			ans[key] = val.ToPrimitive()
+			ans[key] = val.ToObject()
 		}
 		return ans
 	} else if v.Type == VAL_LIST {
 		ans := make([]interface{}, len(v.ListVal))
 		for idx, val := range v.ListVal {
-			ans[idx] = val.ToPrimitive()
+			ans[idx] = val.ToObject()
 		}
 		return ans
 	} else if v.Type == VAL_NAME {

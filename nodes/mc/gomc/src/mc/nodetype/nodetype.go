@@ -10,7 +10,7 @@ type NodeType struct {
 	Usage string
 }
 
-func Parse(spec string) *NodeType {
+func Parse(spec string) (*NodeType, error) {
 	mode := "none"
 	interface_spec := ""
 	ans := &NodeType{
@@ -34,9 +34,12 @@ func Parse(spec string) *NodeType {
 		} else if mode == "usage" {
 			ans.Usage += line + "\n"
 		}
-		ans.Interface = ParseNodeInterface(interface_spec)
+		ans.Interface, err = ParseNodeInterface(interface_spec)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return ans
+	return ans, nil
 }
 
 func (nt *NodeType) Run(args map[string]string) {
