@@ -10,8 +10,9 @@ const (
 )
 
 var (
-	keywords = map[string]int{"string":STR, "num":NUM, "bool": BOOL, "true": TRUE, "false": FALSE}
+	keywords = map[string]int{"string":STR, "num":NUM, "bool": BOOL, "true": TRUE, "false": FALSE, "oneof": ONEOF}
 	charsyms = map[rune]int {
+		'=':'=',
 		',':',',
 		'{':'{',
 		'}':'}',

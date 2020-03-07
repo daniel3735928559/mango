@@ -76,7 +76,7 @@ const ValueTypeParserEofCode = 1
 const ValueTypeParserErrCode = 2
 const ValueTypeParserInitialStackSize = 16
 
-//line src/mc/valuetype/parser.go.y:202
+//line src/mc/valuetype/parser.go.y:193
 
 func Parse(exp string) (*ValueType, error) {
 	l := new(ValueTypeLexer)
@@ -101,59 +101,56 @@ var ValueTypeParserExca = [...]int{
 
 const ValueTypeParserPrivate = 57344
 
-const ValueTypeParserLast = 52
+const ValueTypeParserLast = 51
 
 var ValueTypeParserAct = [...]int{
 
-	35, 38, 37, 16, 2, 15, 26, 27, 28, 29,
-	9, 4, 3, 5, 7, 42, 21, 30, 8, 31,
-	6, 25, 33, 43, 32, 20, 22, 10, 14, 34,
-	11, 41, 17, 18, 19, 46, 39, 40, 50, 44,
-	23, 45, 36, 13, 47, 12, 1, 48, 49, 24,
-	0, 51,
+	36, 38, 39, 16, 2, 30, 31, 32, 33, 15,
+	9, 20, 4, 3, 5, 7, 34, 41, 35, 8,
+	19, 6, 21, 24, 25, 10, 42, 14, 40, 28,
+	29, 11, 26, 17, 27, 46, 43, 22, 18, 37,
+	13, 12, 1, 0, 44, 45, 0, 47, 0, 0,
+	23,
 }
 var ValueTypeParserPact = [...]int{
 
-	2, -1000, -1000, -1000, -1000, -1000, 2, 7, 39, 9,
-	2, 15, 19, 3, -1000, 5, 26, -1000, 39, 1,
-	2, 0, -1000, 2, -1000, -1000, -1000, -1000, -1000, -1000,
-	38, 1, 21, 2, -1000, 14, -7, 4, 25, 1,
-	20, -1000, 1, -1000, 1, -1000, 1, 24, -1000, -1000,
-	38, -1000,
+	3, -1000, -1000, -1000, -1000, -1000, 3, 5, 36, 8,
+	3, 16, 24, -2, -1000, 1, 23, -1000, 36, 3,
+	2, -1000, 3, -1000, 19, 3, -1000, 0, -1000, -1000,
+	-1000, -1000, -1000, -1000, 35, 0, 11, -5, 7, 22,
+	-1000, 0, -1000, 0, 21, -1000, 35, -1000,
 }
 var ValueTypeParserPgo = [...]int{
 
-	0, 46, 3, 5, 30, 45, 1, 2, 0,
+	0, 42, 3, 9, 31, 41, 2, 1, 0,
 }
 var ValueTypeParserR1 = [...]int{
 
 	0, 1, 2, 2, 2, 2, 2, 2, 3, 3,
-	4, 4, 5, 5, 5, 5, 5, 6, 6, 6,
-	6, 6, 6, 8, 8, 7, 7,
+	4, 4, 5, 5, 5, 6, 6, 6, 6, 6,
+	6, 8, 8, 7, 7,
 }
 var ValueTypeParserR2 = [...]int{
 
 	0, 1, 1, 1, 1, 3, 4, 3, 1, 3,
-	1, 3, 3, 4, 5, 6, 3, 1, 1, 1,
-	1, 3, 3, 3, 5, 1, 3,
+	1, 3, 3, 4, 5, 1, 1, 1, 1, 3,
+	3, 3, 5, 1, 3,
 }
 var ValueTypeParserChk = [...]int{
 
 	-1000, -1, -2, 10, 9, 11, 18, 12, 16, -2,
-	20, -4, -5, 4, 19, -3, -2, 17, 14, 15,
-	22, 13, 21, 14, -4, -6, 5, 6, 7, 8,
-	16, 18, -2, 22, -3, -8, 4, -7, -6, 15,
-	-2, 17, 22, 19, 14, -6, 15, -6, -7, -6,
-	14, -8,
+	20, -4, -5, 4, 19, -3, -2, 17, 14, 22,
+	13, 21, 14, -4, -2, 22, -3, 15, -2, -6,
+	5, 6, 7, 8, 16, 18, -8, 4, -7, -6,
+	17, 22, 19, 14, -6, -7, 14, -8,
 }
 var ValueTypeParserDef = [...]int{
 
 	0, -2, 1, 2, 3, 4, 0, 0, 0, 0,
 	0, 0, 10, 0, 5, 0, 8, 7, 0, 0,
-	0, 0, 6, 0, 11, 16, 17, 18, 19, 20,
-	0, 0, 12, 0, 9, 0, 0, 0, 25, 0,
-	13, 21, 0, 22, 0, 14, 0, 23, 26, 15,
-	0, 24,
+	0, 6, 0, 11, 12, 0, 9, 0, 13, 14,
+	15, 16, 17, 18, 0, 0, 0, 0, 0, 23,
+	19, 0, 20, 0, 21, 24, 0, 22,
 }
 var ValueTypeParserTok1 = [...]int{
 
@@ -519,7 +516,7 @@ ValueTypeParserdefault:
 
 	case 1:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-1 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:44
+//line src/mc/valuetype/parser.go.y:45
 		{
 			ValueTypeParserVAL.typedesc = nil
 			if l, ok := ValueTypeParserlex.(*ValueTypeLexer); ok {
@@ -528,37 +525,37 @@ ValueTypeParserdefault:
 		}
 	case 2:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-1 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:52
+//line src/mc/valuetype/parser.go.y:53
 		{
 			ValueTypeParserVAL.typedesc = MakeStringType()
 		}
 	case 3:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-1 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:56
+//line src/mc/valuetype/parser.go.y:57
 		{
 			ValueTypeParserVAL.typedesc = MakeNumType()
 		}
 	case 4:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-1 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:60
+//line src/mc/valuetype/parser.go.y:61
 		{
 			ValueTypeParserVAL.typedesc = MakeBoolType()
 		}
 	case 5:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-3 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:64
+//line src/mc/valuetype/parser.go.y:65
 		{
 			ValueTypeParserVAL.typedesc = MakeListType(ValueTypeParserDollar[2].typedesc)
 		}
 	case 6:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-4 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:68
+//line src/mc/valuetype/parser.go.y:69
 		{
 			ValueTypeParserVAL.typedesc = ValueTypeParserDollar[3].typedesc
 		}
 	case 7:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-3 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:72
+//line src/mc/valuetype/parser.go.y:73
 		{
 			map_defaults := make(map[string]*value.Value)
 			map_required := make(map[string]bool)
@@ -578,7 +575,7 @@ ValueTypeParserdefault:
 		}
 	case 8:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-1 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:91
+//line src/mc/valuetype/parser.go.y:92
 		{
 			ValueTypeParserVAL.typedesc = &ValueType{
 				Type:       TY_ONEOF,
@@ -586,7 +583,7 @@ ValueTypeParserdefault:
 		}
 	case 9:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-3 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:97
+//line src/mc/valuetype/parser.go.y:98
 		{
 			ValueTypeParserVAL.typedesc = &ValueType{
 				Type:       TY_ONEOF,
@@ -594,21 +591,21 @@ ValueTypeParserdefault:
 		}
 	case 10:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-1 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:104
+//line src/mc/valuetype/parser.go.y:105
 		{
 			ValueTypeParserVAL.mapentries = []*MapEntrySpec{ValueTypeParserDollar[1].mapentry}
 		}
 	case 11:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-3 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:108
+//line src/mc/valuetype/parser.go.y:109
 		{
 			ValueTypeParserVAL.mapentries = append([]*MapEntrySpec{ValueTypeParserDollar[1].mapentry}, ValueTypeParserDollar[3].mapentries...)
 		}
 	case 12:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-3 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:113
+//line src/mc/valuetype/parser.go.y:114
 		{
-			fmt.Println("sty", ValueTypeParserDollar[3].typedesc)
+			fmt.Println("sty", ValueTypeParserDollar[1].token.literal, ValueTypeParserDollar[3].typedesc)
 			ValueTypeParserVAL.mapentry = &MapEntrySpec{
 				Name:       ValueTypeParserDollar[1].token.literal,
 				Required:   true,
@@ -617,84 +614,73 @@ ValueTypeParserdefault:
 		}
 	case 13:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-4 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:122
+//line src/mc/valuetype/parser.go.y:123
 		{
 			ValueTypeParserVAL.mapentry = &MapEntrySpec{
 				Name:       ValueTypeParserDollar[1].token.literal,
-				Required:   true,
+				Required:   false,
 				DefaultVal: nil,
 				ValType:    ValueTypeParserDollar[4].typedesc}
 
 		}
 	case 14:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-5 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:131
+//line src/mc/valuetype/parser.go.y:132
 		{
 			ValueTypeParserVAL.mapentry = &MapEntrySpec{
 				Name:       ValueTypeParserDollar[1].token.literal,
 				Required:   false,
 				DefaultVal: ValueTypeParserDollar[5].val,
 				ValType:    ValueTypeParserDollar[3].typedesc}
-
 		}
 	case 15:
-		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-6 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:140
+		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-1 : ValueTypeParserpt+1]
+//line src/mc/valuetype/parser.go.y:141
 		{
-			ValueTypeParserVAL.mapentry = &MapEntrySpec{
-				Name:       ValueTypeParserDollar[1].token.literal,
-				Required:   false,
-				DefaultVal: ValueTypeParserDollar[6].val,
-				ValType:    ValueTypeParserDollar[4].typedesc}
+			x, _ := strconv.ParseFloat(ValueTypeParserDollar[1].token.literal, 64)
+			ValueTypeParserVAL.val = value.MakeFloatValue(x)
+		}
+	case 16:
+		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-1 : ValueTypeParserpt+1]
+//line src/mc/valuetype/parser.go.y:146
+		{
+			ValueTypeParserVAL.val = &value.Value{Type: value.VAL_STRING, StringVal: ValueTypeParserDollar[1].token.literal}
 		}
 	case 17:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-1 : ValueTypeParserpt+1]
 //line src/mc/valuetype/parser.go.y:150
 		{
-			x, _ := strconv.ParseFloat(ValueTypeParserDollar[1].token.literal, 64)
-			ValueTypeParserVAL.val = value.MakeFloatValue(x)
+			ValueTypeParserVAL.val = value.MakeBoolValue(true)
 		}
 	case 18:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-1 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:155
-		{
-			ValueTypeParserVAL.val = &value.Value{Type: value.VAL_STRING, StringVal: ValueTypeParserDollar[1].token.literal}
-		}
-	case 19:
-		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-1 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:159
-		{
-			ValueTypeParserVAL.val = value.MakeBoolValue(true)
-		}
-	case 20:
-		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-1 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:163
+//line src/mc/valuetype/parser.go.y:154
 		{
 			ValueTypeParserVAL.val = value.MakeBoolValue(false)
+		}
+	case 19:
+		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-3 : ValueTypeParserpt+1]
+//line src/mc/valuetype/parser.go.y:158
+		{
+			ValueTypeParserVAL.val = ValueTypeParserDollar[2].val
+		}
+	case 20:
+		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-3 : ValueTypeParserpt+1]
+//line src/mc/valuetype/parser.go.y:162
+		{
+			ValueTypeParserVAL.val = ValueTypeParserDollar[2].val
 		}
 	case 21:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-3 : ValueTypeParserpt+1]
 //line src/mc/valuetype/parser.go.y:167
 		{
-			ValueTypeParserVAL.val = ValueTypeParserDollar[2].val
-		}
-	case 22:
-		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-3 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:171
-		{
-			ValueTypeParserVAL.val = ValueTypeParserDollar[2].val
-		}
-	case 23:
-		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-3 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:176
-		{
 			ValueTypeParserVAL.val = &value.Value{
 				Type:   value.VAL_MAP,
 				MapVal: map[string]*value.Value{ValueTypeParserDollar[1].token.literal: ValueTypeParserDollar[3].val}}
 		}
-	case 24:
+	case 22:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-5 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:182
+//line src/mc/valuetype/parser.go.y:173
 		{
 			map_val := ValueTypeParserDollar[5].val.MapVal
 			map_val[ValueTypeParserDollar[1].token.literal] = ValueTypeParserDollar[3].val
@@ -702,17 +688,17 @@ ValueTypeParserdefault:
 				Type:   value.VAL_MAP,
 				MapVal: map_val}
 		}
-	case 25:
+	case 23:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-1 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:191
+//line src/mc/valuetype/parser.go.y:182
 		{
 			ValueTypeParserVAL.val = &value.Value{
 				Type:    value.VAL_LIST,
 				ListVal: []*value.Value{ValueTypeParserDollar[1].val}}
 		}
-	case 26:
+	case 24:
 		ValueTypeParserDollar = ValueTypeParserS[ValueTypeParserpt-3 : ValueTypeParserpt+1]
-//line src/mc/valuetype/parser.go.y:197
+//line src/mc/valuetype/parser.go.y:188
 		{
 			ValueTypeParserVAL.val = &value.Value{
 				Type:    value.VAL_LIST,

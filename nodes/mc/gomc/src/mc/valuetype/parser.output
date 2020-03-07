@@ -23,25 +23,25 @@ state 1
 state 2
 	parseroot:  typedesc.    (1)
 
-	.  reduce 1 (src line 43)
+	.  reduce 1 (src line 44)
 
 
 state 3
 	typedesc:  STR.    (2)
 
-	.  reduce 2 (src line 51)
+	.  reduce 2 (src line 52)
 
 
 state 4
 	typedesc:  NUM.    (3)
 
-	.  reduce 3 (src line 55)
+	.  reduce 3 (src line 56)
 
 
 state 5
 	typedesc:  BOOL.    (4)
 
-	.  reduce 4 (src line 59)
+	.  reduce 4 (src line 60)
 
 
 state 6
@@ -104,34 +104,31 @@ state 11
 state 12
 	mapentries:  mapentry.    (10)
 	mapentries:  mapentry.',' mapentries 
-	mapentry:  mapentry.'=' value 
 
 	','  shift 18
-	'='  shift 19
-	.  reduce 10 (src line 103)
+	.  reduce 10 (src line 104)
 
 
 state 13
 	mapentry:  IDENT.':' typedesc 
 	mapentry:  IDENT.'*' ':' typedesc 
 	mapentry:  IDENT.':' typedesc '=' value 
-	mapentry:  IDENT.'*' ':' typedesc '=' value 
 
-	'*'  shift 21
-	':'  shift 20
+	'*'  shift 20
+	':'  shift 19
 	.  error
 
 
 state 14
 	typedesc:  '[' typedesc ']'.    (5)
 
-	.  reduce 5 (src line 63)
+	.  reduce 5 (src line 64)
 
 
 state 15
 	typedesc:  ONEOF '(' oneofentries.')' 
 
-	')'  shift 22
+	')'  shift 21
 	.  error
 
 
@@ -139,14 +136,14 @@ state 16
 	oneofentries:  typedesc.    (8)
 	oneofentries:  typedesc.',' oneofentries 
 
-	','  shift 23
-	.  reduce 8 (src line 90)
+	','  shift 22
+	.  reduce 8 (src line 91)
 
 
 state 17
 	typedesc:  '{' mapentries '}'.    (7)
 
-	.  reduce 7 (src line 71)
+	.  reduce 7 (src line 72)
 
 
 state 18
@@ -155,23 +152,10 @@ state 18
 	IDENT  shift 13
 	.  error
 
-	mapentries  goto 24
+	mapentries  goto 23
 	mapentry  goto 12
 
 state 19
-	mapentry:  mapentry '='.value 
-
-	NUMBER  shift 26
-	STRING  shift 27
-	TRUE  shift 28
-	FALSE  shift 29
-	'{'  shift 30
-	'['  shift 31
-	.  error
-
-	value  goto 25
-
-state 20
 	mapentry:  IDENT ':'.typedesc 
 	mapentry:  IDENT ':'.typedesc '=' value 
 
@@ -183,23 +167,22 @@ state 20
 	'['  shift 6
 	.  error
 
-	typedesc  goto 32
+	typedesc  goto 24
 
-state 21
+state 20
 	mapentry:  IDENT '*'.':' typedesc 
-	mapentry:  IDENT '*'.':' typedesc '=' value 
 
-	':'  shift 33
+	':'  shift 25
 	.  error
 
 
-state 22
+state 21
 	typedesc:  ONEOF '(' oneofentries ')'.    (6)
 
-	.  reduce 6 (src line 67)
+	.  reduce 6 (src line 68)
 
 
-state 23
+state 22
 	oneofentries:  typedesc ','.oneofentries 
 
 	NUM  shift 4
@@ -211,78 +194,24 @@ state 23
 	.  error
 
 	typedesc  goto 16
-	oneofentries  goto 34
+	oneofentries  goto 26
 
-state 24
+state 23
 	mapentries:  mapentry ',' mapentries.    (11)
 
-	.  reduce 11 (src line 107)
+	.  reduce 11 (src line 108)
 
 
-state 25
-	mapentry:  mapentry '=' value.    (16)
-
-	.  reduce 16 (src line 147)
-
-
-state 26
-	value:  NUMBER.    (17)
-
-	.  reduce 17 (src line 149)
-
-
-state 27
-	value:  STRING.    (18)
-
-	.  reduce 18 (src line 154)
-
-
-state 28
-	value:  TRUE.    (19)
-
-	.  reduce 19 (src line 158)
-
-
-state 29
-	value:  FALSE.    (20)
-
-	.  reduce 20 (src line 162)
-
-
-state 30
-	value:  '{'.mapvals '}' 
-
-	IDENT  shift 36
-	.  error
-
-	mapvals  goto 35
-
-state 31
-	value:  '['.listvals ']' 
-
-	NUMBER  shift 26
-	STRING  shift 27
-	TRUE  shift 28
-	FALSE  shift 29
-	'{'  shift 30
-	'['  shift 31
-	.  error
-
-	value  goto 38
-	listvals  goto 37
-
-32: shift/reduce conflict (shift 39(0), red'n 12(0)) on '='
-state 32
+state 24
 	mapentry:  IDENT ':' typedesc.    (12)
 	mapentry:  IDENT ':' typedesc.'=' value 
 
-	'='  shift 39
-	.  reduce 12 (src line 112)
+	'='  shift 27
+	.  reduce 12 (src line 113)
 
 
-state 33
+state 25
 	mapentry:  IDENT '*' ':'.typedesc 
-	mapentry:  IDENT '*' ':'.typedesc '=' value 
 
 	NUM  shift 4
 	STR  shift 3
@@ -292,168 +221,192 @@ state 33
 	'['  shift 6
 	.  error
 
-	typedesc  goto 40
+	typedesc  goto 28
 
-state 34
+state 26
 	oneofentries:  typedesc ',' oneofentries.    (9)
 
-	.  reduce 9 (src line 96)
+	.  reduce 9 (src line 97)
 
 
-state 35
-	value:  '{' mapvals.'}' 
+state 27
+	mapentry:  IDENT ':' typedesc '='.value 
 
-	'}'  shift 41
+	NUMBER  shift 30
+	STRING  shift 31
+	TRUE  shift 32
+	FALSE  shift 33
+	'{'  shift 34
+	'['  shift 35
 	.  error
 
+	value  goto 29
+
+state 28
+	mapentry:  IDENT '*' ':' typedesc.    (13)
+
+	.  reduce 13 (src line 122)
+
+
+state 29
+	mapentry:  IDENT ':' typedesc '=' value.    (14)
+
+	.  reduce 14 (src line 131)
+
+
+state 30
+	value:  NUMBER.    (15)
+
+	.  reduce 15 (src line 140)
+
+
+state 31
+	value:  STRING.    (16)
+
+	.  reduce 16 (src line 145)
+
+
+state 32
+	value:  TRUE.    (17)
+
+	.  reduce 17 (src line 149)
+
+
+state 33
+	value:  FALSE.    (18)
+
+	.  reduce 18 (src line 153)
+
+
+state 34
+	value:  '{'.mapvals '}' 
+
+	IDENT  shift 37
+	.  error
+
+	mapvals  goto 36
+
+state 35
+	value:  '['.listvals ']' 
+
+	NUMBER  shift 30
+	STRING  shift 31
+	TRUE  shift 32
+	FALSE  shift 33
+	'{'  shift 34
+	'['  shift 35
+	.  error
+
+	value  goto 39
+	listvals  goto 38
 
 state 36
-	mapvals:  IDENT.':' value 
-	mapvals:  IDENT.':' value ',' mapvals 
+	value:  '{' mapvals.'}' 
 
-	':'  shift 42
+	'}'  shift 40
 	.  error
 
 
 state 37
-	value:  '[' listvals.']' 
+	mapvals:  IDENT.':' value 
+	mapvals:  IDENT.':' value ',' mapvals 
 
-	']'  shift 43
+	':'  shift 41
 	.  error
 
 
 state 38
-	listvals:  value.    (25)
-	listvals:  value.',' listvals 
+	value:  '[' listvals.']' 
 
-	','  shift 44
-	.  reduce 25 (src line 190)
+	']'  shift 42
+	.  error
 
 
 state 39
-	mapentry:  IDENT ':' typedesc '='.value 
+	listvals:  value.    (23)
+	listvals:  value.',' listvals 
 
-	NUMBER  shift 26
-	STRING  shift 27
-	TRUE  shift 28
-	FALSE  shift 29
-	'{'  shift 30
-	'['  shift 31
-	.  error
+	','  shift 43
+	.  reduce 23 (src line 181)
 
-	value  goto 45
 
-40: shift/reduce conflict (shift 46(0), red'n 13(0)) on '='
 state 40
-	mapentry:  IDENT '*' ':' typedesc.    (13)
-	mapentry:  IDENT '*' ':' typedesc.'=' value 
+	value:  '{' mapvals '}'.    (19)
 
-	'='  shift 46
-	.  reduce 13 (src line 121)
+	.  reduce 19 (src line 157)
 
 
 state 41
-	value:  '{' mapvals '}'.    (21)
-
-	.  reduce 21 (src line 166)
-
-
-state 42
 	mapvals:  IDENT ':'.value 
 	mapvals:  IDENT ':'.value ',' mapvals 
 
-	NUMBER  shift 26
-	STRING  shift 27
-	TRUE  shift 28
-	FALSE  shift 29
-	'{'  shift 30
-	'['  shift 31
+	NUMBER  shift 30
+	STRING  shift 31
+	TRUE  shift 32
+	FALSE  shift 33
+	'{'  shift 34
+	'['  shift 35
 	.  error
 
-	value  goto 47
+	value  goto 44
+
+state 42
+	value:  '[' listvals ']'.    (20)
+
+	.  reduce 20 (src line 161)
+
 
 state 43
-	value:  '[' listvals ']'.    (22)
-
-	.  reduce 22 (src line 170)
-
-
-state 44
 	listvals:  value ','.listvals 
 
-	NUMBER  shift 26
-	STRING  shift 27
-	TRUE  shift 28
-	FALSE  shift 29
-	'{'  shift 30
-	'['  shift 31
+	NUMBER  shift 30
+	STRING  shift 31
+	TRUE  shift 32
+	FALSE  shift 33
+	'{'  shift 34
+	'['  shift 35
 	.  error
 
-	value  goto 38
-	listvals  goto 48
+	value  goto 39
+	listvals  goto 45
+
+state 44
+	mapvals:  IDENT ':' value.    (21)
+	mapvals:  IDENT ':' value.',' mapvals 
+
+	','  shift 46
+	.  reduce 21 (src line 166)
+
 
 state 45
-	mapentry:  IDENT ':' typedesc '=' value.    (14)
+	listvals:  value ',' listvals.    (24)
 
-	.  reduce 14 (src line 130)
+	.  reduce 24 (src line 187)
 
 
 state 46
-	mapentry:  IDENT '*' ':' typedesc '='.value 
-
-	NUMBER  shift 26
-	STRING  shift 27
-	TRUE  shift 28
-	FALSE  shift 29
-	'{'  shift 30
-	'['  shift 31
-	.  error
-
-	value  goto 49
-
-state 47
-	mapvals:  IDENT ':' value.    (23)
-	mapvals:  IDENT ':' value.',' mapvals 
-
-	','  shift 50
-	.  reduce 23 (src line 175)
-
-
-state 48
-	listvals:  value ',' listvals.    (26)
-
-	.  reduce 26 (src line 196)
-
-
-state 49
-	mapentry:  IDENT '*' ':' typedesc '=' value.    (15)
-
-	.  reduce 15 (src line 139)
-
-
-state 50
 	mapvals:  IDENT ':' value ','.mapvals 
 
-	IDENT  shift 36
+	IDENT  shift 37
 	.  error
 
-	mapvals  goto 51
+	mapvals  goto 47
 
-state 51
-	mapvals:  IDENT ':' value ',' mapvals.    (24)
+state 47
+	mapvals:  IDENT ':' value ',' mapvals.    (22)
 
-	.  reduce 24 (src line 181)
+	.  reduce 22 (src line 172)
 
 
 22 terminals, 9 nonterminals
-27 grammar rules, 52/8000 states
-2 shift/reduce, 0 reduce/reduce conflicts reported
+25 grammar rules, 48/8000 states
+0 shift/reduce, 0 reduce/reduce conflicts reported
 58 working sets used
-memory: parser 22/120000
+memory: parser 20/120000
 23 extra closures
-93 shift entries, 1 exceptions
-20 goto entries
+79 shift entries, 1 exceptions
+18 goto entries
 3 entries saved by goto default
-Optimizer space used: output 52/120000
-52 table entries, 1 zero
-maximum spread: 22, maximum offset: 50
+Optimizer space used: output 51/120000
+51 table entries, 4 zero
+maximum spread: 22, maximum offset: 46

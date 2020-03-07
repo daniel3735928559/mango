@@ -2,7 +2,7 @@ package valuetype
 
 import (
 	"fmt"
-	//"strings"
+	"strings"
 	value "mc/value"
 )
 
@@ -40,52 +40,42 @@ type ValueType struct {
 	OneofTypes []*ValueType
 }
 
-// func (ty *ValueType) ToString(ext_types map[string]*ValueType) string {
-// 	if ty.Type == TY_ONEOF {
-// 		subtypes := make([]string, len(ty.OneofTypes))
-// 		for i, sty := range ty.OneofTypes {
-// 			subtypes[i] = sty.ToString(ext_types)
-// 		}
-// 		return fmt.Sprintf("oneof(%s)", strings.Join(subtypes, ","))
-// 	} else if ty.Type == TY_MAP {
-// 		// Check if all the keys in v are expected
-// 		for k, _ := range ty.MapArgTypes {
-// 			if _, ok := ty.MapArgTypes[k]; !ok {
-// 				return nil, errors.New()
-// 			}
-// 		}
-// 		// Check all required keys are present
-// 		for k, r := range ty.MapArgRequired {
-// 			if _, ok := v.MapVal[k]; r && !ok {
-// 				return nil
-// 			}
-// 		}
-// 		// Now check each is of the required type
-// 		for k, sv := range v.MapVal {
-// 			if svv := ty.MapArgTypes[k].Validate(sv); svv != nil {
-// 				v.MapVal[k] = svv
-// 			} else {
-// 				return nil
-// 			}
-// 		}
-// 		return v
-// 	} else if ty.Type == TY_LIST {
-// 		for i, sv := range v.ListVal {
-// 			if svv := ty.ListArgType.Validate(sv); svv != nil {
-// 				v.ListVal[i] = svv
-// 			} else {
-// 				return nil
-// 			}
-// 			return v
-// 		}
-// 	} else if ty.Type == TY_NUM {
-// 		return v
-// 	} else if ty.Type == TY_STRING {
-// 		return v
-// 	} else if ty.Type == TY_BOOL {
-// 		return v
-// 	}
-// }
+func (ty *ValueType) ToString() string {
+	if ty.Type == TY_ONEOF {
+		subtypes := make([]string, len(ty.OneofTypes))
+		for i, sty := range ty.OneofTypes {
+			subtypes[i] = sty.ToString()
+		}
+		return fmt.Sprintf("oneof(%s)", strings.Join(subtypes, ","))
+	} else if ty.Type == TY_MAP {
+		entries := make([]string, 0)
+		// Check if all the keys in v are expected
+		for k, sty := range ty.MapArgTypes {
+			req := "*"
+			if ty.MapArgRequired[k] {
+				req = ""
+			}
+			def := ""
+			if defaultval, ok := ty.MapDefaults[k]; ok {
+				def = "="+defaultval.ToString()
+				req = ""
+			}
+			entries = append(entries, fmt.Sprintf("%s%s:%s%s", k, req, sty.ToString(), def))
+		}
+		return fmt.Sprintf("{%s}", strings.Join(entries, ","))
+	} else if ty.Type == TY_LIST {
+		return fmt.Sprintf("[%s]", ty.ListArgType.ToString())
+	} else if ty.Type == TY_NUM {
+		return "num"
+	} else if ty.Type == TY_STRING {
+		return "string"
+	} else if ty.Type == TY_BOOL {
+		return "bool"
+	} else if ty.Type == TY_EXT {
+		return ty.ExternalTypeName
+	}
+	return "[unknown]"
+}
 
 func MakeExtType(name string) *ValueType {
 	return &ValueType{Type: TY_EXT, ExternalTypeName: name}
@@ -156,6 +146,12 @@ func (ty *ValueType) Validate(v *value.Value, ext_types map[string]*ValueType, p
 		for k, r := range ty.MapArgRequired {
 			if _, ok := v.MapVal[k]; r && !ok {
 				return nil, fmt.Errorf("Error at %s: Map entry `%s` required", path, k)
+			}
+		}
+		// Populate default values of absent values
+		for k, defval := range ty.MapDefaults {
+			if _, ok := v.MapVal[k]; !ok {
+				v.MapVal[k] = defval
 			}
 		}
 		// Now check each is of the required type

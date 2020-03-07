@@ -37,6 +37,7 @@
 
 %token<token> IDENT NUMBER STRING TRUE FALSE NUM STR BOOL ONEOF '*' ',' '=' '{' '}' '[' ']' '(' ')'
 
+%left '='
 %left '*'
 %left '[' '{' '('
 %%
@@ -111,7 +112,7 @@ mapentries : mapentry
 ;
 mapentry : IDENT ':' typedesc
 {
-	fmt.Println("sty",$3)
+	fmt.Println("sty",$1.literal,$3)
 	$$ = &MapEntrySpec{
 		Name: $1.literal,
 		Required: true,
@@ -122,7 +123,7 @@ mapentry : IDENT ':' typedesc
 {
 	$$ = &MapEntrySpec{
 		Name: $1.literal,
-		Required: true,
+		Required: false,
 		DefaultVal: nil,
 		ValType: $4}
 	
@@ -134,17 +135,7 @@ mapentry : IDENT ':' typedesc
 		Required: false,
 		DefaultVal: $5,
 		ValType: $3}
-	
 }
-| IDENT '*' ':' typedesc '=' value
-{
-	$$ = &MapEntrySpec{
-		Name: $1.literal,
-		Required: false,
-		DefaultVal: $6,
-		ValType: $4}
-}
-| mapentry '=' value
 ;
 value : NUMBER
 {
