@@ -136,6 +136,7 @@ func (ty *ValueType) PossibleValueTypes() []value.ValueKind {
 
 // Does v conform to ty?
 func (ty *ValueType) Validate(v *value.Value, ext_types map[string]*ValueType, path string) (*value.Value, error) {
+	fmt.Println("Validate",ty,v)
 	if ty.Type == TY_ONEOF {
 		for _, sty := range ty.OneofTypes {
 			if sv, err := sty.Validate(v, ext_types, path); err == nil {
@@ -144,6 +145,7 @@ func (ty *ValueType) Validate(v *value.Value, ext_types map[string]*ValueType, p
 		}
 		return nil, fmt.Errorf("Error at %s: Subvalue does not validate as any of the given types", path)
 	} else if ty.Type == TY_MAP && v.Type == value.VAL_MAP {
+		fmt.Println("map")
 		// Check if all the keys in v are expected
 		for k, _ := range v.MapVal {
 			if _, ok := ty.MapArgTypes[k]; !ok {

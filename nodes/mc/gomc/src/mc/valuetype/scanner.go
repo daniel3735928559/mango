@@ -46,6 +46,7 @@ func (s *ValueTypeScanner) Scan() (tok int, lit string, pos Position) {
 	switch ch := s.peek(); {
 	case isLetter(ch):
 		lit = s.scanIdentifier()
+		fmt.Println("scanning kwds",lit)
 		if keyword, ok := keywords[lit]; ok {
 			tok = keyword
 		} else {

@@ -1,6 +1,7 @@
 %{
 	package valuetype
 	import (
+		"fmt"
 		"strings"
 		"strconv"
 		"errors"
@@ -25,6 +26,7 @@
 	mapentry *MapEntrySpec
 	val *value.Value
 }
+%type<typedesc> parseroot
 %type<typedesc> typedesc
 %type<typedesc> oneofentries
 %type<mapentries> mapentries
@@ -38,14 +40,21 @@
 %left '*'
 %left '[' '{' '('
 %%
-typedesc : STRING
+parseroot : typedesc
+{
+	$$ = nil
+	if l, ok := ValueTypeParserlex.(*ValueTypeLexer); ok {
+		l.result = $1
+	}
+}
+;
+typedesc : STR
 {
 	$$ = MakeStringType()
 }
 | NUM
 {
 	$$ = MakeNumType()
-
 }
 | BOOL
 {
@@ -102,6 +111,7 @@ mapentries : mapentry
 ;
 mapentry : IDENT ':' typedesc
 {
+	fmt.Println("sty",$3)
 	$$ = &MapEntrySpec{
 		Name: $1.literal,
 		Required: true,
