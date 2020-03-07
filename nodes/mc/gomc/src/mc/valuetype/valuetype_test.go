@@ -15,7 +15,7 @@ func TestInterfaceParser(t *testing.T) {
 
 func TestValidate(t *testing.T) {
 	ty, e1 := Parse(`{key:num}`)
-	fmt.Println("ty",ty,e1)
+	fmt.Println("ty",ty.ToString())
 	v, e2 := value.FromObject(map[string]interface{}{"key":45})
 	fmt.Println("v",v,e2)
 	nv, err := ty.Validate(v, map[string]*ValueType{}, "")
