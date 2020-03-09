@@ -3,32 +3,28 @@ package mzmq
 import (
 	"fmt"
 	"math/rand"
-	serializer "mc/serializer"
+	"mc/transport"
 	zmq "github.com/pebbe/zmq4"
 )
 
 type ZMQTransport struct {
 	Port int
 	Socket *zmq.Socket
-	IdentityToNode map[string]string
-	NodeToIdentity map[string]string
-	MessageInput chan serializer.MCMessage
+	MessageInput chan transport.WrappedMessage
 }
 
-func MakeZMQTransport(port int, msgs chan serializer.MCMessage) *ZMQTransport {
+func MakeZMQTransport(port int, msgs chan transport.WrappedMessage) *ZMQTransport {
 	return &ZMQTransport {
 		Port: port,
-		IdentityToNode: make(map[string]string),
-		NodeToIdentity: make(map[string]string),
 		MessageInput: msgs}
 }
 
-func (t *ZMQTransport) Tx(dest string, data []byte) {
-	t.Socket.Send(t.NodeToIdentity[dest],zmq.SNDMORE)
+func (t *ZMQTransport) Tx(identity string, data []byte) {
+	t.Socket.Send(identity, zmq.SNDMORE)
 	t.Socket.Send(string(data), 0)
 }
 
-func (t *ZMQTransport) RunServer(register func(*serializer.MCMessage, serializer.MCTransport) bool) {
+func (t *ZMQTransport) RunServer() {
 	t.Socket, _ = zmq.NewSocket(zmq.ROUTER)
 	t.Socket.Bind(fmt.Sprintf("tcp://*:%d", t.Port))
 	for {
@@ -36,32 +32,12 @@ func (t *ZMQTransport) RunServer(register func(*serializer.MCMessage, serializer
 		t.Socket.Recv(0)
 		data, _ := t.Socket.Recv(0)
 		fmt.Println(data)
-		msg, err := serializer.ParseMessage(data)
-
-		if err != nil {
-			fmt.Println(err)
-		} else if msg.Command == "hellomango" {
-			if register(msg, t) {
-				t.NodeToIdentity[msg.Sender] = identity
-				t.IdentityToNode[identity] = msg.Sender
-			} else {
-				fmt.Println("Registration failed")
-			}
-			continue
-		} else if _, ok := t.NodeToIdentity[msg.Sender]; !ok {
-			fmt.Println("No such node",msg.Sender)
-			continue
-		} else if t.NodeToIdentity[msg.Sender] != identity || t.IdentityToNode[identity] != msg.Sender {
-			fmt.Println("Updating",msg.Sender,identity)
-			prev_identity := t.NodeToIdentity[msg.Sender]
-			delete(t.IdentityToNode, prev_identity)
-			t.IdentityToNode[identity] = msg.Sender
-		}
-		fmt.Println("Processing normally from",msg.Sender)
-		fmt.Println(msg)
-		t.MessageInput <- *msg
+		msg := transport.WrappedMessage {
+			Transport: t,
+			Identity: identity,
+			Data: []byte(data)}
+		t.MessageInput <- msg
 	}
-	
 }
 
 func TestZmqClient(port int) {

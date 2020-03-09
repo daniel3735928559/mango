@@ -25,6 +25,10 @@ func ParseNodeInterface(spec string) (*NodeInterface, error) {
 		ReturnTypes: make(map[string]string)}
 	lines := strings.Split(spec, "\n")
 	for lineno, line := range lines {
+		line = strings.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
 		fs := strings.Fields(line)
 		if fs[0] == "import" {
 			fn := strings.SplitN(line, " ", 2)[1]

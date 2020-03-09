@@ -8,59 +8,52 @@ import (
 	"encoding/json"
 )
 
-type MCMessage struct {
+type Msg struct {
 	Sender string
 	MessageId string
 	Command string
+	Cookie string
 	Data map[string]interface{}
 }
 
-type MCHeader struct {
+type MsgHeader struct {
 	Source string  `json:"source"`
 	MessageId string  `json:"mid"`
 	Command string `json:"command"`
+	Cookie string `json:"cookie,omitempty"`
 	Format string  `json:"format"`
 }
 
-type MCTransport interface {
-	RunServer(register func(*MCMessage, MCTransport) bool)
-	Tx(string, []byte)
-}
-
-func (msg *MCMessage) Serialize() string {
-	header, _ := json.Marshal(&MCHeader{Source: msg.Sender, MessageId: msg.MessageId, Command: msg.Command, Format: "json"})
-	body, _ := json.Marshal(msg.Data)
-	return fmt.Sprintf("%s\n%s", header, body)
-}
-
-func (msg *MCMessage) RawHeader() map[string]string {
-	return map[string]string{"source": msg.Sender, "mid": msg.MessageId, "command": msg.Command}
-}
-
-func MakeMessage(src, mid, command string, args map[string]interface{}) *MCMessage {
-	return &MCMessage {
-		Sender: src,
+func Serialize(sender, mid, command string, payload interface{}) ([]byte, error) {
+	header, _ := json.Marshal(&MsgHeader{
+		Source: sender,
 		MessageId: mid,
 		Command: command,
-		Data: args}
+		Format: "json"})
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(fmt.Sprintf("%s\n%s", header, body)), nil
 }
 
-func ParseMessage(data string) (*MCMessage, error) {
+func Deserialize(data string) (*Msg, error) {
 	parts := strings.SplitN(data, "\n", 2)
 	if len(parts) < 2 {
 		return nil, errors.New(fmt.Sprintf("Invalid data received: %s", data))
 	}
 	header, body := parts[0], parts[1]
-	var header_info MCHeader
+	var header_info MsgHeader
 	json.Unmarshal([]byte(header), &header_info)
 	fmt.Println("AA",header_info)
 	if header_info.Format == "json" {
 		var body_info map[string]interface{}
 		json.Unmarshal([]byte(body), body_info)
-		return &MCMessage{
+		return &Msg{
 			Sender:header_info.Source,
 			MessageId: header_info.MessageId,
 			Command: header_info.Command,
+			Cookie: header_info.Cookie,
 			Data: body_info}, nil
 	}
 	return nil, errors.New(fmt.Sprintf("Failed to parse message: Invalid format: %s", header_info.Format))

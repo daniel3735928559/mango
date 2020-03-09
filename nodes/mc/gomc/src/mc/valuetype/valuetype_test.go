@@ -84,17 +84,32 @@ func TestValidateComplex(t *testing.T) {
 	}
 }
 
+type testcase struct {
+	expected string
+	inp interface{}
+}
+
 func TestValidateFailures(t *testing.T) {
 	desc := `{key1:[num]=[1,2,3],key2:{key3:oneof(bool,string,[num])=false}}`
-	testcases := map[string]interface{}{
-		`Error at root0: Invalid type: root0.key1`:map[string]interface{}{"key1":"hello","key2":map[string]interface{}{}},
-		`Error at root1: Invalid type: root1.key1`:map[string]interface{}{"key1":"hello","key2":map[string]interface{}{}},
-		`Error at root2: Invalid type: root2.key1`:map[string]interface{}{"key1":"hello","key2":map[string]interface{}{}},
-		`Error at root3: Invalid type: root3.key1`:map[string]interface{}{"key1":"hello","key2":map[string]interface{}{}}}
+	testcases := []testcase{
+		testcase{
+			expected:`Error at root0: Invalid type: root0.key1`,
+			inp:map[string]interface{}{"key1":"hello","key2":map[string]interface{}{}}},
+		testcase{
+			expected:`Error at root1: Invalid type: root1.key1`,
+			inp:map[string]interface{}{"key1":"hello","key2":map[string]interface{}{}}},
+		testcase{
+			expected:`Error at root2: Invalid type: root2.key1`,
+			inp:map[string]interface{}{"key1":"hello","key2":map[string]interface{}{}}},
+		testcase{
+			expected:`Error at root3: Invalid type: root3.key1`,
+			inp:map[string]interface{}{"key1":"hello","key2":map[string]interface{}{}}}}
 	ty, _ := Parse(desc)
 	fmt.Println(ty.ToString())
 	idx := 0
-	for errmsg, o := range testcases {
+	for _, tc := range testcases {
+		errmsg := tc.expected
+		o := tc.inp
 		v, _ := value.FromObject(o)
 		_, err := ty.Validate(v, map[string]*ValueType{}, fmt.Sprintf("root%d",idx))
 		if err == nil {
@@ -134,7 +149,7 @@ func TestValidateExtTypes(t *testing.T) {
 		} else if nv == nil {
 			t.Errorf("Failed to validate: nv is null; %s", v.ToString())
 		} else {
-			if nv.ToString() != ans.ToString() {
+			if !nv.Equals(ans) {
 				t.Errorf("Testcase %d: Expected: %s, Got: %s", i, ans.ToString(), nv.ToString())
 			}
 		}

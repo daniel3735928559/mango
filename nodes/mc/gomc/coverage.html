@@ -54,26 +54,184 @@
 			<div id="nav">
 				<select id="files">
 				
+				<option value="file0">mc/nodetype/nodeinterface.go (63.3%)</option>
+				
+				<option value="file1">mc/nodetype/nodetype.go (0.0%)</option>
+				
 				</select>
 			</div>
 			<div id="legend">
 				<span>not tracked</span>
 			
-				<span class="cov0">no coverage</span>
-				<span class="cov1">low coverage</span>
-				<span class="cov2">*</span>
-				<span class="cov3">*</span>
-				<span class="cov4">*</span>
-				<span class="cov5">*</span>
-				<span class="cov6">*</span>
-				<span class="cov7">*</span>
-				<span class="cov8">*</span>
-				<span class="cov9">*</span>
-				<span class="cov10">high coverage</span>
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
 			
 			</div>
 		</div>
 		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package nodetype
+
+import (
+        "fmt"
+        "strings"
+        "errors"
+        valuetype "mc/valuetype"
+        value "mc/value"
+)
+
+type NodeInterface struct {
+        Imports []string
+        Types map[string]*valuetype.ValueType
+        Inputs map[string]*valuetype.ValueType
+        Outputs map[string]*valuetype.ValueType
+        ReturnTypes map[string]string // Input name -&gt; Output name
+}
+
+func ParseNodeInterface(spec string) (*NodeInterface, error) <span class="cov8" title="1">{
+        ans := &amp;NodeInterface{
+                Imports: make([]string, 0),
+                Types: make(map[string]*valuetype.ValueType),
+                Inputs: make(map[string]*valuetype.ValueType),
+                Outputs: make(map[string]*valuetype.ValueType),
+                ReturnTypes: make(map[string]string)}
+        lines := strings.Split(spec, "\n")
+        for lineno, line := range lines </span><span class="cov8" title="1">{
+                fs := strings.Fields(line)
+                if fs[0] == "import" </span><span class="cov0" title="0">{
+                        fn := strings.SplitN(line, " ", 2)[1]
+                        return nil, errors.New(fmt.Sprintf("Error at line %d: `%s`: import not yet implemented: %s", lineno, line, fn))
+                }</span> else<span class="cov8" title="1"> if fs[0] == "type" || fs[0] == "input" || fs[0] == "output" </span><span class="cov8" title="1">{
+                        type_name := fs[1]
+                        fmt.Println("FS",line,fs)
+                        type_spec := strings.SplitN(line, " ", 3)[2]
+                        ty, err := valuetype.Parse(type_spec)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return nil, errors.New(fmt.Sprintf("Error at line %d: `%s`: %v",lineno, line, err))
+                        }</span>
+                        <span class="cov8" title="1">if fs[0] == "type" </span><span class="cov8" title="1">{
+                                if _, ok := ans.Types[type_name]; ok </span><span class="cov0" title="0">{
+                                        return nil, errors.New(fmt.Sprintf("Error at line %d: `%s`: Type already defined: %s", lineno, line, type_name))
+                                }</span>
+                                <span class="cov8" title="1">ans.Types[type_name] = ty</span>
+                        } else<span class="cov8" title="1"> if fs[0] == "input" </span><span class="cov8" title="1">{
+                                if _, ok := ans.Inputs[type_name]; ok </span><span class="cov0" title="0">{
+                                        return nil, errors.New(fmt.Sprintf("Error at line %d: `%s`: Input already defined: %s", lineno, line, type_name))
+                                }</span>
+                                <span class="cov8" title="1">ans.Inputs[type_name] = ty</span>
+                        } else<span class="cov8" title="1"> if fs[0] == "output" </span><span class="cov8" title="1">{
+                                if _, ok := ans.Outputs[type_name]; ok </span><span class="cov0" title="0">{
+                                        return nil, errors.New(fmt.Sprintf("Error at line %d: `%s`: Output already defined: %s", lineno, line, type_name))
+                                }</span>
+                                <span class="cov8" title="1">ans.Outputs[type_name] = ty</span>
+                        }
+                } else<span class="cov0" title="0"> if fs[0] == "return" </span><span class="cov0" title="0">{
+                        if len(fs) != 3 </span><span class="cov0" title="0">{
+                                return nil, errors.New(fmt.Sprintf("Error at line %d: `%s`: Expected format `return &lt;input_name&gt; &lt;output_name&gt;`", lineno, line))
+                        }</span>
+                        <span class="cov0" title="0">ans.ReturnTypes[fs[1]] = fs[2]</span>
+                }
+        }
+        <span class="cov8" title="1">return ans, nil</span>
+}
+
+func (ni *NodeInterface) ToString() string <span class="cov8" title="1">{
+        ans := ""
+        for _, imp := range ni.Imports </span><span class="cov0" title="0">{
+                ans += fmt.Sprintf("import %s\n",imp)
+        }</span>
+        <span class="cov8" title="1">for name, ty := range ni.Types </span><span class="cov8" title="1">{
+                ans += fmt.Sprintf("type %s %s\n",name, ty.ToString())
+        }</span>
+        <span class="cov8" title="1">for name, ty := range ni.Inputs </span><span class="cov8" title="1">{
+                ans += fmt.Sprintf("input %s %s\n",name, ty.ToString())
+        }</span>
+        <span class="cov8" title="1">for name, ty := range ni.Outputs </span><span class="cov8" title="1">{
+                ans += fmt.Sprintf("output %s %s\n",name, ty.ToString())
+        }</span>
+        <span class="cov8" title="1">for name, retname := range ni.ReturnTypes </span><span class="cov0" title="0">{
+                ans += fmt.Sprintf("return %s %s\n",name, retname)
+        }</span>
+        <span class="cov8" title="1">return ans</span>
+}
+
+func (ni *NodeInterface) ValidateInput(name string, val *value.Value) (*value.Value, error) <span class="cov0" title="0">{
+        if ty, ok := ni.Inputs[name]; ok </span><span class="cov0" title="0">{
+                return ty.Validate(val, ni.Types, "")
+        }</span>
+        <span class="cov0" title="0">return nil, fmt.Errorf("No such input type found: %s", name)</span>
+}
+
+func (ni *NodeInterface) ValidateOutput(name string, val *value.Value) (*value.Value, error) <span class="cov0" title="0">{
+        if ty, ok := ni.Outputs[name]; ok </span><span class="cov0" title="0">{
+                return ty.Validate(val, ni.Types, "")
+        }</span>
+        <span class="cov0" title="0">return nil, fmt.Errorf("No such output type found: %s", name)</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package nodetype
+
+import (
+        "fmt"
+        "strings"
+)
+
+type NodeType struct {
+        Name string
+        Interface *NodeInterface
+        Usage string
+}
+
+func Parse(spec string) (*NodeType, error) <span class="cov0" title="0">{
+        mode := "none"
+        interface_spec := ""
+        ans := &amp;NodeType{
+                Name: "",
+                Usage: ""}
+        for lineno, line := range strings.Split(spec, "\n") </span><span class="cov0" title="0">{
+                line = strings.TrimSpace(line)
+                if line == "[config]" </span><span class="cov0" title="0">{
+                        mode = "config"
+                }</span> else<span class="cov0" title="0"> if line == "[interface]" </span><span class="cov0" title="0">{
+                        mode = "interface"
+                }</span> else<span class="cov0" title="0"> if line == "[usage]" </span><span class="cov0" title="0">{
+                        mode = "usage"
+                }</span> else<span class="cov0" title="0"> if mode == "config" </span><span class="cov0" title="0">{
+                        fs := strings.Fields(line)
+                        if fs[0] == "name" </span><span class="cov0" title="0">{
+                                if len(fs) != 2 </span><span class="cov0" title="0">{
+                                        return nil, fmt.Errorf("Error on line %d: config name line should be of the form `name &lt;node_name&gt;`", lineno)
+                                }</span>
+                                <span class="cov0" title="0">ans.Name = fs[1]</span>
+                        } else<span class="cov0" title="0"> {
+                                return nil, fmt.Errorf(`Error on line %d: config lines supported: 
+name &lt;node_name&gt;`, lineno)
+                        }</span>
+                } else<span class="cov0" title="0"> if mode == "interface" </span><span class="cov0" title="0">{
+                        interface_spec += line + "\n"
+                }</span> else<span class="cov0" title="0"> if mode == "usage" </span><span class="cov0" title="0">{
+                        ans.Usage += line + "\n"
+                }</span>
+                <span class="cov0" title="0">new_if, err := ParseNodeInterface(interface_spec)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span> else<span class="cov0" title="0"> {
+                        ans.Interface = new_if
+                }</span>
+        }
+        <span class="cov0" title="0">return ans, nil</span>
+}
+
+func (nt *NodeType) Run(args map[string]string) {<span class="cov0" title="0">
+        
+}</span>
+
+func (nt *NodeType) ToString() string <span class="cov0" title="0">{
+        return fmt.Sprintf("%s", nt.Name)
+}</span>
+
+</pre>
 		
 		</div>
 	</body>

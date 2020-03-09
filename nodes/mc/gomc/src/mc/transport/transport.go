@@ -1,10 +1,18 @@
 package transport
 
 import (
-	mprotocol "libmango/protocol"
+
 )
 
+
 type MangoTransport interface {
-	RunServer(register func(*mprotocol.MangoMessage, MangoTransport) bool)
+	RunServer()
 	Tx(string, []byte)
+}
+
+
+type WrappedMessage struct {
+	Transport MangoTransport
+	Identity string
+	Data []byte
 }

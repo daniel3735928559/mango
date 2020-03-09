@@ -1,5 +1,5 @@
 %{
-	package router
+	package route
 	import (
 		"strconv"
 		"strings"

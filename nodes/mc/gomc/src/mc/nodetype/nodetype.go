@@ -3,6 +3,7 @@ package nodetype
 import (
 	"fmt"
 	"strings"
+	"mc/value"
 )
 
 type NodeType struct {
@@ -19,6 +20,9 @@ func Parse(spec string) (*NodeType, error) {
 		Usage: ""}
 	for lineno, line := range strings.Split(spec, "\n") {
 		line = strings.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
 		if line == "[config]" {
 			mode = "config"
 		} else if line == "[interface]" {
@@ -48,11 +52,18 @@ name <node_name>`, lineno)
 			ans.Interface = new_if
 		}
 	}
+	if len(ans.Name) == 0 {
+		return nil, fmt.Errorf("Must supply a type name")
+	}
 	return ans, nil
 }
 
-func (nt *NodeType) Run(args map[string]string) {
-	
+func (nt *NodeType) ValidateInput(name string, val *value.Value) (*value.Value, error) {
+	return nt.Interface.ValidateInput(name, val)
+}
+
+func (nt *NodeType) ValidateOutput(name string, val *value.Value) (*value.Value, error) {
+	return nt.Interface.ValidateOutput(name, val)
 }
 
 func (nt *NodeType) ToString() string {
