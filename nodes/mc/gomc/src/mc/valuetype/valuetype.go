@@ -134,7 +134,7 @@ func MakeOneofType(subtypes []*ValueType) *ValueType {
 
 // Does v conform to ty?
 func (ty *ValueType) Validate(v *value.Value, ext_types map[string]*ValueType, path string) (*value.Value, error) {
-	fmt.Println("Validate",ty,v)
+	fmt.Println("VALIDATE",v.ToString(),"against",ty.ToString())
 	if ty.Type == TY_ONEOF {
 		for _, sty := range ty.OneofTypes {
 			if sv, err := sty.Validate(v, ext_types, path); err == nil {

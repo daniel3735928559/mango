@@ -7,6 +7,8 @@ import (
 )
 
 type Route struct {
+	Id string
+	Group string
 	Source string
 	Transforms []*Transform
 	Dest string

@@ -4,9 +4,13 @@ import (
 	"fmt"
 	// "strings"
 	// "strconv"
-	// "github.com/docopt/docopt-go"
+	"github.com/docopt/docopt-go"
 	// "github.com/google/shlex"
-	// "time"
+	"time"
+	"math/rand"
+	"mc/route"
+	"mc/node"
+	"mc/nodetype"
 	"mc/value"
 	"mc/serializer"
 	"mc/transport"
@@ -18,14 +22,15 @@ import (
 
 // Each server is responsible for registration and mapping node
 
-type MangoHandler func(header map[string]string, args map[string]interface{})
+type MangoHandler func(command string, data map[string]interface{})
 
 type MangoCommander struct {
 	zmqTransport *mzmq.ZMQTransport
 	//socketTransport *msocket.SocketTransport
 	MessageInput chan transport.WrappedMessage
 	Commands map[string]MangoHandler
-	Registry registry.Registry
+	Registry *registry.Registry
+	Self *node.Node
 }
 
 
@@ -103,6 +108,10 @@ func (mc *MangoCommander) Run() {
 		}
 		
 		src_type := mc.Registry.FindNodeType(src.NodeType)
+		if src_type == nil {
+			fmt.Println("ERROR: Could not find type: ",src.NodeType)
+			continue
+		}
 		
 		validated_val, err := src_type.ValidateOutput(cmd, incoming_val)
 		if err != nil {
@@ -118,17 +127,17 @@ func (mc *MangoCommander) Run() {
 			dst_type := mc.Registry.FindNodeType(dst.NodeType)
 			result_cmd, result_val, result_err := rt.Run(cmd, validated_val)
 			if result_err != nil {
-				fmt.Println("ERROR: failed running route", rt.ToString())
+				fmt.Println("ERROR: failed running route", rt.ToString(), result_err)
 				continue
 			}
 			outval, err := dst_type.ValidateInput(result_cmd, result_val)
 			if err != nil {
-				fmt.Println("ERROR: route failed validation", rt.ToString())
+				fmt.Println("ERROR: route output failed validation", result_cmd, result_val.ToString(), err)
 				continue
 			}
 			data, err := serializer.Serialize(src.ToString(), msg.MessageId, result_cmd, outval.ToObject())
 			if err != nil {
-				fmt.Println("ERROR: Message failed to serialize")
+				fmt.Println("ERROR: Message failed to serialize", err)
 				continue
 			}
 			dst.Transport.Tx(dst.Id, data)
@@ -136,46 +145,146 @@ func (mc *MangoCommander) Run() {
 	}
 }
 
-// type MCLoopbackTransport struct {
-// 	MC *MangoCommander
-// }
+type MCLoopbackTransport struct {
+	MC *MangoCommander
+}
 
-// func (t *MCLoopbackTransport) Tx(dest string, data []byte) {
-// 	if dest == "root/mc" {
-// 		msg, err := serializer.Deserialize(string(data))
-// 		if err == nil {
-// 			if handler, ok := t.MC.Commands[msg.Command]; ok {
-// 				handler(msg.RawHeader(), msg.Data)
-// 			}
-// 		}
-// 	}
-// }
+func (t *MCLoopbackTransport) Tx(id string, data []byte) {
+	if id != t.MC.Self.Id {
+		fmt.Println("ERROR: Message not actually intended for MC")
+		return
+	}
+	msg, err := serializer.Deserialize(string(data))
+	if err != nil {
+		fmt.Println("ERROR: deserialization error")
+		return
+	}
+	if handler, ok := t.MC.Commands[msg.Command]; ok {
+		handler(msg.Command, msg.Data)
+	} else {
+		fmt.Printf("ERROR: Invalid command %s\n",msg.Command)
+	}
+}
 
-// func (t *MCLoopbackTransport) RunServer(register func(*serializer.MCMessage, serializer.MCTransport) bool) {
-// }
+func (t *MCLoopbackTransport) RunServer() {
+	
+}
 
 
-// func (mc *MangoCommander) RouteAdd(header map[string]string, args map[string]interface{}) {
-// 	spec := args["spec"].(string)
-// 	mc.Router.ParseAndAddRoutes(spec)
-// }
+func (mc *MangoCommander) RouteAdd(command string, args map[string]interface{}) {
+	spec := args["spec"].(string)
+	group := args["group"].(string)
+	id := args["id"].(string)
+	routes, err := route.Parse(spec)
+	if err != nil {
+		fmt.Println("ERROR: Routes failed to parse: ", err)
+		return
+	}
+	for i, rt := range routes {
+		rt.Id = fmt.Sprintf("%s_%d", id, i)
+		rt.Group = group
+		mc.Registry.AddRoute(rt)
+	}
+}
+
+func (mc *MangoCommander) Echo(command string, args map[string]interface{}) {
+	fmt.Println("ECHO", args)
+}
+
+func (mc *MangoCommander) Excite(command string, args map[string]interface{}) {
+	fmt.Printf("%s!\n", args["message"].(string))
+}
 
 func main() {
+	usage := `Usage: mc [-t]`
+	args, err := docopt.ParseDoc(usage)
+	if err != nil {
+		fmt.Println("ERROR parsing args: ",err)
+	}
+	
 	fmt.Println("hi")
-	go mzmq.TestZmqClient(1919)
+
+	
 	//go test_socket_client(1920)
 	message_aggregator := make(chan transport.WrappedMessage, 100)
 	
 	MC := &MangoCommander{
 		zmqTransport: mzmq.MakeZMQTransport(1919, message_aggregator),
 		//socketTransport: MakeSocketTransport(1920, message_aggregator),
-		MessageInput: message_aggregator}
+		MessageInput: message_aggregator,
+		Registry: registry.MakeRegistry()}	
 	
-	// MC.Commands = map[string]MangoHandler{
-	// 	"routeadd":MC.RouteAdd}
-	// MC.Router.AddNode(&router.Node{
-	// 	Name: "mc",
-	// 	Group: "root",
-	// 	Transport: &MCLoopbackTransport{MC: MC}})
+	MC.Commands = map[string]MangoHandler{
+		"routeadd":MC.RouteAdd,
+		"echo":MC.Echo}
+	rand.Seed(time.Now().UnixNano())
+	self_id := ""
+	for i := 0; i < 2; i++ {
+		self_id += fmt.Sprintf("%016x", rand.Uint64())
+	}
+	
+	MC.Self = &node.Node{
+		Id: self_id,
+		Name: "mc",
+		Group: "system",
+		NodeType: "mc",
+		Transport: &MCLoopbackTransport{MC: MC}}
+
+	MC.Registry.AddNode(MC.Self)
+
+	mc_type := `
+[config]
+name mc
+
+[interface]
+input echo {message:string}
+`
+	
+	mcnodetype, err := nodetype.Parse(mc_type)
+	if err != nil {
+		fmt.Println("Failed parsing MC node type: ", err)
+		return
+	}
+	MC.Registry.AddNodeType(mcnodetype)
+
+	if args["-t"].(bool) {
+		go mzmq.TestZmqClient(1919)
+
+		testnodetype, err := nodetype.Parse(`
+[config]
+name test_node
+
+[interface]
+output echo {message:string}
+output excite {message:string}
+`)
+		if err != nil {
+			fmt.Println("Failed parsing test node type: ",err)
+			return
+		}
+		MC.Registry.AddNodeType(testnodetype)
+		
+		TestNode := &node.Node{
+			Id: "TEST",
+			Name: "test",
+			Group: "system",
+			NodeType: "test_node",
+			Transport: MC.zmqTransport}
+		
+		MC.Registry.AddNode(TestNode)
+
+		testroutes, rerr := route.Parse(`system/test > ? excite % echo {message += "!";} > system/mc`)
+		if rerr != nil {
+			fmt.Println("Failed parsing test route: ",rerr)
+			return
+		}
+
+		for i, rt := range testroutes {
+			rt.Group = "system"
+			rt.Id = fmt.Sprintf("test_%d", i)
+			MC.Registry.AddRoute(rt)
+		}
+		
+	}
 	MC.Run()
 }

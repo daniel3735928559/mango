@@ -2,7 +2,7 @@ package mzmq
 
 import (
 	"fmt"
-	"math/rand"
+	//"math/rand"
 	"mc/transport"
 	zmq "github.com/pebbe/zmq4"
 )
@@ -43,19 +43,19 @@ func (t *ZMQTransport) RunServer() {
 func TestZmqClient(port int) {
 	worker, _ := zmq.NewSocket(zmq.DEALER)
 	defer worker.Close()
-	set_id(worker) //  Set a printable identity
+	set_id("test", worker) //  Set a printable identity
 	worker.Connect(fmt.Sprintf("tcp://localhost:%d",port))
 
 	worker.Send("",zmq.SNDMORE)
-	worker.Send(`{"source":"exciter","format":"json","command":"hellomango"}
-{"group":"foo"}`,0)
+	worker.Send(`{"source":"system/test","format":"json","command":"echo","cookie":"TEST"}
+{"message":"foo"}`,0)
 	
 	worker.Send("",zmq.SNDMORE)
-	worker.Send(`{"source":"exciter","format":"json","command":"excite"}
-{"message":"asda"}`,0)
+	worker.Send(`{"source":"system/test","format":"json","command":"excite","cookie":"TEST"}
+{"message":"bar"}`,0)
 }
 
-func set_id(soc *zmq.Socket) {
-	identity := fmt.Sprintf("%04X-%04X", rand.Intn(0x10000), rand.Intn(0x10000))
+func set_id(identity string, soc *zmq.Socket) {
+	//identity := fmt.Sprintf("%04X-%04X", rand.Intn(0x10000), rand.Intn(0x10000))
 	soc.SetIdentity(identity)
 }
