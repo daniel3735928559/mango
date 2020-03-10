@@ -2,19 +2,18 @@ package emp
 
 import (
 	"fmt"
-	"strings"
-	"strconv"
+	"mc/nodetype"
 )
 
 type EMP struct {
-	Group string
-	NodeTypes map[string]string
+	Name string
+	NodeTypes map[string]*nodetype.NodeType
 	Nodes []string
 	Routes []string
 }
 
 func (emp *EMP) Run() {
-	for n := range Nodes {
+	for n := range emp.Nodes {
 		fmt.Println(n)
 	}
 }

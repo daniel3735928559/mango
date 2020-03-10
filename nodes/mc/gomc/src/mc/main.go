@@ -5,10 +5,10 @@ import (
 	// "strings"
 	// "strconv"
 	"github.com/docopt/docopt-go"
-	// "github.com/google/shlex"
 	"time"
 	"math/rand"
 	"mc/route"
+	"mc/emp"
 	"mc/node"
 	"mc/nodetype"
 	"mc/value"
@@ -16,6 +16,7 @@ import (
 	"mc/transport"
 	"mc/transport/mzmq"
 	"mc/registry"
+	"io/ioutil"
 	// "libmango/transport/msocket"
 	// "encoding/json"
 )
@@ -187,6 +188,17 @@ func (mc *MangoCommander) RouteAdd(command string, args map[string]interface{}) 
 	}
 }
 
+func (mc *MangoCommander) EMP(command string, args map[string]interface{}) {
+	if filename, ok := args["filename"].(string); ok {
+		data, err := ioutil.ReadFile(filename)
+		if err != nil {
+			fmt.Println("ERROR reading EMP file:",filename,err)
+			return
+		}
+		emp.Parse(string(data), mc.Registry.NodeTypes)
+	}
+}
+
 func (mc *MangoCommander) Echo(command string, args map[string]interface{}) {
 	fmt.Println("ECHO", args)
 }
@@ -218,17 +230,8 @@ func main() {
 		"routeadd":MC.RouteAdd,
 		"echo":MC.Echo}
 	rand.Seed(time.Now().UnixNano())
-	self_id := ""
-	for i := 0; i < 2; i++ {
-		self_id += fmt.Sprintf("%016x", rand.Uint64())
-	}
 	
-	MC.Self = &node.Node{
-		Id: self_id,
-		Name: "mc",
-		Group: "system",
-		NodeType: "mc",
-		Transport: &MCLoopbackTransport{MC: MC}}
+	MC.Self = node.MakeNode("mc", "system", "mc", "", &MCLoopbackTransport{MC: MC})
 
 	MC.Registry.AddNode(MC.Self)
 
