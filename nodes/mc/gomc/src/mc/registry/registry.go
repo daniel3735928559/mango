@@ -9,6 +9,7 @@ import (
 )
 
 type Registry struct {
+	Groups map[string]bool
 	Nodes map[string]*node.Node
 	NodeTypes map[string]*nodetype.NodeType
 	Routes map[string]*route.Route
@@ -18,7 +19,8 @@ func MakeRegistry() *Registry {
 	return &Registry{
 		Nodes: make(map[string]*node.Node),
 		NodeTypes: make(map[string]*nodetype.NodeType),
-		Routes: make(map[string]*route.Route)}
+		Routes: make(map[string]*route.Route),
+		Groups: make(map[string]bool)}
 }
 
 func (reg *Registry) AddNode(n *node.Node) error {
@@ -26,6 +28,7 @@ func (reg *Registry) AddNode(n *node.Node) error {
 		return fmt.Errorf("Node with id %s already exists", n.Id)
 	}
 	reg.Nodes[n.Id] = n
+	reg.Groups[n.Group] = true
 	return nil
 }
 
@@ -93,6 +96,16 @@ func (reg *Registry) FindNodeByName(node_name string) *node.Node {
 		}
 	}
 	return nil
+}
+
+func (reg *Registry) FindNodesByGroup(group_name string) []*node.Node {
+	ans := make([]*node.Node, 0)
+	for _, n := range reg.Nodes {
+		if n.Group == group_name {
+			ans = append(ans, n)
+		}
+	}
+	return ans
 }
 
 func (reg *Registry) FindNodeType(nodetype string) *nodetype.NodeType {

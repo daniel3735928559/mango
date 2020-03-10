@@ -1,0 +1,6 @@
+[config]
+name mc
+
+[interface]
+input echo {message:string}
+input emp {group:string, filename:string}

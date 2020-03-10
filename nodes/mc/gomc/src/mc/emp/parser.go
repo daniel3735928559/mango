@@ -9,9 +9,7 @@ import (
 )
 
 func (emp *EMP) ParseConfig(config_str string) error {
-	config_def := `config
-
-Usage: 
+	config_def := `Usage: 
   config name <name>
 `
 	config_args, err := shlex.Split(config_str)
@@ -29,15 +27,26 @@ Usage:
 }
 
 func (emp *EMP) ParseNode(node_str string) error {
-	if len(node_str) > 0 {
-		fs := strings.SplitN(node_str," ",3)
-		if len(fs) < 2 {
-			return fmt.Errorf("Need <type> <name> <args>...: %s", node_str)
-		}
-		node_type := fs[0]
-		node_name := fs[1]
+	node_def := `Usage: 
+  node instance <type> <name> <args>
+  node merge <name>
+  node gen <name> <values>...
+  node split <name>
+`
+	node_args, err := shlex.Split(node_str)
+	if err != nil {
+		return err
+	}
+	args, err:= docopt.ParseArgs(node_def, node_args, "")
+	if err != nil {
+		return err
+	}
+	
+	if args["instance"].(bool) {
+		node_type := args["<type>"].(string)
+		node_name := args["<name>"].(string)
 		if _, ok := emp.NodeTypes[node_type]; ok {
-			emp.Nodes = append(emp.Nodes, fs[3])
+			emp.Nodes = append(emp.Nodes, args["<args>"].(string))
 		} else {
 			return fmt.Errorf("Unknown node type: %s", node_name)
 		}

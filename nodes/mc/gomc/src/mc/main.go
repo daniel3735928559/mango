@@ -2,11 +2,8 @@ package main
 
 import (
 	"fmt"
-	// "strings"
-	// "strconv"
+	"strings"
 	"github.com/docopt/docopt-go"
-	"time"
-	"math/rand"
 	"mc/route"
 	"mc/emp"
 	"mc/node"
@@ -188,14 +185,29 @@ func (mc *MangoCommander) RouteAdd(command string, args map[string]interface{}) 
 	}
 }
 
-func (mc *MangoCommander) EMP(command string, args map[string]interface{}) {
+func (mc *MangoCommander) EMP(group, emp_data string) {
+	e, err := emp.Parse(emp_data, mc.Registry.NodeTypes)
+	if err != nil {
+		fmt.Println("ERROR parsing EMP:",emp_data,err)
+	}
+	for _, n := range e.Nodes {
+		fmt.Println(n)
+	}
+}
+
+func (mc *MangoCommander) RunEMP(command string, args map[string]interface{}) {
+	group := args["group"].(string)
+	if _, ok := mc.Registry.Groups[group]; ok {
+		fmt.Println("ERROR: group already exists",group)
+		return
+	}
 	if filename, ok := args["filename"].(string); ok {
 		data, err := ioutil.ReadFile(filename)
 		if err != nil {
 			fmt.Println("ERROR reading EMP file:",filename,err)
 			return
 		}
-		emp.Parse(string(data), mc.Registry.NodeTypes)
+		mc.EMP(group, string(data))
 	}
 }
 
@@ -208,7 +220,10 @@ func (mc *MangoCommander) Excite(command string, args map[string]interface{}) {
 }
 
 func main() {
-	usage := `Usage: mc [-t]`
+	usage := `Usage: mc [-t] --manifest=<manifest>
+
+Options:
+-m --manifest manifest_file  A file from which to read the available node types`
 	args, err := docopt.ParseDoc(usage)
 	if err != nil {
 		fmt.Println("ERROR parsing args: ",err)
@@ -216,6 +231,7 @@ func main() {
 	
 	fmt.Println("hi")
 
+	// Create MC
 	
 	//go test_socket_client(1920)
 	message_aggregator := make(chan transport.WrappedMessage, 100)
@@ -228,51 +244,47 @@ func main() {
 	
 	MC.Commands = map[string]MangoHandler{
 		"routeadd":MC.RouteAdd,
-		"echo":MC.Echo}
-	rand.Seed(time.Now().UnixNano())
-	
-	MC.Self = node.MakeNode("mc", "system", "mc", "", &MCLoopbackTransport{MC: MC})
+		"echo":MC.Echo,
+		"emp":MC.RunEMP}
 
+	// Load node types from manifest:
+	fmt.Println(args)
+	manifest_filename := args["--manifest"].(string)
+	manifest_data, err := ioutil.ReadFile(manifest_filename)
+	if err != nil {
+		fmt.Println("ERROR reading manifest", manifest_filename, err)
+		return
+	}
+	for _, line := range strings.Split(string(manifest_data), "\n") {
+		line = strings.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
+		nodetype_data, err := ioutil.ReadFile(line)
+		if err != nil {
+			fmt.Println("ERROR reading node type file", manifest_filename, err)
+			return
+		}
+		nt, err := nodetype.Parse(string(nodetype_data))
+		if err != nil {
+			fmt.Println("Failed parsing node type: ", string(nodetype_data), err)
+			return
+		}
+		MC.Registry.AddNodeType(nt)
+	}
+	
+	// Add self as a node
+	MC.Self = node.MakeNode("mc", "system", "mc", "", &MCLoopbackTransport{MC: MC})
 	MC.Registry.AddNode(MC.Self)
 
-	mc_type := `
-[config]
-name mc
-
-[interface]
-input echo {message:string}
-`
-	
-	mcnodetype, err := nodetype.Parse(mc_type)
 	if err != nil {
 		fmt.Println("Failed parsing MC node type: ", err)
 		return
 	}
-	MC.Registry.AddNodeType(mcnodetype)
 
 	if args["-t"].(bool) {
-		go mzmq.TestZmqClient(1919)
-
-		testnodetype, err := nodetype.Parse(`
-[config]
-name test_node
-
-[interface]
-output echo {message:string}
-output excite {message:string}
-`)
-		if err != nil {
-			fmt.Println("Failed parsing test node type: ",err)
-			return
-		}
-		MC.Registry.AddNodeType(testnodetype)
-		
-		TestNode := &node.Node{
-			Id: "TEST",
-			Name: "test",
-			Group: "system",
-			NodeType: "test_node",
-			Transport: MC.zmqTransport}
+		TestNode := node.MakeNode("test", "system", "test_node", "", MC.zmqTransport)
+		go mzmq.TestZmqClient(1919, TestNode.Id)
 		
 		MC.Registry.AddNode(TestNode)
 

@@ -40,19 +40,19 @@ func (t *ZMQTransport) RunServer() {
 	}
 }
 
-func TestZmqClient(port int) {
+func TestZmqClient(port int, id string) {
 	worker, _ := zmq.NewSocket(zmq.DEALER)
 	defer worker.Close()
 	set_id("test", worker) //  Set a printable identity
 	worker.Connect(fmt.Sprintf("tcp://localhost:%d",port))
 
 	worker.Send("",zmq.SNDMORE)
-	worker.Send(`{"source":"system/test","format":"json","command":"echo","cookie":"TEST"}
-{"message":"foo"}`,0)
+	worker.Send(fmt.Sprintf(`{"source":"system/test","format":"json","command":"echo","cookie":"%s"}
+{"message":"foo"}`, id),0)
 	
 	worker.Send("",zmq.SNDMORE)
-	worker.Send(`{"source":"system/test","format":"json","command":"excite","cookie":"TEST"}
-{"message":"bar"}`,0)
+	worker.Send(fmt.Sprintf(`{"source":"system/test","format":"json","command":"excite","cookie":"%s"}
+{"message":"bar"}`, id),0)
 }
 
 func set_id(identity string, soc *zmq.Socket) {
