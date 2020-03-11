@@ -100,8 +100,7 @@ func (mc *MangoCommander) Run() {
 		// using this transport/id combo, so set those
 		// properties here (in case it has reconnected since
 		// last time or something): 
-		src.Id = wrapped_msg.Identity
-		src.Transport = wrapped_msg.Transport
+		src.GotAlive(wrapped_msg.Identity, wrapped_msg.Transport)
 		
 		// validate message is of acceptable format for node
 		// output:
@@ -146,7 +145,7 @@ func (mc *MangoCommander) Run() {
 				continue
 			}
 			fmt.Println("[MC] SEND TO",dst.ToString())
-			dst.Transport.Tx(dst.Id, data)
+			dst.SendToNode(data)
 		}
 	}
 }
@@ -257,7 +256,7 @@ func (mc *MangoCommander) Echo(args map[string]interface{}) (string, map[string]
 }
 
 func main() {
-	usage := `Usage: mc [-t] --manifest=<manifest>
+	usage := `Usage: mc [-t] [--manifest=<manifest>]
 
 Options:
 -m --manifest manifest_file  A file from which to read the available node types`
@@ -286,8 +285,11 @@ Options:
 
 	// Load node types from manifest:
 	fmt.Println(args)
-	manifest_filename := args["--manifest"].(string)
-	manifest_data, err := ioutil.ReadFile(manifest_filename)
+	manifest_filename := "types.manifest"
+	if mf, ok := args["--manifest"]; ok && mf != nil {
+		manifest_filename = mf.(string)
+	}
+		manifest_data, err := ioutil.ReadFile(manifest_filename)
 	if err != nil {
 		fmt.Println("ERROR reading manifest", manifest_filename, err)
 		return

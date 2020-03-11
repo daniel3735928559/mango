@@ -2,5 +2,7 @@
 name mc
 
 [interface]
+input reply any
+input alive any
 input echo any
 input emp {group:string, filename:string}

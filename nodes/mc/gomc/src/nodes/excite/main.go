@@ -7,7 +7,8 @@ import (
 )
 
 func Excite(args map[string]interface{}) (string, map[string]interface{}, error) {
-	return "excited",map[string]interface{}{"message":args["msg"].(string)+"!"},nil
+	fmt.Println("EXCITING",args)
+	return "excited",map[string]interface{}{"message":args["message"].(string)+"!"},nil
 }
 
 func main() {

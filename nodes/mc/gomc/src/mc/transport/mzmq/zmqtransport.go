@@ -24,6 +24,7 @@ func (t *ZMQTransport) GetServerAddr() string {
 }
 
 func (t *ZMQTransport) Tx(identity string, data []byte) {
+	fmt.Println("TX",identity,string(data))
 	t.Socket.Send(identity, zmq.SNDMORE)
 	t.Socket.Send(string(data), 0)
 }

@@ -21,6 +21,7 @@ const (
 
 type Node struct {
 	Id string
+	TransportId string
 	Name string
 	Group string
 	NodeType string
@@ -29,6 +30,7 @@ type Node struct {
 	Server string
 	LastHeartbeat int64
 	Status NodeStatus
+	TransportQueue [][]byte
 	Proc *exec.Cmd
 }
 
@@ -44,7 +46,9 @@ func MakeNode(name, group, typename, command string, trans transport.MangoTransp
 		NodeType: typename,
 		Command: command,
 		Status: NODE_STATUS_READY,
-		Transport: trans}
+		Transport: trans,
+		TransportQueue: make([][]byte, 0),
+		TransportId: ""}
 }
 
 // func (n *Node) Handler(src, mid, command string, args map[string]interface{}) {
@@ -86,7 +90,28 @@ func (n *Node) Kill() {
 	n.Status = NODE_STATUS_DEAD
 }
 
+func (n *Node) GotAlive(tid string, t transport.MangoTransport) {
+	n.TransportId = tid
+	n.Transport = t
+	n.Status = NODE_STATUS_RUNNING
+	// Send any enqueued things
+	fmt.Println("GOT ALIVE--sending queue of length", len(n.TransportQueue))
+	for _, bs := range n.TransportQueue {
+		n.Transport.Tx(n.TransportId, bs)
+	}
+	n.TransportQueue = make([][]byte, 0)
+}
+
+func (n *Node) SendToNode(data []byte) {
+	if n.Status == NODE_STATUS_RUNNING && len(n.TransportId) > 0 {
+		fmt.Println("Sending")
+		n.Transport.Tx(n.TransportId, data)
+	} else {
+		fmt.Println("Appending to queue")
+		n.TransportQueue = append(n.TransportQueue, data)
+	}
+}
+
 func (n *Node) ToString() string {
 	return fmt.Sprintf("%s/%s", n.Group, n.Name)
 }
-

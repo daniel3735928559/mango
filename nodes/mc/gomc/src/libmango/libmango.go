@@ -4,6 +4,7 @@ import (
 	"os"
 	"fmt"
 	"sync"
+	"time"
 	"strings"
 	"math/rand"
 	"encoding/json"
@@ -97,7 +98,7 @@ func (n *Node) Send(cmd string, args map[string]interface{}) error {
 func (n *Node) SendForReply(cmd string, args map[string]interface{}, reply_handler MangoReplyHandler) (string, error) {
 	n.send_mutex.Lock()
 	defer n.send_mutex.Unlock()
-	fmt.Println("sending",cmd,args)
+	fmt.Println("[LIBMANGO] sending for reply",cmd,args)
 	h := MsgHeader{
 		MessageId: fmt.Sprintf("%d",n.currentMid),
 		Cookie: n.cookie,
@@ -121,7 +122,7 @@ func (n *Node) SendForReply(cmd string, args map[string]interface{}, reply_handl
 func (n *Node) send_reply(mid, cmd string, args map[string]interface{}) {
 	n.send_mutex.Lock()
 	defer n.send_mutex.Unlock()
-	fmt.Println("sending reply",cmd,args)
+	fmt.Println("[LIBMANGO] sending reply",cmd,args)
 	h := MsgHeader{
 		MessageId: mid,
 		Cookie: n.cookie,
@@ -141,11 +142,13 @@ func (n *Node) send_reply(mid, cmd string, args map[string]interface{}) {
 func (n *Node) Start() {
 	fmt.Println("[LIBMANGO] STARTING", n.Server)
 	n.socket, _ = zmq.NewSocket(zmq.DEALER)
+	rand.Seed(time.Now().UnixNano())
 	identity := fmt.Sprintf("%04X-%04X", rand.Intn(0x10000), rand.Intn(0x10000))
-	fmt.Println(identity)
-	//n.socket.SetIdentity(identity)
+	fmt.Println("[LIBMANGO]", identity)
+	n.socket.SetIdentity(identity)
 	n.socket.Connect(n.Server)
 	n.status = NODE_STATUS_RUNNING
+	n.Send("alive", map[string]interface{}{})
 	go n.run()
 }
 
@@ -154,7 +157,7 @@ func (n *Node) Stop() {
 }
 
 func (n *Node) handle_error(err error) {
-	fmt.Printf("ERROR: %v", err)
+	fmt.Printf("[LIBMANGO] ERROR: %v", err)
 }
 
 func (n *Node) serialize(mid, command string, args map[string]interface{}) ([]byte, error) {
@@ -192,11 +195,12 @@ func (n *Node) deserialize(data string) (*Msg, error) {
 
 func (n *Node) run() {
 	for n.status == NODE_STATUS_RUNNING {
+		fmt.Println("[LIBMANGO] RECV")
 		data, err := n.socket.Recv(0)
 		if err != nil {
 			n.handle_error(fmt.Errorf("Problem receiving on socket: %v",err))
 		}
-		fmt.Println("RECVED",data)
+		fmt.Println("[LIBMANGO] RECVED",data)
 
 		msg, err := n.deserialize(data)
 		if err != nil {
