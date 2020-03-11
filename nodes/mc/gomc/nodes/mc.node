@@ -2,5 +2,5 @@
 name mc
 
 [interface]
-input echo {message:string}
+input echo any
 input emp {group:string, filename:string}

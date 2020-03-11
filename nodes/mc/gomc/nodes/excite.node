@@ -1,0 +1,7 @@
+[config]
+name excite_go
+executable ./excite
+
+[interface]
+input excite {message:string}
+output excited {message:string}

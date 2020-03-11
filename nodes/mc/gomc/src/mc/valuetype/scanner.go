@@ -10,7 +10,7 @@ const (
 )
 
 var (
-	keywords = map[string]int{"string":STR, "num":NUM, "bool": BOOL, "true": TRUE, "false": FALSE, "oneof": ONEOF}
+	keywords = map[string]int{"string":STR, "num":NUM, "bool": BOOL, "true": TRUE, "false": FALSE, "oneof": ONEOF, "any": ANY}
 	charsyms = map[rune]int {
 		'=':'=',
 		',':',',
@@ -47,7 +47,7 @@ func (s *ValueTypeScanner) Scan() (tok int, lit string, pos Position) {
 	switch ch := s.peek(); {
 	case isLetter(ch):
 		lit = s.scanIdentifier()
-		fmt.Println("scanning kwds",lit)
+		//fmt.Println("scanning kwds",lit)
 		if keyword, ok := keywords[lit]; ok {
 			tok = keyword
 		} else {

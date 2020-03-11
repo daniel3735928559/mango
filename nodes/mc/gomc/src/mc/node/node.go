@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"time"
 	"math/rand"
@@ -25,6 +26,7 @@ type Node struct {
 	NodeType string
 	Transport transport.MangoTransport
 	Command string
+	Server string
 	LastHeartbeat int64
 	Status NodeStatus
 	Proc *exec.Cmd
@@ -53,17 +55,23 @@ func MakeNode(name, group, typename, command string, trans transport.MangoTransp
 func (n *Node) RestartWorker() {
 	n.Proc.Wait()
 	fmt.Println("RESTARTING")
-	n.Start()
+	n.Start(n.Server)
 }
 
-func (n *Node) Start() {
+func (n *Node) Start(server string) {
 	args, err := shlex.Split(n.Command)
 	if err != nil {
 		fmt.Println("ERROR starting command",n.Command,err)
 	}
+	n.Server = server
 	n.Proc = exec.Command(args[0], args[1:]...)
-	n.Proc.Start()
+	n.Proc.Stdin = os.Stdin
+	n.Proc.Stdout = os.Stdout
+	n.Proc.Env = os.Environ()
+	n.Proc.Env = append(n.Proc.Env, fmt.Sprintf("MANGO_COOKIE=%s", n.Id))
+	n.Proc.Env = append(n.Proc.Env, fmt.Sprintf("MANGO_SERVER=%s", n.Server))
 	n.Status = NODE_STATUS_RUNNING
+	n.Proc.Start()
 }
 
 func (n *Node) Heartbeat() {

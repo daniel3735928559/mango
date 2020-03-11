@@ -3,7 +3,6 @@ package emp
 import (
 	"fmt"
 	"strings"
-	"mc/nodetype"
 	"github.com/google/shlex"
 	"github.com/docopt/docopt-go"
 )
@@ -41,15 +40,12 @@ func (emp *EMP) ParseNode(node_str string) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("EA",args)
 	
 	if args["instance"].(bool) {
 		node_type := args["<type>"].(string)
 		node_name := args["<name>"].(string)
-		if _, ok := emp.NodeTypes[node_type]; ok {
-			emp.Nodes = append(emp.Nodes, args["<args>"].(string))
-		} else {
-			return fmt.Errorf("Unknown node type: %s", node_name)
-		}
+		emp.Nodes = append(emp.Nodes, EMPNode{TypeName: node_type, Name: node_name, Args: args["<args>"].(string)})
 	}
 	return nil
 }
@@ -61,12 +57,14 @@ func (emp *EMP) ParseRoute(routes_str string) error {
 	return nil
 }
 
-func Parse(emp_data string, types map[string]*nodetype.NodeType) (*EMP, error) {
+func Parse(emp_data string) (*EMP, error) {
 	mode := "none"
-	ans := &EMP{
-		NodeTypes: types}
+	ans := &EMP{}
 	for _, line := range strings.Split(emp_data, "\n") {
 		line = strings.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
 		if line == "[config]" {
 			mode = "config"
 		} else if line == "[nodes]" {

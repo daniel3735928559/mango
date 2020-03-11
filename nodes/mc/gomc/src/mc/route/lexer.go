@@ -16,7 +16,7 @@ func (l *RouteLexer) Lex(lval *RouteParserSymType) int {
 		return 0
 	}
 	lval.token = Token{token: tok, literal: lit, position: pos}
-	fmt.Println("Lexed",tok,lit,pos)
+	//fmt.Println("Lexed",tok,lit,pos)
 	return tok
 }
 

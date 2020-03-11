@@ -1,7 +1,7 @@
 %{
 	package valuetype
 	import (
-		"fmt"
+		//"fmt"
 		"strings"
 		"strconv"
 		"errors"
@@ -35,7 +35,7 @@
 %type<val> listvals
 %type<val> mapvals
 
-%token<token> IDENT NUMBER STRING TRUE FALSE NUM STR BOOL ONEOF '*' ',' '=' '{' '}' '[' ']' '(' ')'
+%token<token> IDENT NUMBER STRING TRUE FALSE NUM STR BOOL ONEOF ANY '*' ',' '=' '{' '}' '[' ']' '(' ')'
 
 %left '='
 %left '*'
@@ -64,6 +64,10 @@ typedesc : STR
 | BOOL
 {
 	$$ = MakeBoolType()
+}
+| ANY
+{
+	$$ = MakeAnyType()
 }
 | '[' typedesc ']'
 {
@@ -116,7 +120,7 @@ mapentries : mapentry
 ;
 mapentry : IDENT ':' typedesc
 {
-	fmt.Println("sty",$1.literal,$3)
+  //fmt.Println("sty",$1.literal,$3)
 	$$ = &MapEntrySpec{
 		Name: $1.literal,
 		Required: true,

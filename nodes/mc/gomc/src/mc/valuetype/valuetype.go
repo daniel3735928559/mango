@@ -17,6 +17,7 @@ const (
 	TY_NUM
 	TY_STRING
 	TY_BOOL
+	TY_ANY
 	TY_EXT
 )
 
@@ -78,6 +79,8 @@ func (ty *ValueType) ToString() string {
 		return "string"
 	} else if ty.Type == TY_BOOL {
 		return "bool"
+	} else if ty.Type == TY_ANY {
+		return "any"
 	} else if ty.Type == TY_EXT {
 		return ty.ExternalTypeName
 	}
@@ -90,6 +93,9 @@ func MakeExtType(name string) *ValueType {
 
 func MakeBoolType() *ValueType {
 	return &ValueType{Type: TY_BOOL}
+}
+func MakeAnyType() *ValueType {
+	return &ValueType{Type: TY_ANY}
 }
 func MakeNumType() *ValueType {
 	return &ValueType{Type: TY_NUM}
@@ -192,6 +198,8 @@ func (ty *ValueType) Validate(v *value.Value, ext_types map[string]*ValueType, p
 			return v, nil
 		}
 		return nil, fmt.Errorf("Error at %s: string expected", path)
+	} else if ty.Type == TY_ANY {
+		return v, nil
 	} else if ty.Type == TY_BOOL {
 		if v.Type == value.VAL_BOOL {
 			return v, nil

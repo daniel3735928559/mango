@@ -19,6 +19,10 @@ func MakeZMQTransport(port int, msgs chan transport.WrappedMessage) *ZMQTranspor
 		MessageInput: msgs}
 }
 
+func (t *ZMQTransport) GetServerAddr() string {
+	return fmt.Sprintf("tcp://localhost:%d", t.Port)
+}
+
 func (t *ZMQTransport) Tx(identity string, data []byte) {
 	t.Socket.Send(identity, zmq.SNDMORE)
 	t.Socket.Send(string(data), 0)
@@ -31,7 +35,7 @@ func (t *ZMQTransport) RunServer() {
 		identity, _ := t.Socket.Recv(0)
 		t.Socket.Recv(0)
 		data, _ := t.Socket.Recv(0)
-		fmt.Println(data)
+		fmt.Println("[zmqtransport.go] RX",identity,data)
 		msg := transport.WrappedMessage {
 			Transport: t,
 			Identity: identity,

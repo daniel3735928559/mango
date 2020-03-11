@@ -3,3 +3,5 @@
     ./bin/goyacc -o src/mc/value/parser.go -p ValueParser -v src/mc/value/parser.output src/mc/value/parser.go.y && \
     echo hi
 GOPATH=$(realpath .) go build mc
+GOPATH=$(realpath .) go build nodes/excite
+GOPATH=$(realpath .) go build nodes/tester
