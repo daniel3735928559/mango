@@ -1,0 +1,6 @@
+[config]
+name log
+executable ./log
+
+[interface]
+input log {source:string, timestamp:num, message:string}

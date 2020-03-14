@@ -4,4 +4,5 @@
     echo hi
 GOPATH=$(realpath .) go build mc
 GOPATH=$(realpath .) go build nodes/excite
+GOPATH=$(realpath .) go build nodes/log
 GOPATH=$(realpath .) go build nodes/tester

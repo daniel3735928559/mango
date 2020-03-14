@@ -1,3 +1,4 @@
+
 %{
 	package route
 	import (
@@ -317,6 +318,16 @@ expr : NUMBER
 		Args: []*Expression{
 			MakeNameExpression($1.literal),
 			$3}}
+}
+| IDENT '(' ')'
+{
+	$$ = &Expression{
+		Operation: OP_CALL,
+		Args: []*Expression{
+			MakeNameExpression($1.literal),
+			&Expression{
+				Operation: OP_LIST,
+				Args: []*Expression{}}}}
 }
 | STRING
 {

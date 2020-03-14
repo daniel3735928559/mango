@@ -3,17 +3,28 @@ package route
 import (
 	"fmt"
 	"math"
+	"time"
 	"regexp"
 	"errors"
+	"encoding/json"
 	value "mc/value"
 )
 
 func CallHandler(this *value.Value, local_vars map[string]*value.Value, args []*value.Value, primitive *value.Value) (*value.Value, error) {
 	// TODO: error if called function does not exist
 	name := args[0].NameVal
-	fmt.Println("CALL",name)
+	func_args := args[1].ListVal
+	
+	fmt.Println("CALL",name,func_args)
 	if name == "sub" {
 		return this, nil
+	} else if name == "raw" && len(func_args) == 0 {
+		raw_data, _ := json.Marshal(this.ToObject())
+		raw_val, _ := value.FromObject(string(raw_data))
+		return raw_val, nil
+	} else if name == "now" && len(func_args) == 0 {
+		time_val, _ := value.FromObject(float64(time.Now().UnixNano())/1000000.0)
+		return time_val, nil
 	}
 	return nil, errors.New(fmt.Sprintf("No such function %s",name))
 }

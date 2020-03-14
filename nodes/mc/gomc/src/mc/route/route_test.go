@@ -547,6 +547,18 @@ func TestRouterSimpleReplace(t *testing.T) {
 	RunMessagesThroughRoutes(t, routes, messages, expected)
 }
 
+func TestRouterFuncReplace(t *testing.T) {
+	routes := []string{
+		"node0 > node1",
+		`node0 > = {key1:raw()} > node2`}
+	messages := []map[string]interface{}{
+		map[string]interface{}{"key1":"val2"}}
+	expected := map[string][]string{
+		"node1":[]string{`test_cmd {"key1":"val2"}`},
+		"node2":[]string{`test_cmd {"key1":"{"key1":"val2"}"}`}}
+	RunMessagesThroughRoutes(t, routes, messages, expected)
+}
+
 func TestRouterSimpleCondReplace(t *testing.T) {
 	routes := []string{
 		"node0 > node1",
