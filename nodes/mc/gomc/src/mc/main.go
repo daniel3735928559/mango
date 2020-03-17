@@ -84,11 +84,7 @@ func (mc *MangoCommander) Run() {
 	}
 
 	for wrapped_msg := range mc.MessageInput {
-		msg, err := serializer.Deserialize(string(wrapped_msg.Data))
-		if err != nil {
-			fmt.Println("ERROR: deserialization error")
-			continue
-		}
+		msg := wrapped_msg.Message
 		fmt.Println("FROM",msg.Sender)
 		fmt.Println("DATA",msg.Data)
 		src := mc.Registry.FindNodeById(msg.Cookie)
@@ -111,9 +107,9 @@ func (mc *MangoCommander) Run() {
 			continue
 		}
 		
-		src_type := mc.Registry.FindNodeType(src.NodeType)
+		src_type := mc.Registry.FindNodeType(src.GetType())
 		if src_type == nil {
-			fmt.Println("ERROR: Could not find type: ",src.NodeType)
+			fmt.Println("ERROR: Could not find type: ",src.GetType())
 			continue
 		}
 		
@@ -128,7 +124,7 @@ func (mc *MangoCommander) Run() {
 		routes := mc.Registry.FindRoutesBySrc(src.ToString())
 		for _, rt := range routes {
 			dst := mc.Registry.FindNodeByName(rt.Dest)
-			dst_type := mc.Registry.FindNodeType(dst.NodeType)
+			dst_type := mc.Registry.FindNodeType(dst.GetType())
 			result_cmd, result_val, result_err := rt.Run(cmd, validated_val)
 			if result_err != nil {
 				fmt.Println("ERROR: failed running route", rt.ToString(), result_err)
@@ -139,13 +135,13 @@ func (mc *MangoCommander) Run() {
 				fmt.Println("ERROR: route output failed validation", result_cmd, result_val, err)
 				continue
 			}
-			data, err := serializer.Serialize(src.ToString(), msg.MessageId, result_cmd, outval.ToObject())
-			if err != nil {
-				fmt.Println("ERROR: Message failed to serialize", err)
-				continue
-			}
+			outmsg = serializer.Msg{
+				Source: src.ToString(),
+				MessageId: msg.MessageId,
+				Command: result_cmd,
+				data: outval.ToObject()}
 			fmt.Println("[MC] SEND TO",dst.ToString())
-			dst.SendToNode(data)
+			dst.SendToNode(outmsg)
 		}
 	}
 }
@@ -205,15 +201,20 @@ func (mc *MangoCommander) EMP(group, emp_file string) error {
 	new_nodes := make([]*node.Node, 0)
 	new_routes := make([]*route.Route, 0)
 	for _, n := range e.Nodes {
-		new_type := mc.Registry.FindNodeType(n.TypeName)
-		if new_type == nil {
+		if n.TypeName == "dummy" {
+			// TODO add dummy node
+		} else if n.TypeName == "merge" {
+			// TODO Add merge node
+			new_node := node.MakeMerge()
+		} else if new_type := mc.Registry.FindNodeType(n.TypeName); new_type != nil {
+			new_node := node.MakeExecNode(n.Name, group, n.TypeName, fmt.Sprintf("%s %s", new_type.Executable, n.Args), mc.zmqTransport)
+			if new_node == nil {
+				return fmt.Errorf("ERROR Failed to make node: `%s`", n.Name)
+			}
+			new_nodes = append(new_nodes, new_node)
+		} else {
 			return fmt.Errorf("ERROR Failed to find type: `%s`", n.TypeName)
 		}
-		new_node := node.MakeNode(n.Name, group, n.TypeName, fmt.Sprintf("%s %s", new_type.Executable, n.Args), mc.zmqTransport)
-		if new_node == nil {
-			return fmt.Errorf("ERROR Failed to make node: `%s`", n.Name)
-		}
-		new_nodes = append(new_nodes, new_node)
 	}
 	route_idx := 0
 	for _, spec := range e.Routes {

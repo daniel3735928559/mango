@@ -10,25 +10,25 @@ import (
 
 type Registry struct {
 	Groups map[string]bool
-	Nodes map[string]*node.Node
+	Nodes map[string]node.Node
 	NodeTypes map[string]*nodetype.NodeType
 	Routes map[string]*route.Route
 }
 
 func MakeRegistry() *Registry {
 	return &Registry{
-		Nodes: make(map[string]*node.Node),
+		Nodes: make(map[string]node.Node),
 		NodeTypes: make(map[string]*nodetype.NodeType),
 		Routes: make(map[string]*route.Route),
 		Groups: make(map[string]bool)}
 }
 
-func (reg *Registry) AddNode(n *node.Node) error {
-	if _, ok := reg.Nodes[n.Id]; ok {
-		return fmt.Errorf("Node with id %s already exists", n.Id)
+func (reg *Registry) AddNode(n node.Node) error {
+	if _, ok := reg.Nodes[n.GetId()]; ok {
+		return fmt.Errorf("Node with id %s already exists", n.GetId())
 	}
-	reg.Nodes[n.Id] = n
-	reg.Groups[n.Group] = true
+	reg.Nodes[n.GetId()] = n
+	reg.Groups[n.GetGroup()] = true
 	return nil
 }
 
@@ -78,30 +78,30 @@ func (reg *Registry) FindRoutesBySrcDst(src string, dst string) []*route.Route {
 	return ans
 }
 
-func (reg *Registry) FindNodeById(node_id string) *node.Node {
+func (reg *Registry) FindNodeById(node_id string) node.Node {
 	if n, ok := reg.Nodes[node_id]; ok {
 		return n
 	}
 	return nil
 }
 
-func (reg *Registry) FindNodeByName(node_name string) *node.Node {
+func (reg *Registry) FindNodeByName(node_name string) node.Node {
 	fs := strings.Split(node_name, "/")
 	if len(fs) != 2 {
 		return nil
 	}
 	for _, n := range reg.Nodes {
-		if n.Group == fs[0] && n.Name == fs[1] {
+		if n.GetGroup() == fs[0] && n.GetName() == fs[1] {
 			return n
 		}
 	}
 	return nil
 }
 
-func (reg *Registry) FindNodesByGroup(group_name string) []*node.Node {
-	ans := make([]*node.Node, 0)
+func (reg *Registry) FindNodesByGroup(group_name string) []node.Node {
+	ans := make([]node.Node, 0)
 	for _, n := range reg.Nodes {
-		if n.Group == group_name {
+		if n.GetGroup() == group_name {
 			ans = append(ans, n)
 		}
 	}

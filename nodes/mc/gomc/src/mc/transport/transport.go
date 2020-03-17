@@ -1,18 +1,18 @@
 package transport
 
 import (
-
+	"mc/serializer"
 )
 
 
 type MangoTransport interface {
 	RunServer()
-	Tx(string, []byte)
+	Tx(string, serializer.Msg) error
 }
 
 
 type WrappedMessage struct {
 	Transport MangoTransport
 	Identity string
-	Data []byte
+	Message serializer.Msg
 }

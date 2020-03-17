@@ -3,6 +3,7 @@ package mzmq
 import (
 	"fmt"
 	//"math/rand"
+	"mc/serializer"
 	"mc/transport"
 	zmq "github.com/pebbe/zmq4"
 )
@@ -23,10 +24,15 @@ func (t *ZMQTransport) GetServerAddr() string {
 	return fmt.Sprintf("tcp://localhost:%d", t.Port)
 }
 
-func (t *ZMQTransport) Tx(identity string, data []byte) {
+func (t *ZMQTransport) Tx(identity string, m serializer.Msg) error {
+	data, err := serializer.SerializeMsg(m)
+	if err != nil {
+		return err
+	}
 	fmt.Println("TX",identity,string(data))
 	t.Socket.Send(identity, zmq.SNDMORE)
 	t.Socket.Send(string(data), 0)
+	return nil
 }
 
 func (t *ZMQTransport) RunServer() {
@@ -37,11 +43,17 @@ func (t *ZMQTransport) RunServer() {
 		t.Socket.Recv(0)
 		data, _ := t.Socket.Recv(0)
 		fmt.Println("[zmqtransport.go] RX",identity,data)
-		msg := transport.WrappedMessage {
+		msg_ptr, err := serializer.Deserialize(data)
+		msg := *msg_ptr
+		if err != nil {
+			fmt.Println("ERROR: deserialization error")
+			continue
+		}
+		wmsg := transport.WrappedMessage {
 			Transport: t,
 			Identity: identity,
-			Data: []byte(data)}
-		t.MessageInput <- msg
+			Message: msg}
+		t.MessageInput <- wmsg
 	}
 }
 

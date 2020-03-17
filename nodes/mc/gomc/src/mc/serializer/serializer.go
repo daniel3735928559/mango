@@ -37,6 +37,10 @@ func Serialize(sender, mid, command string, payload interface{}) ([]byte, error)
 	return []byte(fmt.Sprintf("%s\n%s", header, body)), nil
 }
 
+func SerializeMsg(m Msg) ([]byte, error) {
+	return Serialize(m.Sender, m.MessageId, m.Command, m.Data)
+}
+
 func Deserialize(data string) (*Msg, error) {
 	parts := strings.SplitN(data, "\n", 2)
 	if len(parts) < 2 {
