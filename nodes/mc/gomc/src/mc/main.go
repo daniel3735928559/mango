@@ -28,7 +28,7 @@ type MangoCommander struct {
 	MessageInput chan transport.WrappedMessage
 	Commands map[string]libmango.MangoHandler
 	Registry *registry.Registry
-	Self *node.Node
+	Self node.Node
 }
 
 
@@ -135,11 +135,11 @@ func (mc *MangoCommander) Run() {
 				fmt.Println("ERROR: route output failed validation", result_cmd, result_val, err)
 				continue
 			}
-			outmsg = serializer.Msg{
-				Source: src.ToString(),
+			outmsg := serializer.Msg{
+				Sender: src.ToString(),
 				MessageId: msg.MessageId,
 				Command: result_cmd,
-				data: outval.ToObject()}
+				Data: outval.ToObject().(map[string]interface{})}
 			fmt.Println("[MC] SEND TO",dst.ToString())
 			dst.SendToNode(outmsg)
 		}
@@ -150,21 +150,16 @@ type MCLoopbackTransport struct {
 	MC *MangoCommander
 }
 
-func (t *MCLoopbackTransport) Tx(id string, data []byte) {
-	if id != t.MC.Self.Id {
-		fmt.Println("ERROR: Message not actually intended for MC")
-		return
+func (t *MCLoopbackTransport) Tx(id string, m serializer.Msg) error {
+	if id != t.MC.Self.GetId() {
+		return fmt.Errorf("ERROR: Message not actually intended for MC")
 	}
-	msg, err := serializer.Deserialize(string(data))
-	if err != nil {
-		fmt.Println("ERROR: deserialization error")
-		return
-	}
-	if handler, ok := t.MC.Commands[msg.Command]; ok {
-		handler(msg.Data)
+	if handler, ok := t.MC.Commands[m.Command]; ok {
+		handler(m.Data)
 	} else {
-		fmt.Printf("ERROR: Invalid command %s\n",msg.Command)
+		return fmt.Errorf("ERROR: Invalid command %s\n",m.Command)
 	}
+	return nil
 }
 
 func (t *MCLoopbackTransport) RunServer() {
@@ -198,14 +193,15 @@ func (mc *MangoCommander) EMP(group, emp_file string) error {
 	if err != nil {
 		return fmt.Errorf("ERROR parsing EMP: `%s` %v",emp_data, err)
 	}
-	new_nodes := make([]*node.Node, 0)
+	new_nodes := make([]node.Node, 0)
 	new_routes := make([]*route.Route, 0)
 	for _, n := range e.Nodes {
 		if n.TypeName == "dummy" {
 			// TODO add dummy node
 		} else if n.TypeName == "merge" {
 			// TODO Add merge node
-			new_node := node.MakeMerge()
+			new_merge_nodes := node.MakeMerge(group, n.Name, strings.Fields(n.Args), mc.MessageInput)
+			new_nodes = append(new_nodes, new_merge_nodes...)
 		} else if new_type := mc.Registry.FindNodeType(n.TypeName); new_type != nil {
 			new_node := node.MakeExecNode(n.Name, group, n.TypeName, fmt.Sprintf("%s %s", new_type.Executable, n.Args), mc.zmqTransport)
 			if new_node == nil {
@@ -236,7 +232,9 @@ func (mc *MangoCommander) EMP(group, emp_file string) error {
 		mc.Registry.AddRoute(rt)
 	}
 	for _, n := range new_nodes {
-		n.Start(mc.zmqTransport.GetServerAddr())
+		if en, ok := n.(*node.ExecNode); ok {
+			en.Start(mc.zmqTransport.GetServerAddr())
+		}
 	}
 	
 	return nil
@@ -314,7 +312,7 @@ Options:
 	}
 	
 	// Add self as a node
-	MC.Self = node.MakeNode("mc", "system", "mc", "", &MCLoopbackTransport{MC: MC})
+	MC.Self = node.MakeExecNode("mc", "system", "mc", "", &MCLoopbackTransport{MC: MC})
 	MC.Registry.AddNode(MC.Self)
 	
 	// if args["-t"].(bool) {
