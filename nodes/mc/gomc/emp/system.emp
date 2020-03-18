@@ -5,6 +5,6 @@ instance log system_log ./system.log
 
 [routes]
 system/testing123 > ? emp > system/mc
-system/testing123 > = excite {message:"a command was issued"} > system/an_exciter
+system/testing123 > = excite {message:raw()} > system/an_exciter
 system/testing123 > = log {source:"system/testing123", timestamp:now(), message:raw()} > system/system_log
 system/an_exciter > = log {source:"system/an_exciter", timestamp:now(), message:raw()} > system/system_log

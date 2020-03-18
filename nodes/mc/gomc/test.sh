@@ -1,5 +1,5 @@
 #GOPATH=$(realpath .) go build mc
-for pkg in route value valuetype nodetype; do
+for pkg in route value valuetype nodetype node; do
 if [[ "$1" == "all" || "$1" == "$pkg" ]]; then
 if [[ "$2" == "verbose" ]]; then
   GOPATH=$(realpath .) go test -coverprofile=cover.out -v mc/"$pkg"

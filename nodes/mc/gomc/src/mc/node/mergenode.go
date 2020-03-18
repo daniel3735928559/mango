@@ -23,7 +23,7 @@ type MergeInputNode struct {
 	Name string
 	Identity string
 	result *MergeResultNode
-	received map[string]serializer.Msg
+	received map[string]map[string]interface{}
 }
 
 
@@ -43,7 +43,7 @@ func MakeMerge(group, name string, merge_inputs []string, ch chan transport.Wrap
 			Name: mi_name,
 			Identity: input_identity,
 			result: output,
-			received: make(map[string]serializer.Msg)}
+			received: make(map[string]map[string]interface{})}
 		ans = append(ans, inputs[i])
 	}
 	output.Inputs = inputs
@@ -120,7 +120,7 @@ func (n *MergeInputNode) GetType() string {
 }
 
 func (n *MergeInputNode) SendToNode(m serializer.Msg) error {
-	n.received[m.MessageId] = m
+	n.received[m.MessageId] = m.Data
 	n.result.CheckReady(m.MessageId)
 	return nil
 }
