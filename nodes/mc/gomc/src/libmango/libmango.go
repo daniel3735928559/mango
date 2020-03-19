@@ -13,6 +13,7 @@ import (
 
 type MangoHandler func(map[string]interface{}) (string, map[string]interface{}, error)
 type MangoReplyHandler func(string, map[string]interface{})
+type MangoDefaultHandler func(string, map[string]interface{}) (string, map[string]interface{}, error)
 
 type NodeStatus int
 
@@ -43,9 +44,11 @@ type Node struct {
 	cookie string
 	currentMid int
 	handlers map[string]MangoHandler
+	DefaultHandler MangoDefaultHandler
 	outstanding map[string]MangoReplyHandler
 	send_mutex sync.Mutex
 	socket *zmq.Socket
+	outgoing chan interface{}
 }
 
 func NewNode(name string, handlers map[string]MangoHandler) (*Node, error) {
@@ -55,7 +58,9 @@ func NewNode(name string, handlers map[string]MangoHandler) (*Node, error) {
 		Name: name,
 		handlers: handlers,
 		send_mutex: sync.Mutex{},
-		outstanding: make(map[string]MangoReplyHandler)}
+		outstanding: make(map[string]MangoReplyHandler),
+		outgoing: make(chan interface{}, 1000)}
+	n.DefaultHandler = n.default_default_handler
 	if srv, ok := os.LookupEnv("MANGO_SERVER"); ok {
 		n.Server = srv
 	} else {
@@ -88,9 +93,10 @@ func (n *Node) Send(cmd string, args map[string]interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed to marshal arguments:%v", args)
 	}
-	
-	n.socket.Send("",zmq.SNDMORE)
-	n.socket.Send(fmt.Sprintf("%s\n%s",string(header_bytes), string(data_bytes)), 0)
+
+	n.outgoing <- fmt.Sprintf("%s\n%s",string(header_bytes), string(data_bytes))
+	// n.socket.Send("",zmq.SNDMORE)
+	// n.socket.Send(fmt.Sprintf("%s\n%s",string(header_bytes), string(data_bytes)), 0)
 	fmt.Println("[LIBMANGO] sent")
 	return nil
 }
@@ -113,9 +119,10 @@ func (n *Node) SendForReply(cmd string, args map[string]interface{}, reply_handl
 	if err != nil {
 		return "", fmt.Errorf("Failed to marshal arguments:%v", args)
 	}
-	
-	n.socket.Send("",zmq.SNDMORE)
-	n.socket.Send(fmt.Sprintf("%s\n%s",string(header_bytes), string(data_bytes)), 0)
+
+	n.outgoing <- fmt.Sprintf("%s\n%s",string(header_bytes), string(data_bytes))
+	// n.socket.Send("",zmq.SNDMORE)
+	// n.socket.Send(fmt.Sprintf("%s\n%s",string(header_bytes), string(data_bytes)), 0)
 	return h.MessageId, nil
 }
 
@@ -134,8 +141,9 @@ func (n *Node) send_reply(mid, cmd string, args map[string]interface{}) {
 	if err != nil {
 		n.handle_error(fmt.Errorf("Failed to marshal arguments:%v", args))
 	} else {
-		n.socket.Send("",zmq.SNDMORE)
-		n.socket.Send(fmt.Sprintf("%s\n%s",string(header_bytes), string(data_bytes)), 0)
+		n.outgoing <- fmt.Sprintf("%s\n%s",string(header_bytes), string(data_bytes))
+		// n.socket.Send("",zmq.SNDMORE)
+		// n.socket.Send(fmt.Sprintf("%s\n%s",string(header_bytes), string(data_bytes)), 0)
 	}
 }
 
@@ -194,8 +202,7 @@ func (n *Node) deserialize(data string) (*Msg, error) {
 }
 
 func (n *Node) run() {
-	for n.status == NODE_STATUS_RUNNING {
-		fmt.Println("[LIBMANGO] RECV")
+	incoming_handler := func(zmq.State) error {
 		data, err := n.socket.Recv(0)
 		if err != nil {
 			n.handle_error(fmt.Errorf("Problem receiving on socket: %v",err))
@@ -224,11 +231,34 @@ func (n *Node) run() {
 				n.send_reply(msg.MessageId, reply_cmd, reply_args)
 			}
 			
-		} else {
-			n.handle_error(fmt.Errorf("No handler for command: %s", msg.Command))
+		} else if n.DefaultHandler != nil {
+			reply_cmd, reply_args, reply_err := n.DefaultHandler(msg.Command, msg.Data)
+			if reply_err != nil {
+				n.handle_error(reply_err)
+			}
+			if len(reply_cmd) > 0 {
+				n.send_reply(msg.MessageId, reply_cmd, reply_args)
+			}
+			
 		}
-		
+		return nil
 	}
+	outgoing_handler := func(data interface{}) error {
+		fmt.Println("[LIBMANGO] SENDING: ",data.(string))
+		n.socket.Send("", zmq.SNDMORE)
+		n.socket.Send(data.(string), 0)
+		return nil
+	}
+
+	reactor := zmq.NewReactor()
+	reactor.AddChannel(n.outgoing, 1000, outgoing_handler)
+	reactor.AddSocket(n.socket, zmq.POLLIN, incoming_handler)
+	reactor.Run(time.Second)
+}
+
+func (n *Node) default_default_handler(cmd string, args map[string]interface{}) (string, map[string]interface{}, error) {
+	n.handle_error(fmt.Errorf("No handler for command: %s", cmd))
+	return "", nil, nil
 }
 
 func (n *Node) heartbeat(args map[string]interface{}) (string, map[string]interface{}, error) {
