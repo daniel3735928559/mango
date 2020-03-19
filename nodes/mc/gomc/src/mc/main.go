@@ -197,13 +197,13 @@ func (mc *MangoCommander) EMP(group, emp_file string) error {
 	new_routes := make([]*route.Route, 0)
 	for _, n := range e.Nodes {
 		if n.TypeName == "dummy" {
-			// TODO add dummy node
+			new_dummy_node := node.MakeDummyNode(fmt.Sprintf("%s_%s",group,n.Name), group, n.Name, mc.MessageInput)
+			new_nodes = append(new_nodes, new_dummy_node)
 		} else if n.TypeName == "merge" {
-			// TODO Add merge node
-			new_merge_nodes := node.MakeMerge(group, n.Name, strings.Fields(n.Args), mc.MessageInput)
+			new_merge_nodes := node.MakeMergeNode(group, n.Name, strings.Fields(n.Args), mc.MessageInput)
 			new_nodes = append(new_nodes, new_merge_nodes...)
 		} else if new_type := mc.Registry.FindNodeType(n.TypeName); new_type != nil {
-			new_node := node.MakeExecNode(n.Name, group, n.TypeName, fmt.Sprintf("%s %s", new_type.Executable, n.Args), mc.zmqTransport)
+			new_node := node.MakeExecNode(group, n.Name, n.TypeName, fmt.Sprintf("%s %s", new_type.Executable, n.Args), mc.zmqTransport)
 			if new_node == nil {
 				return fmt.Errorf("ERROR Failed to make node: `%s`", n.Name)
 			}
@@ -312,7 +312,7 @@ Options:
 	}
 	
 	// Add self as a node
-	MC.Self = node.MakeExecNode("mc", "system", "mc", "", &MCLoopbackTransport{MC: MC})
+	MC.Self = node.MakeExecNode("system", "mc", "mc", "", &MCLoopbackTransport{MC: MC})
 	MC.Registry.AddNode(MC.Self)
 	
 	// if args["-t"].(bool) {

@@ -26,7 +26,7 @@ type ExecNode struct {
 	Proc *exec.Cmd
 }
 
-func MakeExecNode(name, group, typename, command string, trans transport.MangoTransport) *ExecNode {
+func MakeExecNode(group, name, typename, command string, trans transport.MangoTransport) *ExecNode {
 	id := ""
 	for i := 0; i < 4; i++ {
 		id += fmt.Sprintf("%016x", rand.Uint64())

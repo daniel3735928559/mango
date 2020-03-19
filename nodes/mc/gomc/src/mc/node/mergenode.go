@@ -27,7 +27,7 @@ type MergeInputNode struct {
 }
 
 
-func MakeMerge(group, name string, merge_inputs []string, ch chan transport.WrappedMessage) []Node {
+func MakeMergeNode(group, name string, merge_inputs []string, ch chan transport.WrappedMessage) []Node {
 	identity := fmt.Sprintf("%s/merge_%s_output",group,name)
 	output := &MergeResultNode{
 		Group: group,
@@ -50,7 +50,9 @@ func MakeMerge(group, name string, merge_inputs []string, ch chan transport.Wrap
 	return ans
 }
 
-func (n *MergeResultNode) GotAlive(identity string, transport transport.MangoTransport) {}
+func (n *MergeResultNode) GotAlive(identity string, transport transport.MangoTransport) {
+	n.Identity = identity
+}
 
 func (n *MergeResultNode) GetId() string {
 	return n.Identity
