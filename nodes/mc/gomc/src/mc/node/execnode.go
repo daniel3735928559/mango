@@ -19,6 +19,7 @@ type ExecNode struct {
 	NodeType string
 	Transport transport.MangoTransport
 	Command string
+	Environment map[string]string
 	Server string
 	LastHeartbeat int64
 	Status NodeStatus
@@ -26,7 +27,7 @@ type ExecNode struct {
 	Proc *exec.Cmd
 }
 
-func MakeExecNode(group, name, typename, command string, trans transport.MangoTransport) *ExecNode {
+func MakeExecNode(group, name, typename, command string, env map[string]string, trans transport.MangoTransport) *ExecNode {
 	id := ""
 	for i := 0; i < 4; i++ {
 		id += fmt.Sprintf("%016x", rand.Uint64())
@@ -37,6 +38,7 @@ func MakeExecNode(group, name, typename, command string, trans transport.MangoTr
 		Group: group,
 		NodeType: typename,
 		Command: command,
+		Environment: env,
 		Status: NODE_STATUS_READY,
 		Transport: trans,
 		TransportQueue: make([]serializer.Msg, 0),
@@ -79,6 +81,9 @@ func (n *ExecNode) Start(server string) {
 	n.Proc.Env = os.Environ()
 	n.Proc.Env = append(n.Proc.Env, fmt.Sprintf("MANGO_COOKIE=%s", n.Id))
 	n.Proc.Env = append(n.Proc.Env, fmt.Sprintf("MANGO_SERVER=%s", n.Server))
+	for name, val := range n.Environment {
+		n.Proc.Env = append(n.Proc.Env, fmt.Sprintf("%s=%s", name, val))
+	}
 	n.Status = NODE_STATUS_RUNNING
 	n.Proc.Start()
 }

@@ -11,6 +11,7 @@ type NodeType struct {
 	Interface *NodeInterface
 	Executable string
 	Usage string
+	Environment map[string]string
 }
 
 func Parse(spec string) (*NodeType, error) {
@@ -18,7 +19,8 @@ func Parse(spec string) (*NodeType, error) {
 	interface_spec := ""
 	ans := &NodeType{
 		Name: "",
-		Usage: ""}
+		Usage: "",
+		Environment: make(map[string]string)}
 	for lineno, line := range strings.Split(spec, "\n") {
 		line = strings.TrimSpace(line)
 		if len(line) == 0 {
@@ -39,9 +41,14 @@ func Parse(spec string) (*NodeType, error) {
 				ans.Name = fs[1]
 			} else if fs[0] == "executable" {
 				if len(fs) != 2 {
-					return nil, fmt.Errorf("Error on line %d: config name line should be of the form `executable <path_to_executable>`", lineno)
+					return nil, fmt.Errorf("Error on line %d: config executable line should be of the form `executable <path_to_executable>`", lineno)
 				}
 				ans.Executable = fs[1]
+			} else if fs[0] == "env" {
+				if len(fs) != 3 {
+					return nil, fmt.Errorf("Error on line %d: config env line should be of the form `env <name> <val>`", lineno)
+				}
+				ans.Environment[fs[1]] = fs[2]
 			} else {
 				return nil, fmt.Errorf(`Error on line %d: config lines supported: 
 name <node_name>`, lineno)

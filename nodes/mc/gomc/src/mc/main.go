@@ -203,7 +203,7 @@ func (mc *MangoCommander) EMP(group, emp_file string) error {
 			new_merge_nodes := node.MakeMergeNode(group, n.Name, strings.Fields(n.Args), mc.MessageInput)
 			new_nodes = append(new_nodes, new_merge_nodes...)
 		} else if new_type := mc.Registry.FindNodeType(n.TypeName); new_type != nil {
-			new_node := node.MakeExecNode(group, n.Name, n.TypeName, fmt.Sprintf("%s %s", new_type.Executable, n.Args), mc.zmqTransport)
+			new_node := node.MakeExecNode(group, n.Name, n.TypeName, fmt.Sprintf("%s %s", new_type.Executable, n.Args), new_type.Environment, mc.zmqTransport)
 			if new_node == nil {
 				return fmt.Errorf("ERROR Failed to make node: `%s`", n.Name)
 			}
@@ -312,7 +312,7 @@ Options:
 	}
 	
 	// Add self as a node
-	MC.Self = node.MakeExecNode("system", "mc", "mc", "", &MCLoopbackTransport{MC: MC})
+	MC.Self = node.MakeExecNode("system", "mc", "mc", "", map[string]string{}, &MCLoopbackTransport{MC: MC})
 	MC.Registry.AddNode(MC.Self)
 	
 	// if args["-t"].(bool) {

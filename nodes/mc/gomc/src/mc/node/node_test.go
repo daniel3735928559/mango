@@ -76,7 +76,7 @@ func TestExecNode(t *testing.T) {
 	tr := &TestTransport{
 		Sent: make([]serializer.Msg, 0)}
 	
-	execnode := MakeExecNode("test", "exec0", "testtype", "echo hi", tr)
+	execnode := MakeExecNode("test", "exec0", "testtype", "echo hi", map[string]string{}, tr)
 	
 	execnode.SendToNode(serializer.Msg{
 		Sender:"test",
