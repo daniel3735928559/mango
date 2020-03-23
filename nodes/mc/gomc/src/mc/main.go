@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"strings"
+	"math/rand"
 	"github.com/docopt/docopt-go"
 	"mc/route"
 	"mc/emp"
@@ -72,6 +73,21 @@ type MangoCommander struct {
 // 	return true
 // }
 
+func (mc *MangoCommander) Send(mid, command string, args map[string]interface{}) {
+	if len(mid) == 0 {
+		mid = fmt.Sprintf("%d",int(rand.Int()))
+	}
+	mc.MessageInput <- transport.WrappedMessage {
+		Transport: nil,
+		Identity: "",
+		Message: serializer.Msg{
+			Sender: "system/mc",
+			MessageId: mid,
+			Command: command,
+			Cookie: mc.Self.GetId(),
+			Data: args}}
+}
+
 func (mc *MangoCommander) Run() {
 	go mc.zmqTransport.RunServer()
 	//go mc.socketTransport.RunServer(mc.Register)
@@ -95,15 +111,17 @@ func (mc *MangoCommander) Run() {
 		// Since we got here, the node we're talking to is
 		// using this transport/id combo, so set those
 		// properties here (in case it has reconnected since
-		// last time or something): 
-		src.GotAlive(wrapped_msg.Identity, wrapped_msg.Transport)
+		// last time or something):
+		if wrapped_msg.Transport != nil {
+			src.GotAlive(wrapped_msg.Identity, wrapped_msg.Transport)
+		}
 		
 		// validate message is of acceptable format for node
 		// output:
 		cmd := msg.Command
 		incoming_val, err := value.FromObject(msg.Data)
 		if err != nil {
-			fmt.Println("ERROR: failed to convert incoming value")
+			fmt.Println("ERROR: failed to convert incoming value",err)
 			continue
 		}
 		
@@ -112,11 +130,15 @@ func (mc *MangoCommander) Run() {
 			fmt.Println("ERROR: Could not find type: ",src.GetType())
 			continue
 		}
-		
-		validated_val, err := src_type.ValidateOutput(cmd, incoming_val)
-		if err != nil {
-			fmt.Println("ERROR: message failed to validate")
-			continue
+
+		validated_val := incoming_val
+		if src_type.Validate {
+			v, err := src_type.ValidateOutput(cmd, incoming_val)
+			if err != nil {
+				fmt.Println("ERROR: output message failed to validate from:",src_type.Name)
+				continue
+			}
+			validated_val = v
 		}
 		
 		// If we made it here, the value is legitimate. Send
@@ -130,10 +152,15 @@ func (mc *MangoCommander) Run() {
 				fmt.Println("ERROR: failed running route", rt.ToString(), result_err)
 				continue
 			}
-			outval, err := dst_type.ValidateInput(result_cmd, result_val)
-			if err != nil {
-				fmt.Println("ERROR: route output failed validation", result_cmd, result_val, err)
-				continue
+			
+			outval := result_val
+			if dst_type.Validate {
+				v, err := dst_type.ValidateInput(result_cmd, result_val)
+				if err != nil {
+					fmt.Println("ERROR: route output failed validation", result_cmd, result_val, err)
+					continue
+				}
+				outval = v
 			}
 			outmsg := serializer.Msg{
 				Sender: src.ToString(),
@@ -146,41 +173,56 @@ func (mc *MangoCommander) Run() {
 	}
 }
 
-type MCLoopbackTransport struct {
-	MC *MangoCommander
-}
-
-func (t *MCLoopbackTransport) Tx(id string, m serializer.Msg) error {
-	if id != t.MC.Self.GetId() {
-		return fmt.Errorf("ERROR: Message not actually intended for MC")
-	}
-	if handler, ok := t.MC.Commands[m.Command]; ok {
-		handler(m.Data)
+func (mc *MangoCommander) MsgHandler(m serializer.Msg) error {
+	fmt.Println("[MC] SELF RX",m)
+	if handler, ok := mc.Commands[m.Command]; ok {
+		fmt.Println("[MC] found")
+		retcmd, retval, err := handler(m.Data)
+		if err != nil {
+			mc.Send("", "error", map[string]interface{}{"message":fmt.Sprintf("%v", err)})
+		} else {
+			mc.Send(m.MessageId, retcmd, retval)
+		}
 	} else {
 		return fmt.Errorf("ERROR: Invalid command %s\n",m.Command)
 	}
 	return nil
 }
 
-func (t *MCLoopbackTransport) RunServer() {
-	
+func (mc *MangoCommander) Doc(args map[string]interface{}) (string, map[string]interface{}, error) {
+	node_type := mc.Registry.FindNodeType(args["nodetype"].(string))
+	if node_type == nil {
+		return "", nil, fmt.Errorf("Type not found: %s", args["nodetype"].(string))
+	}
+	if command_if, ok := args["command"]; ok {
+		command := command_if.(string)
+		if inp, ok := node_type.Interface.Inputs[command]; ok {
+			return "doc", map[string]interface{}{"doc":inp.ToString()},nil
+		}
+		return "", nil, fmt.Errorf("Input not found: %s", command)
+	}
+	return "doc", map[string]interface{}{"doc":node_type.Interface.ToString()}, nil
 }
-
 
 func (mc *MangoCommander) RouteAdd(args map[string]interface{}) (string, map[string]interface{}, error) {
 	spec := args["spec"].(string)
 	group := args["group"].(string)
-	id := args["id"].(string)
+	id := ""
+	for i := 0; i < 4; i++ {
+		id += fmt.Sprintf("%016x", rand.Uint64())
+	}
 	routes, err := route.Parse(spec)
 	if err != nil {
 		return "", nil, fmt.Errorf("ERROR: Routes failed to parse: %v", err)
 	}
+	ans := make([]interface{}, 0)
 	for i, rt := range routes {
 		rt.Id = fmt.Sprintf("%s_%d", id, i)
 		rt.Group = group
 		mc.Registry.AddRoute(rt)
+		ans = append(ans, map[string]interface{}{"id":rt.Id,"src":rt.Source,"dst":rt.Dest,"spec":rt.ToString()})
 	}
-	return "", nil, nil
+	return "routeinfo",map[string]interface{}{"routes":ans},nil
 }
 
 func (mc *MangoCommander) EMP(group, emp_file string) error {
@@ -250,6 +292,79 @@ func (mc *MangoCommander) RunEMP(args map[string]interface{}) (string, map[strin
 	return "", nil, err
 }
 
+func (mc *MangoCommander) FindTypes(args map[string]interface{}) (string, map[string]interface{}, error)  {
+	return "echo",args,nil
+}
+
+func (mc *MangoCommander) FindRoutes(args map[string]interface{}) (string, map[string]interface{}, error)  {
+	// group, by_group := args["group"]
+	// name, by_name := args["name"]
+	// var nodes []node.Node
+	// if by_group && !by_name {
+	// 	nodes = mc.Registry.FindNodesByGroup(group.(string))
+	// } else if !by_group && !by_name {
+	// 	nodes = mc.Registry.GetNodes()
+	// } else if by_name {
+	// 	nodes = []node.Node{mc.Registry.FindNodeByName(name.(string))}
+	// }
+	var routes []*route.Route
+	routes = mc.Registry.GetRoutes()
+	
+	ans := map[string]interface{}{"routes":make([]interface{}, len(routes))}
+	for i, rt := range routes {
+		ans["routes"].([]interface{})[i] = map[string]interface{}{"src":rt.Source,"dst":rt.Dest,"id":rt.Id,"spec":rt.ToString()}
+	}
+	return "routeinfo",ans,nil
+}
+
+func (mc *MangoCommander) FindNodes(args map[string]interface{}) (string, map[string]interface{}, error)  {
+	group, by_group := args["group"]
+	name, by_name := args["name"]
+	var nodes []node.Node
+	if by_group && !by_name {
+		nodes = mc.Registry.FindNodesByGroup(group.(string))
+	} else if !by_group && !by_name {
+		nodes = mc.Registry.GetNodes()
+	} else if by_name {
+		nodes = []node.Node{mc.Registry.FindNodeByName(name.(string))}
+	}
+	
+	ans := map[string]interface{}{"nodes":make([]interface{}, len(nodes))}
+	for i, no := range nodes {
+		ans["nodes"].([]interface{})[i] = map[string]interface{}{"type":no.GetType(),"name":no.GetName(),"group":no.GetGroup()}
+	}
+	return "nodeinfo",ans,nil
+	return "echo",args,nil
+}
+
+func (mc *MangoCommander) GetGroup(args map[string]interface{}) (string, map[string]interface{}, error)  {
+	nodes := mc.Registry.FindNodesByGroup(args["name"].(string))
+	ans := map[string]interface{}{"nodes":make([]map[string]interface{}, len(nodes))}
+	for i, no := range nodes {
+		ans["nodes"].([]map[string]interface{})[i] = map[string]interface{}{"type":no.GetType(),"name":no.GetName(),"group":no.GetGroup()}
+	}
+	return "nodeinfo",ans,nil
+}
+
+func (mc *MangoCommander) GroupDel(args map[string]interface{}) (string, map[string]interface{}, error)  {
+	mc.Registry.DelGroup(args["name"].(string))
+	return "",nil,nil
+}
+
+func (mc *MangoCommander) NodeDel(args map[string]interface{}) (string, map[string]interface{}, error)  {
+	mc.Registry.DelNode(args["id"].(string))
+	return "",nil,nil
+}
+
+func (mc *MangoCommander) RouteDel(args map[string]interface{}) (string, map[string]interface{}, error)  {
+	mc.Registry.DelRoute(args["id"].(string))
+	return "",nil,nil
+}
+
+func (mc *MangoCommander) HandleError(args map[string]interface{}) (string, map[string]interface{}, error)  {
+	return "",nil,nil
+}
+
 func (mc *MangoCommander) Echo(args map[string]interface{}) (string, map[string]interface{}, error)  {
 	return "echo",args,nil
 }
@@ -279,9 +394,18 @@ Options:
 	
 	MC.Commands = map[string]libmango.MangoHandler{
 		"routeadd":MC.RouteAdd,
+		"findroutes":MC.FindRoutes,
+		"findtypes":MC.FindTypes,
+		"findnodes":MC.FindNodes,
+		"getgroup":MC.GetGroup,
+		"groupdel":MC.GroupDel,
+		"routedel":MC.RouteDel,
+		"nodedel":MC.NodeDel,
+		"error":MC.HandleError,
 		"echo":MC.Echo,
+		"doc":MC.Doc,
 		"emp":MC.RunEMP}
-
+	
 	// Load node types from manifest:
 	fmt.Println(args)
 	manifest_filename := "types.manifest"
@@ -312,7 +436,7 @@ Options:
 	}
 	
 	// Add self as a node
-	MC.Self = node.MakeExecNode("system", "mc", "mc", "", map[string]string{}, &MCLoopbackTransport{MC: MC})
+	MC.Self = node.MakeCallbackNode("system", "mc", "mc", MC.MsgHandler)
 	MC.Registry.AddNode(MC.Self)
 	
 	// if args["-t"].(bool) {

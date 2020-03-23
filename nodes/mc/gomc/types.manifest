@@ -3,3 +3,5 @@ nodes/test.node
 nodes/excite.node
 nodes/tester.node
 nodes/log.node
+nodes/notify.node
+nodes/agent.node

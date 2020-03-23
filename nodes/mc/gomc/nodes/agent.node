@@ -1,0 +1,6 @@
+[config]
+name mx_agent
+executable ./agent
+validate no
+
+[interface]

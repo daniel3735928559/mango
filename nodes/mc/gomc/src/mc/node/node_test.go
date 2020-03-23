@@ -10,6 +10,7 @@ import (
 func TestMergeNode(t *testing.T) {
 	ch := make(chan transport.WrappedMessage, 100)
 	mergenodes := MakeMergeNode("test","merger", []string{"in1","in2","in3"}, ch)
+	outnode := mergenodes[0]
 	in1 := mergenodes[1]
 	in2 := mergenodes[2]
 	in3 := mergenodes[3]
@@ -31,6 +32,19 @@ func TestMergeNode(t *testing.T) {
 		Command:"test_cmd",
 		Cookie:"cookie1",
 		Data:map[string]interface{}{"arg3":"val3"}})
+	if outnode.GetName() != "merger" {
+		t.Errorf("Expected name == merger; got %s", outnode.GetName())
+	}
+	if outnode.GetGroup() != "test" {
+		t.Errorf("Expected group == test; got %s", outnode.GetGroup())
+	}
+	if outnode.GetType() != "merge_output" {
+		t.Errorf("Expected type == merge_output; got %s", outnode.GetType())
+	}
+	if outnode.ToString() != "test/merger" {
+		t.Errorf("Expected str == test/merger; got %s", outnode.ToString())
+	}
+
 	select {
 	case wmsg := <-ch:
 		outmsg := wmsg.Message.Data
@@ -205,5 +219,53 @@ func TestDummyNode(t *testing.T) {
 	outmsg = wmsg.Message.Data
 	if v, ok := outmsg["arg3"].(string); !ok || v != "val3" {
 		t.Errorf("Expected arg3 == val3 in output, but arg3 = %v", outmsg["arg3"])
+	}
+}
+
+
+func TestCallbackNode(t *testing.T) {
+	sent := make([]serializer.Msg, 0)
+	handler := func(m serializer.Msg) error {
+		sent = append(sent, m)
+		return nil
+	}
+	cbnode := MakeCallbackNode("test", "cbnode", "testnode", handler)
+	cbnode.SendToNode(serializer.Msg{
+		Sender:"test",
+		MessageId:"m1",
+		Command:"test_cmd",
+		Cookie:"cookie1",
+		Data:map[string]interface{}{"arg1":"val1"}})
+	cbnode.SendToNode(serializer.Msg{
+		Sender:"test",
+		MessageId:"m2",
+		Command:"test_cmd",
+		Cookie:"cookie2",
+		Data:map[string]interface{}{"arg2":"val2"}})
+	cbnode.SendToNode(serializer.Msg{
+		Sender:"test",
+		MessageId:"m3",
+		Command:"test_cmd",
+		Cookie:"cookie3",
+		Data:map[string]interface{}{"arg3":"val3"}})
+	if cbnode.GetName() != "cbnode" {
+		t.Errorf("Expected name == cbnode; got %s", cbnode.GetName())
+	}
+	if cbnode.GetGroup() != "test" {
+		t.Errorf("Expected group == test; got %s", cbnode.GetGroup())
+	}
+	if cbnode.GetType() != "testnode" {
+		t.Errorf("Expected type == testnode; got %s", cbnode.GetType())
+	}
+	if cbnode.ToString() != "test/cbnode" {
+		t.Errorf("Expected str == test/cbnode; got %s", cbnode.ToString())
+	}
+
+	for i, m := range sent {
+		arg := fmt.Sprintf("arg%d",i+1)
+		exp := fmt.Sprintf("val%d",i+1)
+		if m.Data[arg].(string) != exp {
+			t.Errorf("Expected in1.%s == %s in output, but in1.arg1 = %s", arg, exp, m.Data[arg].(string))
+		}
 	}
 }

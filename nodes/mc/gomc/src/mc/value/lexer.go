@@ -1,7 +1,7 @@
 package value
 
 import (
-	"fmt"
+	//"fmt"
 )
 
 type ValueLexer struct {
@@ -16,12 +16,12 @@ func (l *ValueLexer) Lex(lval *ValueParserSymType) int {
 		return 0
 	}
 	lval.token = Token{token: tok, literal: lit, position: pos}
-	fmt.Println("Lexed",tok,lit,pos)
+	//fmt.Println("Lexed",tok,lit,pos)
 	return tok
 }
 
 func (l *ValueLexer) Error(e string) {
 	le := *(l.lexerErrors)
 	*(l.lexerErrors) = append(le, e)
-	fmt.Println("ERROR",e)
+	//fmt.Println("ERROR",e)
 }

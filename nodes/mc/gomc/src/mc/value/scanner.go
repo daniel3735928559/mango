@@ -1,7 +1,7 @@
 package value
 
 import (
-	"fmt"
+	//"fmt"
 )
 
 const (
@@ -44,7 +44,7 @@ func (s *ValueScanner) Scan() (tok int, lit string, pos Position) {
 	switch ch := s.peek(); {
 	case isLetter(ch):
 		lit = s.scanIdentifier()
-		fmt.Println("scanning kwds",lit)
+		//fmt.Println("scanning kwds",lit)
 		if keyword, ok := keywords[lit]; ok {
 			tok = keyword
 		} else {
@@ -139,7 +139,7 @@ func (s *ValueScanner) scanNumber() string {
 		}
 		s.next()
 	}
-	fmt.Println("SN",string(ret))
+	//fmt.Println("SN",string(ret))
 	return string(ret)
 }
 

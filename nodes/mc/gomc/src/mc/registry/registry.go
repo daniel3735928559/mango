@@ -48,6 +48,14 @@ func (reg *Registry) AddRoute(r *route.Route) error {
 	return nil
 }
 
+func (reg *Registry) GetRoutes() []*route.Route {
+	ans := make([]*route.Route, 0)
+	for _, rt := range reg.Routes {
+		ans = append(ans, rt)
+	}
+	return ans
+}
+
 func (reg *Registry) FindRoutesBySrc(src string) []*route.Route {
 	ans := make([]*route.Route, 0)
 	for _, rt := range reg.Routes {
@@ -74,6 +82,24 @@ func (reg *Registry) FindRoutesBySrcDst(src string, dst string) []*route.Route {
 		if rt.Source == src && rt.Dest == dst {
 			ans = append(ans, rt)
 		}
+	}
+	return ans
+}
+
+func (reg *Registry) FindRoutesByGroup(group_name string) []*route.Route {
+	ans := make([]*route.Route, 0)
+	for _, rt := range reg.Routes {
+		if rt.Group == group_name {
+			ans = append(ans, rt)
+		}
+	}
+	return ans
+}
+
+func (reg *Registry) GetNodes() []node.Node {
+	ans := make([]node.Node, 0)
+	for _, n := range reg.Nodes {
+		ans = append(ans, n)
 	}
 	return ans
 }
@@ -114,3 +140,39 @@ func (reg *Registry) FindNodeType(nodetype string) *nodetype.NodeType {
 	}
 	return nil
 }
+
+func (reg *Registry) DelGroup(name string) {
+	nodes := reg.FindNodesByGroup(name)
+	for _, n := range nodes {
+		reg.DelNode(n.GetId())
+	}
+	rts := reg.FindRoutesByGroup(name)
+	for _, rt := range rts {
+		reg.DelRoute(rt.Id)
+	}
+}
+
+func (reg *Registry) DelNode(node_id string) bool {
+	if n, ok := reg.Nodes[node_id]; ok {
+		node_routes := make([]*route.Route, 0)
+		src_routes := reg.FindRoutesBySrc(n.ToString())
+		dst_routes := reg.FindRoutesByDst(n.ToString())
+		node_routes = append(node_routes, src_routes...)
+		node_routes = append(node_routes, dst_routes...)
+		for _, rt := range node_routes {
+			reg.DelRoute(rt.Id)
+		}
+		delete(reg.Nodes, node_id)
+		return true
+	}
+	return false
+}
+
+func (reg *Registry) DelRoute(rt_id string) bool {
+	if _, ok := reg.Routes[rt_id]; ok {
+		delete(reg.Routes, rt_id)
+		return true
+	}
+	return false
+}
+

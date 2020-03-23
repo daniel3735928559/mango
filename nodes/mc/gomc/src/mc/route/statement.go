@@ -167,6 +167,18 @@ func (w *WriteableValue) Write(this *value.Value, vars map[string]*value.Value, 
 	return this, vars, errors.New("Something went wrong?")
 }
 
+func (w *WriteableValue) ToString() string {
+	path_str := w.Base
+	for _, e := range w.Path {
+		if e.Type == PATH_MAP {
+			path_str += fmt.Sprintf(".%s", e.MapKey)
+		} else if e.Type == PATH_LIST {
+			path_str += fmt.Sprintf("[%s]", e.ListIndex.ToString())
+		}
+	}
+	return path_str
+}
+
 func MakeAssignmentStatement(dest *WriteableValue, val *Expression) *Statement {
 	return &Statement {
 		Type: STMT_ASSIGN,
@@ -186,15 +198,11 @@ func MakeDeletionStatement(name string) *Statement {
 
 func (s *Statement) ToString() string {
 	if s.Type == STMT_ASSIGN {
-		path_str := s.Destination.Base
-		for _, e := range s.Destination.Path {
-			if e.Type == PATH_MAP {
-				path_str += fmt.Sprintf(".%s", e.MapKey)
-			} else if e.Type == PATH_LIST {
-				path_str += fmt.Sprintf("[%s]", e.ListIndex.ToString())
-			}
-		}
-		return fmt.Sprintf("%s = %s", path_str, s.Args[0].ToString())
+		return fmt.Sprintf("%s = %s", s.Destination.ToString(), s.Args[0].ToString())
+	} else if s.Type == STMT_DELETE {
+		return fmt.Sprintf("del %s", s.Destination.ToString())
+	} else if s.Type == STMT_DECLARE {
+		return fmt.Sprintf("var %s", s.Destination.ToString())
 	}
 	return "[unknown statement type]"
 }

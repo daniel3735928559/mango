@@ -40,13 +40,14 @@ type Msg struct {
 type Node struct {
 	Name string
 	Server string
+	ctx *zmq.Context
 	status NodeStatus
 	cookie string
 	currentMid int
 	handlers map[string]MangoHandler
 	DefaultHandler MangoDefaultHandler
 	outstanding map[string]MangoReplyHandler
-	send_mutex sync.Mutex
+	send_mutex *sync.Mutex
 	socket *zmq.Socket
 	outgoing chan interface{}
 }
@@ -57,7 +58,7 @@ func NewNode(name string, handlers map[string]MangoHandler) (*Node, error) {
 		currentMid: 0,
 		Name: name,
 		handlers: handlers,
-		send_mutex: sync.Mutex{},
+		send_mutex: &sync.Mutex{},
 		outstanding: make(map[string]MangoReplyHandler),
 		outgoing: make(chan interface{}, 1000)}
 	n.DefaultHandler = n.default_default_handler
@@ -148,8 +149,9 @@ func (n *Node) send_reply(mid, cmd string, args map[string]interface{}) {
 }
 
 func (n *Node) Start() {
+	n.ctx, _ = zmq.NewContext()
 	fmt.Println("[LIBMANGO] STARTING", n.Server)
-	n.socket, _ = zmq.NewSocket(zmq.DEALER)
+	n.socket, _ = n.ctx.NewSocket(zmq.DEALER)
 	rand.Seed(time.Now().UnixNano())
 	identity := fmt.Sprintf("%04X-%04X", rand.Intn(0x10000), rand.Intn(0x10000))
 	fmt.Println("[LIBMANGO]", identity)
@@ -214,13 +216,10 @@ func (n *Node) run() {
 			n.handle_error(fmt.Errorf("Failed to deserialize: %s",data))
 		}
 
-		if msg.Command == "reply" {
-			// Handle replies
-			if handler, ok := n.outstanding[msg.MessageId]; ok {
-				handler(msg.MessageId, msg.Data)
-			} else {
-				n.handle_error(fmt.Errorf("Unexpected reply for message id %s", msg.MessageId))
-			}
+		if handler, ok := n.outstanding[msg.MessageId]; ok {
+			fmt.Println("[LIBMANGO] GOT REPLY",msg.MessageId,handler)
+			handler(msg.Command, msg.Data)
+			delete(n.outstanding, msg.MessageId)
 		} else if handler, ok := n.handlers[msg.Command]; ok {
 			// Handle other registered commands
 			reply_cmd, reply_args, reply_err := handler(msg.Data)

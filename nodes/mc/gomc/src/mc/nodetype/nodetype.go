@@ -12,6 +12,7 @@ type NodeType struct {
 	Executable string
 	Usage string
 	Environment map[string]string
+	Validate bool
 }
 
 func Parse(spec string) (*NodeType, error) {
@@ -20,7 +21,8 @@ func Parse(spec string) (*NodeType, error) {
 	ans := &NodeType{
 		Name: "",
 		Usage: "",
-		Environment: make(map[string]string)}
+		Environment: make(map[string]string),
+		Validate: true}
 	for lineno, line := range strings.Split(spec, "\n") {
 		line = strings.TrimSpace(line)
 		if len(line) == 0 {
@@ -49,6 +51,11 @@ func Parse(spec string) (*NodeType, error) {
 					return nil, fmt.Errorf("Error on line %d: config env line should be of the form `env <name> <val>`", lineno)
 				}
 				ans.Environment[fs[1]] = fs[2]
+			} else if fs[0] == "validate" {
+				if len(fs) != 2 || (fs[1] != "yes" && fs[1] != "no") {
+					return nil, fmt.Errorf("Error on line %d: config validate line should be of the form `validate (yes|no)`", lineno)
+				}
+				ans.Validate = fs[1] == "yes"
 			} else {
 				return nil, fmt.Errorf(`Error on line %d: config lines supported: 
 name <node_name>`, lineno)
