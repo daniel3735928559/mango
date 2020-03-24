@@ -1,0 +1,8 @@
+[config]
+name excite_c
+command './c/nodes/excite/excite'
+env LD_LIBRARY_PATH ./libmango/c
+
+[interface]
+input excite {message:string}
+output excited {message:string}

@@ -7,3 +7,4 @@ nodes/notify.node
 nodes/agent.node
 nodes/excite_js.node
 nodes/excite_py.node
+nodes/excite_c.node
