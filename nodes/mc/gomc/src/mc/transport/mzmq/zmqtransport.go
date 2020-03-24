@@ -44,11 +44,11 @@ func (t *ZMQTransport) RunServer() {
 		data, _ := t.Socket.Recv(0)
 		fmt.Println("[zmqtransport.go] RX",identity,data)
 		msg_ptr, err := serializer.Deserialize(data)
-		msg := *msg_ptr
-		if err != nil {
-			fmt.Println("ERROR: deserialization error")
+		if err != nil || msg_ptr == nil {
+			fmt.Println("ERROR: deserialization error:",err)
 			continue
 		}
+		msg := *msg_ptr
 		wmsg := transport.WrappedMessage {
 			Transport: t,
 			Identity: identity,

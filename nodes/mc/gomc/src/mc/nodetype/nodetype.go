@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"strings"
 	"mc/value"
+	"github.com/google/shlex"
+	"github.com/docopt/docopt-go"
 )
 
 type NodeType struct {
 	Name string
 	Interface *NodeInterface
-	Executable string
+	Command string
 	Usage string
 	Environment map[string]string
 	Validate bool
@@ -35,30 +37,28 @@ func Parse(spec string) (*NodeType, error) {
 		} else if line == "[usage]" {
 			mode = "usage"
 		} else if mode == "config" {
-			fs := strings.Fields(line)
-			if fs[0] == "name" {
-				if len(fs) != 2 {
-					return nil, fmt.Errorf("Error on line %d: config name line should be of the form `name <node_name>`", lineno)
-				}
-				ans.Name = fs[1]
-			} else if fs[0] == "executable" {
-				if len(fs) != 2 {
-					return nil, fmt.Errorf("Error on line %d: config executable line should be of the form `executable <path_to_executable>`", lineno)
-				}
-				ans.Executable = fs[1]
-			} else if fs[0] == "env" {
-				if len(fs) != 3 {
-					return nil, fmt.Errorf("Error on line %d: config env line should be of the form `env <name> <val>`", lineno)
-				}
-				ans.Environment[fs[1]] = fs[2]
-			} else if fs[0] == "validate" {
-				if len(fs) != 2 || (fs[1] != "yes" && fs[1] != "no") {
-					return nil, fmt.Errorf("Error on line %d: config validate line should be of the form `validate (yes|no)`", lineno)
-				}
-				ans.Validate = fs[1] == "yes"
-			} else {
-				return nil, fmt.Errorf(`Error on line %d: config lines supported: 
-name <node_name>`, lineno)
+			config_usage := `Usage:
+  config name <node_name>
+  config command <cmd>
+  config env <name> <val>
+  config validate (yes|no)`
+			config_args, err := shlex.Split(line)
+			if err != nil {
+				return nil, fmt.Errorf("Error on line %d: %v", lineno, err)
+			}
+			docopt.DefaultParser.HelpHandler = docopt.PrintHelpOnly
+			args, err := docopt.ParseArgs(config_usage, config_args, "")
+			if err != nil {
+				return nil, fmt.Errorf("Error on line %d: %v", lineno, err)
+			}
+			if args["name"].(bool) {
+				ans.Name = args["<node_name>"].(string)
+			} else if args["command"].(bool) {
+				ans.Command = args["<cmd>"].(string)
+			} else if args["env"].(bool) {
+				ans.Environment[args["<name>"].(string)] = args["<val>"].(string)
+			} else if args["validate"].(bool) {
+				ans.Validate = args["yes"].(bool)
 			}
 		} else if mode == "interface" {
 			interface_spec += line + "\n"

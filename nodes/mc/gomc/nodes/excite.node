@@ -1,6 +1,6 @@
 [config]
 name excite_go
-executable ./excite
+command ./excite
 
 [interface]
 input excite {message:string}

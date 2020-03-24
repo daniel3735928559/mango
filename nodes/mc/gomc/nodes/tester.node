@@ -1,6 +1,6 @@
 [config]
 name tester
-executable ./tester
+command ./tester
 
 [interface]
 input cmd any

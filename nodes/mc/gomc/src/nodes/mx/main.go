@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"mc/value"
 	"encoding/json"
+	"path/filepath"
 	docopt "github.com/docopt/docopt-go"
 	zmq "github.com/pebbe/zmq4"
 )
@@ -61,6 +62,7 @@ func sendrecv(srv, data string) string {
 func main() {
 	usage := `Usage: 
   mx send <command> <args>...
+  mx emp <group> <emp_file>
   mx nodes
   mx routes
   mx connect <node>
@@ -91,11 +93,30 @@ func main() {
 		os.Exit(1)
 	}
 
-	if args["send"].(bool) {
+	if args["emp"].(bool) {
+		emp_path, err := filepath.Abs(args["<emp_file>"].(string))
+		if err != nil {
+			fmt.Printf("ERROR: Problem accessing file %s\n", args["<emp_file>"].(string))
+			os.Exit(1)
+		}
+		info, err := os.Stat(emp_path)
+		if os.IsNotExist(err) || info.IsDir() {
+			fmt.Printf("ERROR: File does not exist or is not regular file: %s\n", emp_path)
+			os.Exit(1)
+		}
+		
+		data := make(map[string]interface{})
+		data["operation"] = "emp"
+		data["empfile"] = emp_path
+		data["group"] = args["<group>"].(string)
+		bs, _ := json.Marshal(data)
+		send(agent_srv, string(bs))
+	} else if args["send"].(bool) {
 		arg_val, _ := value.FromObject(make(map[string]interface{}))
 		arg_name := ""
 		if len(args["<args>"].([]string)) % 2 != 0 {
 			fmt.Println("ERROR: Odd number of args. Expected <args> of the form `arg val arg val ...`")
+			os.Exit(1)
 		}
 		for i, arg := range args["<args>"].([]string) {
 			if i%2 == 0 {

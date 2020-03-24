@@ -6,7 +6,7 @@
   "dependencies": {
     "js-yaml": "^3.7.0",
     "vis": "^4.20.1",
-    "zeromq": "^4.6.0"
+    "zeromq": "^5.2.0"
   },
   "devDependencies": {},
   "scripts": {

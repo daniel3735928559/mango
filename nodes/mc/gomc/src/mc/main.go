@@ -136,6 +136,9 @@ func (mc *MangoCommander) Run() {
 			v, err := src_type.ValidateOutput(cmd, incoming_val)
 			if err != nil {
 				fmt.Println("ERROR: output message failed to validate from:",src_type.Name)
+				if incoming_val != nil {
+					fmt.Println("ERROR: Invalid message:",incoming_val.ToString())
+				}
 				continue
 			}
 			validated_val = v
@@ -245,7 +248,7 @@ func (mc *MangoCommander) EMP(group, emp_file string) error {
 			new_merge_nodes := node.MakeMergeNode(group, n.Name, strings.Fields(n.Args), mc.MessageInput)
 			new_nodes = append(new_nodes, new_merge_nodes...)
 		} else if new_type := mc.Registry.FindNodeType(n.TypeName); new_type != nil {
-			new_node := node.MakeExecNode(group, n.Name, n.TypeName, fmt.Sprintf("%s %s", new_type.Executable, n.Args), new_type.Environment, mc.zmqTransport)
+			new_node := node.MakeExecNode(group, n.Name, n.TypeName, fmt.Sprintf("%s %s", new_type.Command, n.Args), new_type.Environment, mc.zmqTransport)
 			if new_node == nil {
 				return fmt.Errorf("ERROR Failed to make node: `%s`", n.Name)
 			}

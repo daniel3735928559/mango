@@ -15,6 +15,7 @@ func (emp *EMP) ParseConfig(config_str string) error {
 	if err != nil {
 		return err
 	}
+	docopt.DefaultParser.HelpHandler = docopt.PrintHelpOnly
 	args, err:= docopt.ParseArgs(config_def, config_args, "")
 	if err != nil {
 		return err
@@ -36,6 +37,7 @@ func (emp *EMP) ParseNode(node_str string) error {
 	if err != nil {
 		return err
 	}
+	docopt.DefaultParser.HelpHandler = docopt.PrintHelpOnly
 	args, err:= docopt.ParseArgs(node_def, node_args, "")
 	if err != nil {
 		return err

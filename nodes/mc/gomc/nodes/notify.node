@@ -1,6 +1,6 @@
 [config]
 name notify
-executable ./notify
+command ./notify
 
 [interface]
 input notify {beep:bool=false,title:string,message:string}

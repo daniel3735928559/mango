@@ -44,6 +44,7 @@ func NewMx() *MxAgent {
 		handlers: make(map[string]MxHandler)}
 
 	mx.handlers["send"] = mx.Send
+	mx.handlers["emp"] = mx.Emp
 	mx.handlers["connect"] = mx.Connect
 	mx.handlers["disconnect"] = mx.Disconnect
 	mx.handlers["help"] = mx.Help
@@ -131,6 +132,14 @@ func (mx *MxAgent) Send(req map[string]interface{}, rep chan string) {
 	rep <- "Sent"
 	close(rep)
 }
+
+func (mx *MxAgent) Emp(req map[string]interface{}, rep chan string) {
+	mx.node.Send("emp", map[string]interface{}{"control":true,"filename":req["empfile"].(string),"group":req["group"].(string)})
+	fmt.Println("[MX AGENT] SENT")
+	rep <- "Sent"
+	close(rep)
+}
+
 func (mx *MxAgent) Nodes(req map[string]interface{}, rep chan string) {
 	QueryReplyHandler := func(c string, a map[string]interface{}) {
 		foundnodes := a["nodes"].([]interface{})

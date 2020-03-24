@@ -5,3 +5,4 @@ nodes/tester.node
 nodes/log.node
 nodes/notify.node
 nodes/agent.node
+nodes/excite_js.node
