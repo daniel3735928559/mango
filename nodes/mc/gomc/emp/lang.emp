@@ -1,2 +1,3 @@
 [nodes]
 instance excite_js excitejs ''
+instance excite_py excitepy ''

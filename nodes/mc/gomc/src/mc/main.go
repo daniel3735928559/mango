@@ -338,7 +338,9 @@ func (mc *MangoCommander) FindNodes(args map[string]interface{}) (string, map[st
 	
 	ans := map[string]interface{}{"nodes":make([]interface{}, len(nodes))}
 	for i, no := range nodes {
-		ans["nodes"].([]interface{})[i] = map[string]interface{}{"type":no.GetType(),"name":no.GetName(),"group":no.GetGroup()}
+		if no != nil {
+			ans["nodes"].([]interface{})[i] = map[string]interface{}{"type":no.GetType(),"name":no.GetName(),"group":no.GetGroup()}
+		}
 	}
 	return "nodeinfo",ans,nil
 	return "echo",args,nil

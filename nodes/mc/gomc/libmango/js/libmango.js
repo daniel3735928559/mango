@@ -104,7 +104,7 @@ function Transport(target){
     this.socket.connect(target);
     
     this.tx = function(data){
-	self.socket.send(['',data]);
+	self.socket.send(data);
     }
 
 }

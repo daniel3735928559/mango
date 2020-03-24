@@ -40,7 +40,6 @@ func (t *ZMQTransport) RunServer() {
 	t.Socket.Bind(fmt.Sprintf("tcp://*:%d", t.Port))
 	for {
 		identity, _ := t.Socket.Recv(0)
-		t.Socket.Recv(0)
 		data, _ := t.Socket.Recv(0)
 		fmt.Println("[zmqtransport.go] RX",identity,data)
 		msg_ptr, err := serializer.Deserialize(data)

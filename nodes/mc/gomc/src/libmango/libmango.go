@@ -244,7 +244,6 @@ func (n *Node) run() {
 	}
 	outgoing_handler := func(data interface{}) error {
 		fmt.Println("[LIBMANGO] SENDING: ",data.(string))
-		n.socket.Send("", zmq.SNDMORE)
 		n.socket.Send(data.(string), 0)
 		return nil
 	}
