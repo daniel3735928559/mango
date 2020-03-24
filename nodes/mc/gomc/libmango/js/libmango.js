@@ -11,24 +11,23 @@ function MNode(debug){
     var server = process.env['MANGO_SERVER'];
     
     this.run = function(){
+	self.m_send("alive",{})
     }
     
     this.dispatch = function(header,args){
-	console.log("H",header)
-	console.log("DISPATCH",header,args,self.iface.iface,self.iface.get_function(header['command']));
+	console.log("[LIBMANGO.JS] DISPATCH",header,args,self.iface.iface,self.iface.get_function(header['command']));
 	try{
             result = self.iface.get_function(header['command'])(header,args);
             if(result){
 		self.m_send(result[0], result[1], header.mid)
 	    }
 	} catch(e) {
-	    console.log("ONO",e);
-            self.handle_error(header,e+"")
+            self.handle_error(header["source"],e+"")
 	}
     }
     
     this.handle_error = function(src,err){
-	console.log('OOPS',src,err);
+	console.log('[LIBMANGO.JS] ERROR',src,err);
 	self.m_send('error',{'source':JSON.stringify(src),'message':err},"mc");
     }
 
@@ -49,7 +48,7 @@ function MNode(debug){
     }
 
     this.m_send = function(name,msg,mid,type){
-	console.log('sending',name,msg,mid)
+	console.log('[LIBMANGO.JS] sending',name,msg,mid)
 	header = self.make_header(name,mid,type)
 	self.dataflow.send(header,msg)
     }
@@ -117,7 +116,6 @@ function Dataflow(iface,transport,serialiser,dispatch_cb,error_cb){
     this.serialiser = serialiser;
     this.dispatch_cb = dispatch_cb;
     this.error_cb = error_cb;
-    console.log(this.dispatch_cb);
     this.send = function(header,args){
 	self.transport.tx(self.serialiser.serialise(header,args));
     }
@@ -125,12 +123,11 @@ function Dataflow(iface,transport,serialiser,dispatch_cb,error_cb){
     this.recv = function(data){
 	try{
 	    var m = self.serialiser.deserialise(data);
-	    console.log("MMM",m,m[0],m[1])
 	    if(!self.iface.validate(m[0]["command"])) throw new MError("Unknown function");
 	    console.log(self.dispatch_cb);
 	    self.dispatch_cb(m[0],m[1]);
 	} catch(e) {
-	    console.log("ONBO",e);
+	    console.log("[LIBMANGO.JS] ERROR ",e);
 	    self.error_cb(e);
 	}
     }
@@ -167,7 +164,7 @@ function Serialiser(version){
 	try {
 	    return [JSON.parse(header_str),JSON.parse(body_str)];
 	} catch(e) {
-	    console.log(e);
+	    console.log("[LIBMANGO.JS] ERROR", e);
 	    throw new MError("Failed to parse message:"+header_str+"\n"+body_str);
 	}
 	// p = self.parse_preamble(data);

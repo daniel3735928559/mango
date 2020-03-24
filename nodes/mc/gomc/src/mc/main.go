@@ -119,6 +119,10 @@ func (mc *MangoCommander) Run() {
 		// validate message is of acceptable format for node
 		// output:
 		cmd := msg.Command
+		if cmd == "alive" {
+			// Alive messages are already handled
+			continue
+		}
 		incoming_val, err := value.FromObject(msg.Data)
 		if err != nil {
 			fmt.Println("ERROR: failed to convert incoming value",err)
