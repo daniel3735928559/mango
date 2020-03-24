@@ -7,8 +7,9 @@ input alive any
 input echo any
 input emp {group:string, filename:string}
 input doc {nodetype:string,command*:string}
+input start {type:string,group:string,name:string,args:[string]}
 input routeadd {spec:string,group*:string}
-input findtypes {name:string}
+input findtypes {name*:string}
 input findroutes {src*:string,dst*:string,id*:string,group*:string}
 input findnodes {name*:string,group*:string}
 input getgroup {name:string}
@@ -17,7 +18,7 @@ input nodedel {id:string}
 input routedel {id:string}
 input error {message:string, level:int=2}
 output nodeinfo {nodes:[{type:string,name:string,group:string}]}
-output typeinfo {interface:string}
+output typeinfo {types:[{name:string,usage:string,command:string,interface:string}]}
 output routeinfo {routes:[{src:string,dst:string,id:string,spec:string}]}
 output doc {doc:string}
 output error {source:string, level:int=2, message:string}

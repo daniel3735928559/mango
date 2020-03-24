@@ -44,10 +44,12 @@ func NewMx() *MxAgent {
 		handlers: make(map[string]MxHandler)}
 
 	mx.handlers["send"] = mx.Send
+	mx.handlers["start"] = mx.StartNode
 	mx.handlers["emp"] = mx.Emp
 	mx.handlers["connect"] = mx.Connect
 	mx.handlers["disconnect"] = mx.Disconnect
 	mx.handlers["help"] = mx.Help
+	mx.handlers["types"] = mx.Types
 	mx.handlers["nodes"] = mx.Nodes
 	mx.handlers["routes"] = mx.Routes
 	mx.handlers["list"] = mx.List
@@ -126,6 +128,7 @@ func (mx *MxAgent) Help(req map[string]interface{}, rep chan string) {
 	}
 	mx.node.SendForReply("doc", args, DocReplyHandler)
 }
+
 func (mx *MxAgent) Send(req map[string]interface{}, rep chan string) {
 	mx.node.Send(req["command"].(string), req["args"].(map[string]interface{}))
 	fmt.Println("[MX AGENT] SENT")
@@ -134,7 +137,25 @@ func (mx *MxAgent) Send(req map[string]interface{}, rep chan string) {
 }
 
 func (mx *MxAgent) Emp(req map[string]interface{}, rep chan string) {
-	mx.node.Send("emp", map[string]interface{}{"control":true,"filename":req["empfile"].(string),"group":req["group"].(string)})
+	mx.node.Send("emp", map[string]interface{}{
+		"control":true,
+		"filename":req["empfile"].(string),
+		"group":req["group"].(string)})
+	fmt.Println("[MX AGENT] SENT")
+	rep <- "Sent"
+	close(rep)
+}
+
+func (mx *MxAgent) StartNode(req map[string]interface{}, rep chan string) {
+	fmt.Println("[MX AGENT] StartNode",req)
+	d := map[string]interface{}{
+		"control":true,
+		"name":req["name"].(string),
+		"type":req["type"].(string),
+		"group":req["group"].(string),
+		"args":req["args"].([]interface{})}
+	fmt.Println("D",d)
+	mx.node.Send("start", d)
 	fmt.Println("[MX AGENT] SENT")
 	rep <- "Sent"
 	close(rep)
@@ -155,6 +176,29 @@ func (mx *MxAgent) Nodes(req map[string]interface{}, rep chan string) {
 	}
 	mx.node.SendForReply("findnodes", map[string]interface{}{"control":true}, QueryReplyHandler)
 }
+
+
+func (mx *MxAgent) Types(req map[string]interface{}, rep chan string) {
+	QueryReplyHandler := func(c string, a map[string]interface{}) {
+		foundtypes := a["types"].([]interface{})
+		fmt.Println("[MX AGENT] QueryReply", c, a)
+		ans := make([]string, len(foundtypes))
+		for i, fi := range foundtypes {
+			f := fi.(map[string]interface{})
+			ans[i] = fmt.Sprintf(`%s: 
+Usage: %s
+Command: %s
+Interface: %s
+--
+`, f["name"].(string), f["usage"].(string), f["command"].(string), f["interface"].(string))
+		}
+		fmt.Println("[MX AGENT] TYPES",ans)
+		rep <- strings.Join(ans,"\n")
+		close(rep)
+	}
+	mx.node.SendForReply("findtypes", map[string]interface{}{"control":true}, QueryReplyHandler)
+}
+
 func (mx *MxAgent) Routes(req map[string]interface{}, rep chan string) {
 	QueryReplyHandler := func(c string, a map[string]interface{}) {
 		foundroutes := a["routes"].([]interface{})

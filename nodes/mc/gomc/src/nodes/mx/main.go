@@ -62,8 +62,10 @@ func sendrecv(srv, data string) string {
 func main() {
 	usage := `Usage: 
   mx send <command> <args>...
+  mx start <nodetype> <nodegroup> <nodename> <nodeargs>...
   mx emp <group> <emp_file>
   mx nodes
+  mx types
   mx routes
   mx connect <node>
   mx disconnect
@@ -111,6 +113,15 @@ func main() {
 		data["group"] = args["<group>"].(string)
 		bs, _ := json.Marshal(data)
 		send(agent_srv, string(bs))
+	} else if args["start"].(bool) {		
+		data := make(map[string]interface{})
+		data["operation"] = "start"
+		data["type"] = args["<nodetype>"].(string)
+		data["group"] = args["<nodegroup>"].(string)
+		data["name"] = args["<nodename>"].(string)
+		data["args"] = args["<nodeargs>"].([]string)
+		bs, _ := json.Marshal(data)
+		send(agent_srv, string(bs))
 	} else if args["send"].(bool) {
 		arg_val, _ := value.FromObject(make(map[string]interface{}))
 		arg_name := ""
@@ -154,6 +165,9 @@ func main() {
 		fmt.Println(sendrecv(agent_srv, string(bs)))
 	} else if args["nodes"].(bool) {
 		bs, _ := json.Marshal(map[string]interface{}{"operation":"nodes"})
+		fmt.Println(sendrecv(agent_srv, string(bs)))
+	} else if args["types"].(bool) {
+		bs, _ := json.Marshal(map[string]interface{}{"operation":"types"})
 		fmt.Println(sendrecv(agent_srv, string(bs)))
 	} else if args["routes"].(bool) {
 		bs, _ := json.Marshal(map[string]interface{}{"operation":"routes"})

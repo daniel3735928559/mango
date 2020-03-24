@@ -232,6 +232,25 @@ func (mc *MangoCommander) RouteAdd(args map[string]interface{}) (string, map[str
 	return "routeinfo",map[string]interface{}{"routes":ans},nil
 }
 
+func (mc *MangoCommander) StartNode(nodetype, group, name string, args []interface{}) error {
+	if new_type := mc.Registry.FindNodeType(nodetype); new_type != nil {
+		nodeargs := make([]string, len(args))
+		for i, a := range args {
+			nodeargs[i] = a.(string)
+		}
+		new_node := node.MakeExecNode(group, name, nodetype, fmt.Sprintf("%s %s", new_type.Command, nodeargs), new_type.Environment, mc.zmqTransport)
+		if new_node == nil {
+			return fmt.Errorf("ERROR Failed to make node: `%s`", name)
+		}
+		
+		mc.Registry.AddNode(new_node)
+		new_node.Start(mc.zmqTransport.GetServerAddr())
+	} else {
+		return fmt.Errorf("ERROR Failed to find type: `%s`", nodetype)
+	}
+	return nil
+}
+
 func (mc *MangoCommander) EMP(group, emp_file string) error {
 	data, err := ioutil.ReadFile(emp_file)
 	if err != nil {
@@ -299,8 +318,37 @@ func (mc *MangoCommander) RunEMP(args map[string]interface{}) (string, map[strin
 	return "", nil, err
 }
 
+func (mc *MangoCommander) RunNode(args map[string]interface{}) (string, map[string]interface{}, error) {
+	group := args["group"].(string)
+	nodetype := args["type"].(string)
+	name := args["name"].(string)
+	nodeargs := args["args"].([]interface{})
+	err := mc.StartNode(nodetype, group, name, nodeargs)
+	return "", nil, err
+}
+
 func (mc *MangoCommander) FindTypes(args map[string]interface{}) (string, map[string]interface{}, error)  {
-	return "echo",args,nil
+	var types []*nodetype.NodeType
+	name, by_name := args["name"]
+	if by_name {
+		types = []*nodetype.NodeType{mc.Registry.FindNodeType(name.(string))}
+	} else {
+		for _, ty := range mc.Registry.NodeTypes {
+			types = append(types, ty)
+		}
+	}
+	
+	ans := map[string]interface{}{"types":make([]interface{}, len(types))}
+	for i, ty := range types {
+		if ty != nil {
+			ans["types"].([]interface{})[i] = map[string]interface{}{
+				"name":ty.Name,
+				"usage":ty.Usage,
+				"command":ty.Command,
+				"interface":ty.Interface.ToString()}
+		}
+	}
+	return "typeinfo",ans,nil
 }
 
 func (mc *MangoCommander) FindRoutes(args map[string]interface{}) (string, map[string]interface{}, error)  {
@@ -343,7 +391,6 @@ func (mc *MangoCommander) FindNodes(args map[string]interface{}) (string, map[st
 		}
 	}
 	return "nodeinfo",ans,nil
-	return "echo",args,nil
 }
 
 func (mc *MangoCommander) GetGroup(args map[string]interface{}) (string, map[string]interface{}, error)  {
@@ -402,6 +449,7 @@ Options:
 		Registry: registry.MakeRegistry()}	
 	
 	MC.Commands = map[string]libmango.MangoHandler{
+		"start":MC.RunNode,
 		"routeadd":MC.RouteAdd,
 		"findroutes":MC.FindRoutes,
 		"findtypes":MC.FindTypes,
