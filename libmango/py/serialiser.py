@@ -10,25 +10,19 @@ class m_serialiser:
         self.method = method
         self.serialisers = {"json":m_json_serialiser()}
 
-    def make_preamble(self):
-        return bytes("MANGO{0} {1}\n".format(self.version,self.method),"ASCII")
-
-    def parse_preamble(self,msg):
-        nl1 = msg.find(b'\n')
-        m = re.match("^MANGO([0-9.]*) ([^ ]*)$",msg[:nl1].decode("ASCII"))
-        if(m is None):
-            raise m_error(m_error.SERIALISATION_ERROR,"Preamble failed to parse")
-        return m.group(1),m.group(2),msg[nl1+1:]
-
     def serialise(self,header,msg):
-        return self.make_preamble()+self.serialisers[self.method].pack(header,msg)
+        return "{}\n{}".format(json.dumps(header), json.dumps(msg))
+        # return self.make_preamble()+self.serialisers[self.method].pack(header,msg)
 
     def deserialise(self,message):
-        ver,method,msg = self.parse_preamble(message)
-        if ver != self.version:
-            raise m_error(m_error.VERSION_MISMATCH, ver + " given, " + self.version + " expected")
-        h,a = self.serialisers[method].unpack(msg)
-        return h,a
+        
+        header_str, args_str = message.decode().split("\n", 1)
+        return json.loads(header_str), json.loads(args_str)
+        # ver,method,msg = self.parse_preamble(message)
+        # if ver != self.version:
+        #     raise m_error(m_error.VERSION_MISMATCH, ver + " given, " + self.version + " expected")
+        # h,a = self.serialisers[method].unpack(msg)
+        # return h,a
 
 class m_json_serialiser:
     def pack(self,header,msg):

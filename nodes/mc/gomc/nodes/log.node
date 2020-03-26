@@ -1,6 +1,0 @@
-[config]
-name log
-command ./log
-
-[interface]
-input log {source:string, timestamp:num, message:string}

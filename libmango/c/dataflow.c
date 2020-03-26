@@ -38,21 +38,24 @@ void m_dataflow_send(m_dataflow_t *d, cJSON *header, cJSON *args){
     
 void m_dataflow_recv(m_dataflow_t *d){
   char *data = m_transport_rx(d->transport);
-  cJSON *m = m_serialiser_deserialise(d->serialiser,data);
-  cJSON *header = cJSON_GetObjectItem(m,"header");
-  cJSON *args = cJSON_GetObjectItem(m,"args");
+  cJSON **m = m_serialiser_deserialise(d->serialiser,data);
+  cJSON *header = m[0];
+  cJSON *args = m[1];
 
-  if(!cJSON_HasObjectItem(header,"name")){
-    m_debug_print(d->node, "ERROR", "No name");
-    d->error(d->node, "no name", "Invalid header");
-  }  
-  else if(!m_interface_validate(d->interface, cJSON_GetObjectItem(header,"name")->valuestring)){
-    m_debug_print(d->node, "ERROR", cJSON_GetObjectItem(header,"name")->valuestring);
-    d->error(d->node, cJSON_GetObjectItem(header,"name")->valuestring, "Unknown message");
-    return;
+  if(!cJSON_HasObjectItem(header,"command")){
+    m_debug_print(d->node, "ERROR", "No command");
+    d->error(d->node, "no command", "Invalid header");
+  } else {
+    char *cmd = cJSON_GetObjectItem(header,"command")->valuestring;
+    if(!m_interface_validate(d->interface, cmd)){
+      m_debug_print(d->node, "ERROR", cmd);
+      d->error(d->node, cmd, "Unknown message");
+    } else {
+      m_debug_print(d->node, "DISPATCH", cmd);
+      d->dispatch(d->node, header, args);
+    }
   }
-  m_debug_print(d->node, "DISPATCH", cJSON_GetObjectItem(header,"name")->valuestring);
-  d->dispatch(d->node, header, args);
   free(data);
-  cJSON_Delete(m);
+  cJSON_Delete(header);
+  cJSON_Delete(args);
 }

@@ -1,6 +1,0 @@
-[config]
-name mx_agent
-command ./agent
-validate no
-
-[interface]

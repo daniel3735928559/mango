@@ -1,0 +1,10 @@
+[nodes]
+instance jam chat ''
+instance log logger ./chat.log
+instance notify commsalert ''
+dummy emailrecvd
+
+[routes]
+comms/chat > ? recv = log {source:"chat", timestamp:now(), message:raw()} > comms/logger
+comms/chat > ? recv = notify {urgency:"high", title:from, message:msg} > comms/commsalert
+comms/emailrecvd > ? recv = notify {urgency:"high", title:"email", message:subject} > comms/commsalert

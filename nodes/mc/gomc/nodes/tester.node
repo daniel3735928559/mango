@@ -1,7 +1,0 @@
-[config]
-name tester
-command ./tester
-
-[interface]
-input cmd any
-output cmd any

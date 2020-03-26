@@ -1,2 +1,0 @@
-export PYTHONPATH="$(realpath $( dirname "${BASH_SOURCE[0]}" )'/../../libmango/py' )"
-python mango_commander.py $1 $2

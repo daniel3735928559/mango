@@ -1,7 +1,0 @@
-[config]
-name excite_go
-command ./excite
-
-[interface]
-input excite {message:string}
-output excited {message:string}

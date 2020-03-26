@@ -16,43 +16,37 @@ m_serialiser_t *m_serialiser_new(char *version){
   return s;
 }
 
-void m_serialiser_make_preamble(m_serialiser_t *s, char *buf){
-  sprintf(buf, "MANGO%s %s\n", s->version, s->method);
-}
-
-int m_serialiser_len_preamble(m_serialiser_t *s){
-  return strlen(LIBMANGO_PREAMBLE) + strlen(s->version) + strlen(s->method) + 2;
-}
-
-char *m_serialiser_parse_preamble(m_serialiser_t *s, char *data){
-  int l = m_serialiser_len_preamble(s);
-  char *sample_preamble = malloc(m_serialiser_len_preamble(s)+1);
-  m_serialiser_make_preamble(s, sample_preamble);
-  char *ans = NULL;
-  if(strncmp(sample_preamble, data, l) == 0){
-    ans = data+l;
-  }
-  free(sample_preamble);
-  return ans;
-}
-
 char *m_serialiser_serialise(m_serialiser_t *s, cJSON *header, cJSON *args){
-  cJSON *data_dict = cJSON_CreateObject();
-  cJSON_AddItemToObject(data_dict, "header", header);
-  cJSON_AddItemToObject(data_dict, "args", args);
-
-  int l = m_serialiser_len_preamble(s);
-  char *content = cJSON_PrintUnformatted(data_dict);
-  char *data = malloc(strlen(content)+l+1);
-  m_serialiser_make_preamble(s, data);
-  strcpy(data+l, content);
-  free(content);
-  cJSON_Delete(data_dict);
+  char *header_str = cJSON_PrintUnformatted(header);
+  char *args_str = cJSON_PrintUnformatted(args);
+  int header_len = strlen(header_str);
+  int args_len = strlen(args_str);
+  char *data = malloc(header_len + 1 + args_len + 1);
+  strcpy(data, header_str);
+  data[header_len] = '\n';
+  strcpy(data+header_len+1, args_str);
+  data[header_len + 1 + args_len] = '\0';
+  
+  free(header_str);
+  free(args_str);
   return data;
 }
 
-cJSON *m_serialiser_deserialise(m_serialiser_t *s, char *data){
-  char *content = m_serialiser_parse_preamble(s, data);
-  if(!content) return NULL;
-  return cJSON_Parse(content);
+cJSON **m_serialiser_deserialise(m_serialiser_t *s, char *data){
+  int l = strlen(data);
+  int brk = -1;
+  for(int i = 0; i < l; i++) {
+    if (data[i] == '\n') {
+      brk = i;
+      break;
+    }
+  }
+  data[brk] = '\0';
+  
+  cJSON *header = cJSON_Parse(data);
+  cJSON *args = cJSON_Parse(data+brk+1);
+  cJSON **ans = malloc(sizeof(cJSON *)*2);
+  ans[0] = header;
+  ans[1] = args;
+  return ans;
 }

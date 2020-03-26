@@ -1,4 +1,4 @@
-import io, re, time, signal, os
+import io, re, time, signal, os, random
 from serialiser import *
 from dataflow import *
 from transport import *
@@ -16,17 +16,12 @@ class m_node:
         self.serialiser = m_serialiser(self.version)
         self.interface = m_if(default_handler=self.default)
         self.dataflows = {}
-        self.route = os.getenv('MANGO_ROUTE')
-        self.node_id = os.getenv('MANGO_ID')
-        self.group_id = os.getenv('MANGO_GROUP','root')
-        self.interface.add_interface(os.path.join(os.getenv('PYTHONPATH'),'../node.yaml'),{
-            'heartbeat':self.heartbeat,
-            'exit':self.end
-        })
+        self.node_id = os.getenv('MANGO_COOKIE')
+        self.interface.add_interface({'heartbeat':self.heartbeat,'exit':self.end})
         self.flags = {}
-        self.server = os.getenv('MC_ADDR',None)
+        self.server = os.getenv('MANGO_SERVER',None)
         if not self.server is None:
-            self.local_gateway = m_ZMQ_transport(self.server,self.context,self.poller,self.route)
+            self.local_gateway = m_ZMQ_transport(self.server,self.context,self.poller,''.join(random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789') for i in range(10)))
             s = self.local_gateway.socket
             self.dataflow = m_dataflow(self.interface,self.local_gateway,self.serialiser,self.dispatch,self.handle_error)
             self.dataflows[s] = self.dataflow
@@ -40,41 +35,39 @@ class m_node:
         self.dataflows[sock] = dataflow
             
     def ready(self):
-        iface = self.interface.get_spec()
-        self.debug_print("IF",iface)
+        self.m_send('alive',{})
             
     def dispatch(self,header,args):
         self.debug_print("DISPATCH",header,args)
         try:
-           result = self.interface.get_function(header['name'])(header,args)
+           result = self.interface.get_function(header['command'])(args)
            if not result is None:
                self.m_send(result[0],result[1],mid=header.get('mid',None))
         except Exception as exc:
            self.handle_error("unknown",traceback.format_exc())
 
-    def heartbeat(self,header,args):
+    def heartbeat(self,args):
         self.mc_send('alive',{})
         
-    def end(self,header,args):
+    def end(self,args):
         exit(0)
             
-    def default(self,header,args):
+    def default(self,args):
         self.debug_print("UNHANDLED",header,args)
 
     def handle_error(self,src,err):
         self.debug_print('OOPS',src,err)
         self.mc_send('error',{'source':src,'message':err})
 
-    def make_header(self,name,msg_type=None,mid=None):
-        header = {'name':name}
-        if mid: header['mid'] = mid
-        if msg_type: header['type'] = msg_type
+    def make_header(self,command,mid=None):
+        header = {
+            'command':command,
+            'mid':mid if not mid is None else ''.join(random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789') for i in range(10)),
+            'cookie':self.node_id,
+            'format':'json'}
         self.debug_print("H",header)
         return header
 
-    def mc_send(self,name,msg):
-        self.dataflow.send(self.make_header(name,'system'),msg)
-        
     def m_send(self,name,msg,mid=None):
         self.debug_print('sending',msg)
         self.dataflow.send(self.make_header(name,mid=mid),msg)
@@ -82,7 +75,7 @@ class m_node:
     def debug_print(self,*args):
         if self.debug:
             caller = getframeinfo(stack()[1][0])
-            print("[{}:{} {} DEBUG] ".format(caller.filename, caller.lineno, self.node_id),*args)
+            print("[LIBMANGO.PY] [{}:{} {} DEBUG] ".format(caller.filename, caller.lineno, self.node_id),*args)
     
     def run(self,f=None):
         if not self.server is None:

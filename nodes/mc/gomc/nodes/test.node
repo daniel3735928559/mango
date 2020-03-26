@@ -1,6 +1,0 @@
-[config]
-name test_node
-
-[interface]
-output echo {message:string}
-output excite {message:string}

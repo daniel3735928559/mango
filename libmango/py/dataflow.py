@@ -25,9 +25,9 @@ class m_dataflow:
         data = self.transport.rx()
         try:
             header,args = self.serialiser.deserialise(data)
-            self.interface.validate(header['name'],args)
+            self.interface.validate(header['command'],args)
             result = self.dispatch_cb(header,args)
         except m_error as exc:
-            self.error_cb(header['src_node'],str(exc))
+            self.error_cb(header['source'],str(exc))
             return None
 

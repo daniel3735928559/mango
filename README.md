@@ -21,29 +21,192 @@ a GUI, shell, other program, or over the network, and that you can
 readily chain together functions from disparate programs when needed,
 in the style of a UNIX pipeline.
 
-## Example
 
+### Node type definition
 
+```
+[config]
+name <node_name>
+command <cmd>
+env <name> <val>
+validate (yes|no)
 
-## Nodes
+[usage]
+<usage_string>
 
-### Currently available:
+[interface]
+import <filename>
+type <type_name> <typespec>
+input <name> <typespec>
+output <name> <typespec>
+```
 
-* `jam`: A wrapper for libpurple
+### EMP definition
 
-* `otto`: A node for auto-responding to chat messages
+```
+[config]
+name <name>
 
-* `guppy`: A WYSIWYG program for writing mathematical expressions
+[nodes]
+instance <type> <name> <args>...
+dummy <name>
+merge <name> <mergepoints>...
+gen <name> <values>...
 
-* `category`: A node for organising snippets of data into concept graphs
+[routes]
+<route>
+```
 
-* `curt`: A node for basic encryption tasks
+### Route definition
 
-* `elm`: A node for various binary exploitation related tasks
+```
+route   
+  : node '>' node
+  | node '<' node
+  | node '<' '>' node
+  | node '>' transforms
+node    
+  : IDENT
+  | IDENT '/' IDENT
+transforms 
+  : transform '>' node
+  | transform '>' transforms
+transform 
+  : '?' transform_filter
+  | '%' transform_edit
+  | '=' transform_replace
+  | '?' transform_filter '%' transform_edit
+  | '?' transform_filter '=' transform_replace
+transform_filter 
+  : '{' expr '}'
+  | IDENT '{' expr '}'
+  | IDENT
+transform_replace 
+  : '{' mapexprs '}'
+  | IDENT '{' mapexprs '}'
+  | IDENT
+transform_edit 
+  : '{' script '}'
+  | IDENT '{' script '}'
+script 
+  : stmt
+  | stmt script
+stmt 
+  : dstexpr '=' expr ';'
+  | dstexpr AE expr ';'
+  | dstexpr OE expr ';'
+  | dstexpr XE expr ';'
+  | dstexpr PE expr ';'
+  | dstexpr ME expr ';'
+  | dstexpr TE expr ';'
+  | dstexpr DE expr ';'
+  | dstexpr RE expr ';'
+  | VAR IDENT ';'
+  | DEL IDENT ';'
+expr 
+  : NUMBER
+  | TRUE
+  | FALSE
+  | '{' mapexprs '}'
+  | '[' listexprs ']'
+  | IDENT '(' listexprs ')'
+  | IDENT '(' ')'
+  | STRING
+  | expr '~' expr
+  | expr '?' expr ':' expr
+  | '-' expr      %prec UNARY
+  | '(' expr ')'
+  | varexpr
+  | expr EXP expr
+  | expr '+' expr
+  | expr '-' expr
+  | expr '*' expr
+  | expr '/' expr
+  | expr '&' expr
+  | expr '|' expr
+  | expr '^' expr
+  | expr '%' expr
+  | expr EQ expr
+  | expr NE expr
+  | expr GE expr
+  | expr LE expr
+  | expr AND expr
+  | expr OR expr
+  | '!' expr %prec UNARY
+  | expr '>' expr
+  | expr '<' expr
+mapexprs 
+  : IDENT ':' expr
+  | IDENT ':' expr ',' mapexprs
+listexprs 
+  : expr
+  | expr ',' listexprs
+varexpr 
+  : expr '.' IDENT
+  | expr '[' expr ']'
+  | IDENT
+dstexpr
+  : IDENT
+  | THIS
+  | dstexpr '[' expr ']'
+  | dstexpr '.' IDENT
+```
 
-* `email`: A node for handling emails
+### Value definition
 
-* `t3`: Super tic-tac-toe game
+```
+value 
+  : NUMBER
+  | STRING
+  | TRUE
+  | FALSE
+  | '{' mapvals '}'
+  | '{' '}'
+  | '[' listvals ']'
+  | '[' ']'
+mapvals 
+  : IDENT ':' value
+  | IDENT ':' value ',' mapvals
+listvals 
+  : value
+  | value ',' listvals
+```
 
-### Planned
+### Value type definition
 
+```
+typedesc 
+  : STR
+  | NUM
+  | IDENT
+  | BOOL
+  | ANY
+  | '[' typedesc ']'
+  | ONEOF '(' oneofentries ')'
+  | '{' mapentries '}'
+oneofentries 
+  : typedesc
+  | typedesc ',' oneofentries
+mapentries 
+  : mapentry
+  | mapentry ',' mapentries
+mapentry 
+  : IDENT ':' typedesc
+  | IDENT '*' ':' typedesc
+  | IDENT ':' typedesc '=' value
+value 
+  : NUMBER
+  | STRING
+  | TRUE
+  | FALSE
+  | '{' mapvals '}'
+  | '{' '}'
+  | '[' listvals ']'
+  | '[' ']'
+mapvals 
+  : IDENT ':' value
+  | IDENT ':' value ',' mapvals
+listvals 
+  : value
+  | value ',' listvals
+```

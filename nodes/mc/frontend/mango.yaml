@@ -1,4 +1,0 @@
-mc_fe:
-  desc: Mango frontend
-  lang: mu
-  dual_if: ../mc.yaml

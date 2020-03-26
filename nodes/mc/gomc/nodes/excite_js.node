@@ -1,8 +1,0 @@
-[config]
-name excite_js
-command 'node ./js/nodes/excite/excite.js'
-env NODE_PATH ./libmango/js/:./libmango/js/node_modules
-
-[interface]
-input excite {message:string}
-output excited {message:string}
