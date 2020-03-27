@@ -46,6 +46,10 @@ func (n *CallbackNode) GetType() string {
 func (n *CallbackNode) GotAlive(tid string, t transport.MangoTransport) {
 }
 
+func (n *CallbackNode) SecsAgo() int {
+	return 0
+}
+
 func (n *CallbackNode) LastSeen() string {
 	return "now"
 }

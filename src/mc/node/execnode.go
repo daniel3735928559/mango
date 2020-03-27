@@ -88,13 +88,29 @@ func (n *ExecNode) Start(server string) {
 	}
 	n.Status = NODE_STATUS_RUNNING
 	n.Proc.Start()
+	go n.watch_proc()
+}
+
+func (n *ExecNode) watch_proc() {
+	n.Proc.Wait()
+	n.Status = NODE_STATUS_DEAD
 }
 
 func (n *ExecNode) Kill() {
 	n.Status = NODE_STATUS_DEAD
 }
 
+func (n *ExecNode) SecsAgo() int {
+	if n.Status == NODE_STATUS_DEAD {
+		return -1
+	}
+	return int((time.Now().UnixNano()-n.LastHeartbeat)/1000000000)
+}
+
 func (n *ExecNode) LastSeen() string {
+	if n.Status == NODE_STATUS_DEAD {
+		return "dead"
+	}
 	return fmt.Sprintf("%d secs ago", (time.Now().UnixNano()-n.LastHeartbeat)/1000000000)
 }
 

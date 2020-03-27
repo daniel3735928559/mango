@@ -25,6 +25,10 @@ func (n *DummyNode) GotAlive(identity string, transport transport.MangoTransport
 	n.Identity = identity
 }
 
+func (n *DummyNode) SecsAgo() int {
+	return 0
+}
+
 func (n *DummyNode) LastSeen() string {
 	return "now"
 }

@@ -88,9 +88,23 @@ func (mc *MangoCommander) Send(mid, command string, args map[string]interface{})
 			Data: args}}
 }
 
+func (mc *MangoCommander) reaper() {
+	for {
+		time.Sleep(60*time.Second)
+		for _, n := range mc.Registry.GetNodes() {
+			ago := n.SecsAgo()
+			if ago > 300 || ago < 0 {
+				fmt.Println("[MC] REAP",n.ToString())
+				mc.Registry.DelNode(n.GetId())
+			}
+		}
+	}
+}
+
 func (mc *MangoCommander) Run() {
 	go mc.zmqTransport.RunServer()
-	//go mc.socketTransport.RunServer(mc.Register)
+	//go mc.socketTransport.RunServer()
+	go mc.reaper()
 
 	// Start system EMP
 	time.Sleep(1*time.Second)
@@ -101,11 +115,11 @@ func (mc *MangoCommander) Run() {
 
 	for wrapped_msg := range mc.MessageInput {
 		msg := wrapped_msg.Message
-		fmt.Println("FROM",msg.Sender)
-		fmt.Println("DATA",msg.Data)
+		fmt.Println("[MC] FROM",msg.Sender)
+		fmt.Println("[MC] DATA",msg.Data)
 		src := mc.Registry.FindNodeById(msg.Cookie)
 		if src == nil {
-			fmt.Println("ERROR: node not found:", msg.Cookie)
+			fmt.Println("[MC] ERROR: node not found:", msg.Cookie)
 			continue
 		}
 		// Since we got here, the node we're talking to is
@@ -125,13 +139,13 @@ func (mc *MangoCommander) Run() {
 		}
 		incoming_val, err := value.FromObject(msg.Data)
 		if err != nil {
-			fmt.Println("ERROR: failed to convert incoming value",err)
+			fmt.Println("[MC] ERROR: failed to convert incoming value",err)
 			continue
 		}
 		
 		src_type := mc.Registry.FindNodeType(src.GetType())
 		if src_type == nil {
-			fmt.Println("ERROR: Could not find type: ",src.GetType())
+			fmt.Println("[MC] ERROR: Could not find type: ",src.GetType())
 			continue
 		}
 
@@ -139,24 +153,26 @@ func (mc *MangoCommander) Run() {
 		if src_type.Validate {
 			v, err := src_type.ValidateOutput(cmd, incoming_val)
 			if err != nil {
-				fmt.Println("ERROR: output message failed to validate from:",src_type.Name)
+				fmt.Println("[MC] ERROR: output message failed to validate from:",src_type.Name)
 				if incoming_val != nil {
-					fmt.Println("ERROR: Invalid message:",incoming_val.ToString())
+					fmt.Println("[MC] ERROR: Invalid message:",incoming_val.ToString())
 				}
 				continue
 			}
+			fmt.Println("[MC] VALIDATION SUCCESSFUL")
 			validated_val = v
 		}
 		
 		// If we made it here, the value is legitimate. Send
 		// on all routes originating at src:
 		routes := mc.Registry.FindRoutesBySrc(src.ToString())
+		fmt.Printf("[MC] SENDING ON %d ROUTES\n", len(routes))
 		for _, rt := range routes {
 			dst := mc.Registry.FindNodeByName(rt.Dest)
 			fmt.Println("[MC] DST",dst.ToString())
 			result_cmd, result_val, result_err := rt.Run(cmd, validated_val)
 			if result_err != nil {
-				fmt.Println("ERROR: failed running route", rt.ToString(), result_err)
+				fmt.Println("[MC] ERROR: failed running route", rt.ToString(), result_err)
 				continue
 			}
 				
@@ -167,7 +183,7 @@ func (mc *MangoCommander) Run() {
 			if dst_type.Validate {
 				v, err := dst_type.ValidateInput(result_cmd, result_val)
 				if err != nil {
-					fmt.Println("ERROR: route output failed validation", result_cmd, result_val, err)
+					fmt.Println("[MC] ERROR: route output failed validation", result_cmd, result_val, err)
 					continue
 				}
 				outval = v
@@ -194,7 +210,7 @@ func (mc *MangoCommander) MsgHandler(m serializer.Msg) error {
 			mc.Send(m.MessageId, retcmd, retval)
 		}
 	} else {
-		return fmt.Errorf("ERROR: Invalid command %s\n",m.Command)
+		return fmt.Errorf("[MC] ERROR: Invalid command %s\n",m.Command)
 	}
 	return nil
 }
@@ -223,7 +239,7 @@ func (mc *MangoCommander) RouteAdd(args map[string]interface{}) (string, map[str
 	}
 	routes, err := route.Parse(spec)
 	if err != nil {
-		return "", nil, fmt.Errorf("ERROR: Routes failed to parse: %v", err)
+		return "", nil, fmt.Errorf("[MC] ERROR: Routes failed to parse: %v", err)
 	}
 	ans := make([]interface{}, 0)
 	for i, rt := range routes {
@@ -243,13 +259,13 @@ func (mc *MangoCommander) StartNode(nodetype, group, name string, args []interfa
 		}
 		new_node := node.MakeExecNode(group, name, nodetype, fmt.Sprintf("%s %s", new_type.Command, strings.Join(nodeargs, " ")), new_type.Environment, mc.zmqTransport)
 		if new_node == nil {
-			return fmt.Errorf("ERROR Failed to make node: `%s`", name)
+			return fmt.Errorf("[MC] ERROR Failed to make node: `%s`", name)
 		}
 		
 		mc.Registry.AddNode(new_node)
 		new_node.Start(mc.zmqTransport.GetServerAddr())
 	} else {
-		return fmt.Errorf("ERROR Failed to find type: `%s`", nodetype)
+		return fmt.Errorf("[MC] ERROR Failed to find type: `%s`", nodetype)
 	}
 	return nil
 }
@@ -257,12 +273,12 @@ func (mc *MangoCommander) StartNode(nodetype, group, name string, args []interfa
 func (mc *MangoCommander) EMP(group, emp_file string) error {
 	data, err := ioutil.ReadFile(emp_file)
 	if err != nil {
-		return fmt.Errorf("ERROR reading EMP file: %s, %v",emp_file,err)
+		return fmt.Errorf("[MC] ERROR reading EMP file: %s, %v",emp_file,err)
 	}
 	emp_data := string(data)
 	e, err := emp.Parse(emp_data)
 	if err != nil {
-		return fmt.Errorf("ERROR parsing EMP: `%s` %v",emp_data, err)
+		return fmt.Errorf("[MC] ERROR parsing EMP: `%s` %v",emp_data, err)
 	}
 	new_nodes := make([]node.Node, 0)
 	new_routes := make([]*route.Route, 0)
@@ -277,18 +293,18 @@ func (mc *MangoCommander) EMP(group, emp_file string) error {
 			fmt.Printf("[MC] EXEC %s %s",new_type.Command, strings.Join(n.Args, " "))
 			new_node := node.MakeExecNode(group, n.Name, n.TypeName, fmt.Sprintf("%s %s", new_type.Command, strings.Join(n.Args, " ")), new_type.Environment, mc.zmqTransport)
 			if new_node == nil {
-				return fmt.Errorf("ERROR Failed to make node: `%s`", n.Name)
+				return fmt.Errorf("[MC] ERROR Failed to make node: `%s`", n.Name)
 			}
 			new_nodes = append(new_nodes, new_node)
 		} else {
-			return fmt.Errorf("ERROR Failed to find type: `%s`", n.TypeName)
+			return fmt.Errorf("[MC] ERROR Failed to find type: `%s`", n.TypeName)
 		}
 	}
 	route_idx := 0
 	for _, spec := range e.Routes {
 		routes, err := route.Parse(spec)
 		if err != nil {
-			return fmt.Errorf("ERROR: Routes failed to parse: %v", err)
+			return fmt.Errorf("[MC] ERROR: Routes failed to parse: %v", err)
 		}
 		for _, rt := range routes {
 			rt.Id = fmt.Sprintf("%s_r%d", group, route_idx)
@@ -315,7 +331,7 @@ func (mc *MangoCommander) EMP(group, emp_file string) error {
 func (mc *MangoCommander) RunEMP(args map[string]interface{}) (string, map[string]interface{}, error) {
 	group := args["group"].(string)
 	if _, ok := mc.Registry.Groups[group]; ok {
-		return "", nil, fmt.Errorf("ERROR: group already exists: `%s`" ,group)
+		return "", nil, fmt.Errorf("[MC] ERROR: group already exists: `%s`" ,group)
 	}
 	filename := args["filename"].(string)
 	err := mc.EMP(group, filename)
@@ -440,7 +456,7 @@ Options:
 -m --manifest manifest_file  A file from which to read the available node types`
 	args, err := docopt.ParseDoc(usage)
 	if err != nil {
-		fmt.Println("ERROR parsing args: ",err)
+		fmt.Println("[MC] ERROR parsing args: ",err)
 	}
 	
 	fmt.Println("hi")
@@ -479,7 +495,7 @@ Options:
 	}
 		manifest_data, err := ioutil.ReadFile(manifest_filename)
 	if err != nil {
-		fmt.Println("ERROR reading manifest", manifest_filename, err)
+		fmt.Println("[MC] ERROR reading manifest", manifest_filename, err)
 		return
 	}
 	for _, line := range strings.Split(string(manifest_data), "\n") {
@@ -489,12 +505,12 @@ Options:
 		}
 		nodetype_data, err := ioutil.ReadFile(line)
 		if err != nil {
-			fmt.Println("ERROR reading node type file", manifest_filename, err)
+			fmt.Println("[MC] ERROR reading node type file", manifest_filename, err)
 			return
 		}
 		nt, err := nodetype.Parse(string(nodetype_data))
 		if err != nil {
-			fmt.Println("Failed parsing node type: ", string(nodetype_data), err)
+			fmt.Println("[MC] ERROR Failed parsing node type: ", string(nodetype_data), err)
 			return
 		}
 		MC.Registry.AddNodeType(nt)

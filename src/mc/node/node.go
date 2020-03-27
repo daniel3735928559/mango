@@ -16,6 +16,7 @@ const (
 
 type Node interface {
 	GotAlive(identity string, transport transport.MangoTransport)
+	SecsAgo() int
 	LastSeen() string
 	GetId() string
 	GetGroup() string

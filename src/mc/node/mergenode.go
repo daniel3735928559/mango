@@ -54,6 +54,10 @@ func (n *MergeResultNode) GotAlive(identity string, transport transport.MangoTra
 	n.Identity = identity
 }
 
+func (n *MergeResultNode) SecsAgo() int {
+	return 0
+}
+
 func (n *MergeResultNode) LastSeen() string {
 	return "now"
 }
@@ -117,6 +121,10 @@ func (n *MergeInputNode) GetGroup() string {
 
 func (n *MergeInputNode) GotAlive(identity string, transport transport.MangoTransport) {}
 
+
+func (n *MergeInputNode) SecsAgo() int {
+	return 0
+}
 
 func (n *MergeInputNode) LastSeen() string {
 	return "now"

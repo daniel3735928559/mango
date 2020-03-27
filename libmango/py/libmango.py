@@ -1,4 +1,4 @@
-import io, re, time, signal, os, random
+import io, re, time, signal, os, random, threading
 from serialiser import *
 from dataflow import *
 from transport import *
@@ -27,6 +27,22 @@ class m_node:
             self.dataflows[s] = self.dataflow
             self.poller.register(s,zmq.POLLIN)
 
+            self.hb_server = self.context.socket(zmq.ROUTER)
+            self.hb_server.bind("inproc://heartbeat")
+            self.add_socket(self.hb_server, self.heartbeat_handler, self.heartbeat_handler)
+
+    def heartbeat_worker(self, context):
+        s = context.socket(zmq.DEALER)
+        s.connect("inproc://heartbeat")
+        while True:
+            time.sleep(30)
+            s.send_string("heartbeat")
+            
+    def heartbeat_handler(self):
+        self.hb_server.recv()
+        self.hb_server.recv()
+        self.m_send("alive",{})
+            
     def add_socket(self, sock, recv_cb, err_cb):
         dataflow = lambda: None
         dataflow.recv = recv_cb
@@ -78,6 +94,10 @@ class m_node:
             print("[LIBMANGO.PY] [{}:{} {} DEBUG] ".format(caller.filename, caller.lineno, self.node_id),*args)
     
     def run(self,f=None):
+        self.heartbeat_thread = threading.Thread(target=self.heartbeat_worker, args=(self.context,))
+        self.heartbeat_thread.daemon = True
+        self.heartbeat_thread.start()
+        
         if not self.server is None:
             self.ready()
         while True:

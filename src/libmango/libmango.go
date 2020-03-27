@@ -267,7 +267,7 @@ func (n *Node) run() {
 }
 
 func (n *Node) heartbeat_worker() {
-	ticker := time.NewTicker(10*time.Second)
+	ticker := time.NewTicker(30*time.Second)
 	for {
 		select {
 		case <-ticker.C:
