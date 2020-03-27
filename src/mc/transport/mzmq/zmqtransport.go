@@ -39,8 +39,17 @@ func (t *ZMQTransport) RunServer() {
 	t.Socket, _ = zmq.NewSocket(zmq.ROUTER)
 	t.Socket.Bind(fmt.Sprintf("tcp://*:%d", t.Port))
 	for {
-		identity, _ := t.Socket.Recv(0)
-		data, _ := t.Socket.Recv(0)
+		rxmsg, err := t.Socket.RecvMessage(0)
+		if err != nil {
+			fmt.Println("[zmqtransport.go] RX error: ", err)
+			continue
+		}
+		if len(rxmsg) != 2 {
+			fmt.Println("[zmqtransport.go] RX ill-formed message: ", len(rxmsg), rxmsg)
+			continue
+		}
+		identity := rxmsg[0]
+		data := rxmsg[1]
 		fmt.Println("[zmqtransport.go] RX",identity,data)
 		msg_ptr, err := serializer.Deserialize(data)
 		if err != nil || msg_ptr == nil {

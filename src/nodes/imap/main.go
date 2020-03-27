@@ -140,6 +140,7 @@ func (mi *MboxInfo) fetch() []MailMessage {
 	seqset.AddRange(uint32(mi.last_seqnum+1), mbox.Messages)
 
 	var section imap.BodySectionName
+	section.Peek = true
 	messages := make(chan *imap.Message, 10)
 	done := make(chan error, 1)
 	go func() {
@@ -160,7 +161,7 @@ func (mi *MboxInfo) fetch() []MailMessage {
 		
 		r := msg.GetBody(&section)
 		if r == nil {
-			log.Fatal("Server didn't returned message body")
+			log.Fatal("body not found")
 		}
 		
 		// Create a new mail reader
