@@ -11,7 +11,7 @@ from dbus.mainloop.glib import DBusGMainLoop
 class jam(m_node):
     def __init__(self):
         super().__init__(debug=True)
-        self.interface.add_interface({'send':self.send,'sendto':self.send_to})
+        self.interface.add_interface({'finduser':self.finduser,'sendto':self.sendto,'sendconv':self.sendconv,'getconvs':self.getconvs,'getbuddies':self.getbuddies})
         # Setup socket for receiving messages
         self.purple_sock = self.context.socket(zmq.ROUTER)
         self.purple_sock.bind("inproc://purplerecv")
@@ -43,6 +43,12 @@ class jam(m_node):
         self.debug_print("jamming")
         self.run()
 
+    def buddy_by_name(self, name):
+        for b in self.buddies:
+            if b["name"] == name:
+                return "{} ({}) @{}".format(b["name"], b["alias"], b["account_id"])
+        return "[buddy not found]"
+        
     def purple_recv(self):
         rt,msg = self.purple_sock.recv_multipart()
         msg= json.loads(msg)
@@ -54,27 +60,56 @@ class jam(m_node):
     def purple_err(self):
         self.debug_print("PRPL DIED")
                         
-    def send(self, args):
-        candidates = process.extract({"name":args['to']},self.buddies,processor=lambda b: b['name'],limit=3)
-        candidates += process.extract({"alias":args['to']},self.buddies,processor=lambda b: b['alias'],limit=3)
+    def finduser(self, args):
+        candidates = process.extract({"name":args['name']},self.buddies,processor=lambda b: b['name'])
+        candidates += process.extract({"alias":args['name']},self.buddies,processor=lambda b: b['alias'])
         candidates = sorted([c for c in candidates if c[1] > self.match_quality_threshold],key=lambda c: c[1])
         self.debug_print("Filtered candidates:",candidates)
-        if len(candidates) == 1 or (len(candidates) == 2 and candidates[0][0] == candidates[1][0]):
-            buddy = candidates[0][0]
-        elif len(candidates) == 0:
-            self.debug_print("Target not found: {}".format(args['to']))
-            return
-        else:
-            self.debug_print("Ambiguous target: {}\nSome possible matches:\n{}".format(args['to'],"\n".join(["- Id: {}, Alias: {}, Quality: {}".format(c[0]['name'], c[0]['alias'], c[1]) for c in candidates])))
-            return
-        
-        conv = self.purple.PurpleConversationNew(1, int(buddy['account_id']), str(buddy['name']))
-        im = self.purple.PurpleConvIm(conv)
-        self.debug_print("SENDING",args,buddy,conv,im)
-        self.purple.PurpleConvImSend(im, args['msg'])
+        return "users",{"users":[{"id":str(c[0]["id"]),"name":c[0]["name"],"alias":c[0]["alias"]} for c in candidates]}
+                        
+    def sendto(self, args):
+        for b in self.buddies:
+            if str(b["id"]) == str(args["id"]):
+                conv = self.purple.PurpleConversationNew(1, int(b["account_id"]), str(b['name']))
+                im = self.purple.PurpleConvIm(conv)
+                self.debug_print("[JAM.PY] SENDING",args,b,conv,im)
+                self.purple.PurpleConvImSend(im, args['msg'])
 
-    def send_to(self, args):
-        im = self.purple.PurpleConvIm(int(args['conv']))
+    def sendconv(self, args):
+        try:
+            c = int(args['conv'])
+            chat = self.purple.PurpleConversationGetChatData(c)
+            if chat == 0:
+                im = self.purple.PurpleConvIm(c)
+                self.debug_print("SENDING",args,im)
+                self.purple.PurpleConvImSend(im, args['msg'])
+            else:
+                self.purple.PurpleConvChatSend(chat, args['msg'])
+        except:
+            pass
+        
+    def getbuddies(self, args):
+        bl = []
+        for b in self.buddies:
+            bl.append({"id":str(b["id"]),"name":b["name"],"alias":b["alias"],"account":str(b["account_id"])})
+        return "buddies",{"buddylist":bl}
+            
+    def getconvs(self, args):
+        cs = self.purple.PurpleGetConversations()
+        convs = []
+        for c in cs:
+            chat = self.purple.PurpleConversationGetChatData(c)
+            if chat == 0:
+                user = self.purple.PurpleConversationGetName(c)
+                convs.append({"id":str(c),"participants":[self.buddy_by_name(user)]})
+            else:
+                users = self.purple.PurpleConvChatGetUsers(chat)
+                usernames = []
+                for u in users:
+                    name = self.purple.PurpleConvChatCbGetName(u)
+                    usernames.append(self.buddy_by_name(name))
+                convs.append({"id":str(c),"participants":usernames})
+        return "convs",{"convs":convs}
         self.debug_print("SENDING",args,im)
         self.purple.PurpleConvImSend(im, args['msg'])
 

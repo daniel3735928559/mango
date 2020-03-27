@@ -9,6 +9,7 @@ nodes/excite_js.node
 nodes/excite_py.node
 nodes/excite_c.node
 nodes/jam.node
+nodes/otto.node
 nodes/checkemail.node
 nodes/dummy.node
 nodes/merge.node

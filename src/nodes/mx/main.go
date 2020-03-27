@@ -61,7 +61,7 @@ func sendrecv(srv, data string) string {
 
 func main() {
 	usage := `Usage: 
-  mx send <command> <args>...
+  mx send <command> [<args>...]
   mx start <nodetype> <nodegroup> <nodename> <nodeargs>...
   mx emp <group> <emp_file>
   mx nodes
@@ -71,6 +71,8 @@ func main() {
   mx disconnect
   mx help [<command>]
   mx list
+  mx clear
+  mx peek
   mx pop
   mx get <id>
 `
@@ -190,11 +192,17 @@ func main() {
 	} else if args["pop"].(bool) {
 		data := make(map[string]interface{})
 		data["operation"] = "pop"
-		bs, err := json.Marshal(data)
-		if err != nil {
-			fmt.Printf("ERROR: Failed to serialize data: %v\n",data)
-			os.Exit(1)
-		}
+		bs, _ := json.Marshal(data)
+		fmt.Println(sendrecv(agent_srv, string(bs)))
+	} else if args["peek"].(bool) {
+		data := make(map[string]interface{})
+		data["operation"] = "peek"
+		bs, _ := json.Marshal(data)
+		fmt.Println(sendrecv(agent_srv, string(bs)))
+	} else if args["clear"].(bool) {
+		data := make(map[string]interface{})
+		data["operation"] = "clear"
+		bs, _ := json.Marshal(data)
 		fmt.Println(sendrecv(agent_srv, string(bs)))
 	} else if args["get"].(bool) {
 		data := make(map[string]interface{})

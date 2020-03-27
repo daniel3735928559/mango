@@ -54,6 +54,8 @@ func NewMx() *MxAgent {
 	mx.handlers["routes"] = mx.Routes
 	mx.handlers["list"] = mx.List
 	mx.handlers["pop"] = mx.Pop
+	mx.handlers["peek"] = mx.Peek
+	mx.handlers["clear"] = mx.Clear
 	mx.handlers["get"] = mx.Get
 
 	n.DefaultHandler = mx.HandleFromWorld
@@ -63,7 +65,7 @@ func NewMx() *MxAgent {
 
 func (mx *MxAgent) HandleFromWorld(command string, args map[string]interface{}) (string, map[string]interface{}, error) {
 	fmt.Println("Got")
-	mx.MsgQueue = append(mx.MsgQueue, MxMsg{Command:command, Args:args})
+	mx.MsgQueue = append([]MxMsg{MxMsg{Command:command, Args:args}}, mx.MsgQueue...)
 	return "", nil, nil
 }
 
@@ -226,7 +228,7 @@ func (mx *MxAgent) List(req map[string]interface{}, rep chan string) {
 func (mx *MxAgent) Pop(req map[string]interface{}, rep chan string) {
 	if len(mx.MsgQueue) > 0 {
 		m := mx.MsgQueue[0]
-		bs, _ := json.Marshal(m.Args)
+		bs, _ := json.MarshalIndent(m.Args, "", "  ")
 		ans := fmt.Sprintf("%s %s", m.Command, string(bs))
 		mx.MsgQueue = mx.MsgQueue[1:]
 		rep <- ans
@@ -236,12 +238,31 @@ func (mx *MxAgent) Pop(req map[string]interface{}, rep chan string) {
 		close(rep)
 	}
 }
+func (mx *MxAgent) Peek(req map[string]interface{}, rep chan string) {
+	if len(mx.MsgQueue) > 0 {
+		m := mx.MsgQueue[0]
+		bs, _ := json.MarshalIndent(m.Args, "", "  ")
+		ans := fmt.Sprintf("%s\n%s", m.Command, string(bs))
+		rep <- ans
+		close(rep)
+	} else {
+		rep <- "No more messages"
+		close(rep)
+	}
+}
+func (mx *MxAgent) Clear(req map[string]interface{}, rep chan string) {
+	if len(mx.MsgQueue) > 0 {
+		mx.MsgQueue = make([]MxMsg, 0)
+		rep <- "No more messages"
+		close(rep)
+	}
+}
 func (mx *MxAgent) Get(req map[string]interface{}, rep chan string) {
 	idx, _ := strconv.Atoi(req["id"].(string))
 	if idx < len(mx.MsgQueue) {
 		m := mx.MsgQueue[idx]
 		bs, _ := json.Marshal(m.Args)
-		ans := fmt.Sprintf("%s %s %s", idx, m.Command, string(bs))
+		ans := fmt.Sprintf("%s", string(bs))
 		rep <- ans
 		close(rep)
 	} else {

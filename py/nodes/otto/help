@@ -1,0 +1,13 @@
+otto available commands: 
+	!away -- display current away message
+	!idle -- give idle time information (precise idle time up to 15 minutes)
+	!gag -- disable auto-replying with away messages
+	!ungag -- re-enable auto-replying with away messages
+	!listen -- Start receiving notification messages
+	!listen1 -- Receive the next notification messages
+	!unlisten -- Stop receiving notification messages
+	!joke -- tell a joke
+	!help -- display this message
+Notes: 
+	-- otto will autorespond to any message at most once every 900 seconds with the current away message if there is one (unless gagged).  
+	-- If not idle but currently marked away, this shall indicate uninterruptable work time during which I do not check messages
