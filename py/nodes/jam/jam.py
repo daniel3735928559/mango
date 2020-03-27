@@ -47,7 +47,9 @@ class jam(m_node):
         rt,msg = self.purple_sock.recv_multipart()
         msg= json.loads(msg)
         self.debug_print("[JAM.PY] MSG",msg)
-        self.m_send("recv",msg)
+        cmd = msg["command"]
+        del msg["command"]
+        self.m_send(cmd, msg)
         
     def purple_err(self):
         self.debug_print("PRPL DIED")
@@ -97,13 +99,62 @@ def run_recv_thread(ctx):
         name = purple.PurpleBuddyGetName(buddy)
         alias = purple.PurpleBuddyGetAlias(buddy)
         print("BUDDY NAME",name,"ALIAS",alias)
-        data = {"msg":message, "from":"{} ({})".format(name,alias), "conv":str(conv), "account":account}
+        data = {"command":"recv", "msg":message, "from":"{} ({})".format(name,alias), "conv":str(conv), "account":account}
         tx.send_string(json.dumps(data))
         print("sender: {} message: {}, account: {}, conversation: {}, flags: {}, conv: {}".format(sender,message,account,conv,flags,conv))
 
+    def _sent(account, recipient, message):
+        print(account)
+        buddy = purple.PurpleFindBuddy(account,recipient)
+        print("BUDDY",buddy)
+        name = purple.PurpleBuddyGetName(buddy)
+        alias = purple.PurpleBuddyGetAlias(buddy)
+        print("BUDDY NAME",name,"ALIAS",alias)
+        data = {"command":"send", "msg":message, "to":"{} ({})".format(name,alias), "account":account}
+        tx.send_string(json.dumps(data))
+
+    def _sentchat(account, message, chat_id):
+        print(account)
+        data = {"command":"send", "msg":message, "conv":str(chat_id), "account":account}
+        tx.send_string(json.dumps(data))
+
+    def _sign(buddy, online):
+        print("BUDDY",buddy)
+        name,alias = purple.PurpleBuddyGetName(buddy),purple.PurpleBuddyGetAlias(buddy)
+        print("BUDDY NAME",name,"ALIAS",alias)
+        data = {"command":"signon" if online else "signoff", "who":"{} ({})".format(name,alias)}
+        tx.send_string(json.dumps(data))
+
+    def _idle(buddy, oldidle, newidle):
+        if oldidle == newidle:
+            return
+        print("BUDDY",buddy)
+        name,alias = purple.PurpleBuddyGetName(buddy),purple.PurpleBuddyGetAlias(buddy)
+        print("BUDDY NAME",name,"ALIAS",alias)
+        data = {"command":"idle" if newidle else "unidle", "who":"{} ({})".format(name,alias)}
+        tx.send_string(json.dumps(data))
+
+
     # OLD
     bus.add_signal_receiver(_recv, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="ReceivedImMsg")
+    bus.add_signal_receiver(_recv, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="ReceivedChatMsg")
+    
+    bus.add_signal_receiver(_sent, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="SentImMsg")
+    bus.add_signal_receiver(_sentchat, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="SentChatMsg")
 
+    #bus.add_signal_receiver(_away, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="BuddyAway")
+    bus.add_signal_receiver(_idle, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="BuddyIdle")
+    bus.add_signal_receiver(lambda b: _sign(b, True), dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="BuddySignedOn")
+    bus.add_signal_receiver(lambda b: _sign(b, False), dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="BuddySignedOff")
+
+    # void (*buddy_away)(PurpleBuddy *buddy, PurpleStatus *old_status, PurpleStatus *status);
+    # void (*buddy_idle)(PurpleBuddy *buddy, gboolean old_idle, gboolean idle);
+    # void (*buddy_signed_off)(PurpleBuddy *buddy);
+    # void (*buddy_signed_on)(PurpleBuddy *buddy);
+
+
+
+    
     # NEW
     #purple.ReceivedImMsg.connect(_recv)
     
