@@ -7,6 +7,7 @@ import (
 	"strings"
 	"encoding/json"
 	"libmango"
+	docopt "github.com/docopt/docopt-go"
 	zmq "github.com/pebbe/zmq4"
 )
 
@@ -139,10 +140,13 @@ func (mx *MxAgent) Send(req map[string]interface{}, rep chan string) {
 }
 
 func (mx *MxAgent) Emp(req map[string]interface{}, rep chan string) {
+	fmt.Println(req["args"])
+	fmt.Println(req["args"].([]interface{}))
 	mx.node.Send("emp", map[string]interface{}{
 		"control":true,
 		"filename":req["empfile"].(string),
-		"group":req["group"].(string)})
+		"group":req["group"].(string),
+		"args":req["args"].([]interface{})})
 	fmt.Println("[MX AGENT] SENT")
 	rep <- "Sent"
 	close(rep)
@@ -308,6 +312,12 @@ func (mx *MxAgent) RunZmqServer(port int) {
 }
 
 func main() {
+	args, _ := docopt.ParseDoc(`Usage: agent <port>`)
+	port, err := strconv.Atoi(args["<port>"].(string))
+	if err != nil {
+		fmt.Println("<port> must be integer")
+		return
+	}
 	MX := NewMx()
-	MX.RunZmqServer(11313)
+	MX.RunZmqServer(port)
 }

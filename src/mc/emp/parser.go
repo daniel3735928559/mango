@@ -10,6 +10,7 @@ import (
 func (emp *EMP) ParseConfig(config_str string) error {
 	config_def := `Usage: 
   config name <name>
+  config param <name>
 `
 	config_args, err := shlex.Split(config_str)
 	if err != nil {
@@ -20,15 +21,19 @@ func (emp *EMP) ParseConfig(config_str string) error {
 	if err != nil {
 		return err
 	}
-	if name, ok := args["<name>"].(string); ok {
+	if args["name"].(bool) {
+		name, _ := args["<name>"].(string)
 		emp.Name = name
+	} else if args["param"].(bool) {
+		name, _ := args["<name>"].(string)
+		emp.ParamNames = append(emp.ParamNames, name)
 	}
 	return nil
 }
 
 func (emp *EMP) ParseNode(node_str string) error {
 	node_def := `Usage: 
-  node instance <type> <name> <args>...
+  node instance <type> <name> [<args>...]
   node dummy <name>
   node merge <name> <mergepoints>...
   node gen <name> <values>...
@@ -69,7 +74,8 @@ func (emp *EMP) ParseRoute(routes_str string) error {
 
 func Parse(emp_data string) (*EMP, error) {
 	mode := "none"
-	ans := &EMP{}
+	ans := &EMP{
+		ParamNames: make([]string, 0)}
 	for _, line := range strings.Split(emp_data, "\n") {
 		line = strings.TrimSpace(line)
 		if len(line) == 0 {

@@ -108,7 +108,7 @@ func (mc *MangoCommander) Run() {
 
 	// Start system EMP
 	time.Sleep(1*time.Second)
-	err := mc.EMP("system", "emp/system.emp")
+	err := mc.EMP("system", "emp/system.emp", map[string]string{"AGENT_PORT":"11313"})
 	if err != nil {
 		fmt.Println("Problem running system.emp:", err)
 	}
@@ -270,7 +270,7 @@ func (mc *MangoCommander) StartNode(nodetype, group, name string, args []interfa
 	return nil
 }
 
-func (mc *MangoCommander) EMP(group, emp_file string) error {
+func (mc *MangoCommander) EMP(group, emp_file string, args map[string]string) error {
 	data, err := ioutil.ReadFile(emp_file)
 	if err != nil {
 		return fmt.Errorf("[MC] ERROR reading EMP file: %s, %v",emp_file,err)
@@ -280,8 +280,21 @@ func (mc *MangoCommander) EMP(group, emp_file string) error {
 	if err != nil {
 		return fmt.Errorf("[MC] ERROR parsing EMP: `%s` %v",emp_data, err)
 	}
+
+	// Validate that all arguments were passed:
+	fmt.Println("EMP ARGS", args)
+	arg_replacements := make([]string, 0)
+	for _, param := range e.ParamNames {
+		if _, ok := args[param]; !ok {
+			return fmt.Errorf("[MC] ERROR parsing EMP: %s -- Argument `%s` not found", emp_data, param)
+		}
+		arg_replacements = append(arg_replacements, fmt.Sprintf("{%s}",param), args[param])
+	}
+	arg_replacer := strings.NewReplacer(arg_replacements...)
+	fmt.Println("made replacer")
+	
+	// Parse all the nodes
 	new_nodes := make([]node.Node, 0)
-	new_routes := make([]*route.Route, 0)
 	for _, n := range e.Nodes {
 		if n.TypeName == "dummy" {
 			new_dummy_node := node.MakeDummyNode(fmt.Sprintf("%s_%s",group,n.Name), group, n.Name, mc.MessageInput)
@@ -291,7 +304,12 @@ func (mc *MangoCommander) EMP(group, emp_file string) error {
 			new_nodes = append(new_nodes, new_merge_nodes...)
 		} else if new_type := mc.Registry.FindNodeType(n.TypeName); new_type != nil {
 			fmt.Printf("[MC] EXEC %s %s",new_type.Command, strings.Join(n.Args, " "))
-			new_node := node.MakeExecNode(group, n.Name, n.TypeName, fmt.Sprintf("%s %s", new_type.Command, strings.Join(n.Args, " ")), new_type.Environment, mc.zmqTransport)
+			new_args := make([]string, 0)
+			for _, a := range n.Args {
+				new_args = append(new_args, arg_replacer.Replace(a))
+			}
+			
+			new_node := node.MakeExecNode(group, n.Name, n.TypeName, fmt.Sprintf("%s %s", new_type.Command, strings.Join(new_args, " ")), new_type.Environment, mc.zmqTransport)
 			if new_node == nil {
 				return fmt.Errorf("[MC] ERROR Failed to make node: `%s`", n.Name)
 			}
@@ -300,6 +318,9 @@ func (mc *MangoCommander) EMP(group, emp_file string) error {
 			return fmt.Errorf("[MC] ERROR Failed to find type: `%s`", n.TypeName)
 		}
 	}
+
+	// Parse all the given routes
+	new_routes := make([]*route.Route, 0)
 	route_idx := 0
 	for _, spec := range e.Routes {
 		routes, err := route.Parse(spec)
@@ -334,7 +355,12 @@ func (mc *MangoCommander) RunEMP(args map[string]interface{}) (string, map[strin
 		return "", nil, fmt.Errorf("[MC] ERROR: group already exists: `%s`" ,group)
 	}
 	filename := args["filename"].(string)
-	err := mc.EMP(group, filename)
+	emp_args := make(map[string]string)
+	for _, a := range args["args"].([]interface{}) {
+		arg := a.(map[string]interface{})
+		emp_args[arg["name"].(string)] = arg["value"].(string)
+	}
+	err := mc.EMP(group, filename, emp_args)
 	return "", nil, err
 }
 

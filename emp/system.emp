@@ -1,9 +1,12 @@
+[config]
+param AGENT_PORT
+
 [nodes]
-instance excite_go an_exciter ''
-instance tester testing123 ''
+instance excite_go an_exciter
+instance tester testing123
 instance log system_log ./system.log
-instance notify alerter ''
-instance mx_agent cli ''
+instance notify alerter
+instance mx_agent cli {AGENT_PORT}
 
 [routes]
 system/testing123 > ? emp > system/mc

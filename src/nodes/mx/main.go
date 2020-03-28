@@ -63,7 +63,7 @@ func main() {
 	usage := `Usage: 
   mx send <command> [<args>...]
   mx start <nodetype> <nodegroup> <nodename> <nodeargs>...
-  mx emp <group> <emp_file>
+  mx emp <group> <emp_file> [<args>...]
   mx nodes
   mx types
   mx routes
@@ -113,6 +113,20 @@ func main() {
 		data["operation"] = "emp"
 		data["empfile"] = emp_path
 		data["group"] = args["<group>"].(string)
+		emp_args := make([]map[string]string, 0)
+		arg_name := ""
+		if len(args["<args>"].([]string)) % 2 != 0 {
+			fmt.Println("ERROR: Odd number of args. Expected <args> of the form `arg val arg val ...`")
+			os.Exit(1)
+		}
+		for i, arg := range args["<args>"].([]string) {
+			if i%2 == 0 {
+				arg_name = arg
+			} else {
+				emp_args = append(emp_args, map[string]string{"name":arg_name,"value":arg})
+			}
+		}
+		data["args"] = emp_args
 		bs, _ := json.Marshal(data)
 		send(agent_srv, string(bs))
 	} else if args["start"].(bool) {		

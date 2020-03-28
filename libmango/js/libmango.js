@@ -12,6 +12,7 @@ function MNode(debug){
     
     this.run = function(){
 	self.m_send("alive",{})
+	self.heartbeat_interval = setInterval(self.heartbeat, 30*1000)
     }
     
     this.dispatch = function(header,args){
@@ -32,10 +33,10 @@ function MNode(debug){
     }
 
     this.heartbeat = function(header,args){
-	self.m_send("alive",{},undefined,"system");
+	self.m_send("alive",{});
     }
 
-    this.make_header = function(name,mid,type){
+    this.make_header = function(name,mid){
 	ans = {'command':name,
 	       'cookie':this.node_id,
 	       'mid':mid ? mid : RandomId(),
@@ -47,9 +48,9 @@ function MNode(debug){
 	process.exit();
     }
 
-    this.m_send = function(name,msg,mid,type){
+    this.m_send = function(name,msg,mid){
 	console.log('[LIBMANGO.JS] sending',name,msg,mid)
-	header = self.make_header(name,mid,type)
+	header = self.make_header(name,mid)
 	self.dataflow.send(header,msg)
     }
     

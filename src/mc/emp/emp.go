@@ -14,9 +14,8 @@ type EMP struct {
 	Name string
 	Nodes []EMPNode
 	Routes []string
+	ParamNames []string
 }
-
-
 
 func (emp *EMP) Run() {
 	for n := range emp.Nodes {
