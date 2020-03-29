@@ -13,3 +13,4 @@ nodes/otto.node
 nodes/checkemail.node
 nodes/dummy.node
 nodes/merge.node
+nodes/sigjam.node
