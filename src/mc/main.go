@@ -18,10 +18,7 @@ import (
 	"io/ioutil"
 	"libmango"
 	// "libmango/transport/msocket"
-	// "encoding/json"
 )
-
-// Each server is responsible for registration and mapping node
 
 type MangoCommander struct {
 	zmqTransport *mzmq.ZMQTransport
@@ -31,47 +28,6 @@ type MangoCommander struct {
 	Registry *registry.Registry
 	Self node.Node
 }
-
-
-// func (n *MCNode) heartbeat_worker() {
-// 	for {
-// 		time.Sleep(5*time.Second)
-// 		n.Transport.Tx("heartbeat", []byte(""))
-// 	}
-// }
-
-// func (mc *MangoCommander) reap(n *MCNode) {
-	
-// }
-
-// func (mc *MangoCommander) reaperWorker() {	
-// 	for {
-// 		time.Sleep(5*time.Second)
-// 		for _, n := range mc.Nodes {
-// 			if n.State == 2 {
-// 				mc.reap(n)
-// 			}
-// 		}
-// 	}
-// }
-
-// func (mc *MangoCommander) Register(msg *serializer.MCMessage, t serializer.MCTransport) bool {
-// 	fmt.Println("Register")
-// 	// Peel off registration commands directly
-// 	var group string
-// 	// if group, ok = msg.Data.(map[string]interface{})["group"].(string); !ok {
-// 	// 	group = "root"
-// 	// }
-// 	group = "root"
-
-// 	new_node := &node.Node{
-// 		Name: msg.Sender,
-// 		Group: group,
-// 		Transport: t}
-// 	mc.Router.AddNode(new_node)
-
-// 	return true
-// }
 
 func (mc *MangoCommander) Send(mid, command string, args map[string]interface{}) {
 	if len(mid) == 0 {
@@ -168,7 +124,12 @@ func (mc *MangoCommander) Run() {
 		routes := mc.Registry.FindRoutesBySrc(src.ToString())
 		fmt.Printf("[MC] SENDING ON %d ROUTES\n", len(routes))
 		for _, rt := range routes {
-			dst := mc.Registry.FindNodeByName(rt.Dest)
+			fmt.Println("[MC] ROUTE",rt.ToString())
+			dst := mc.Registry.FindNodeByName(rt.GetDest())
+			if dst == nil {
+				fmt.Println("[MC] ERROR: destination node not found:", rt.GetDest())
+				continue
+			}
 			fmt.Println("[MC] DST",dst.ToString())
 			result_cmd, result_val, result_err := rt.Run(cmd, validated_val)
 			if result_err != nil {
@@ -177,8 +138,13 @@ func (mc *MangoCommander) Run() {
 			}
 				
 			outval := result_val
+			if outval == nil {
+				fmt.Println("[MC] Filtered out...moving along")
+				continue
+			}
 			
 			// Validate, if needed
+			fmt.Println("[MC] getting type",dst.GetType())
 			dst_type := mc.Registry.FindNodeType(dst.GetType())
 			if dst_type.Validate {
 				v, err := dst_type.ValidateInput(result_cmd, result_val)
@@ -237,7 +203,7 @@ func (mc *MangoCommander) RouteAdd(args map[string]interface{}) (string, map[str
 	for i := 0; i < 4; i++ {
 		id += fmt.Sprintf("%016x", rand.Uint64())
 	}
-	routes, err := route.Parse(spec)
+	routes, err := route.Parse(spec, group)
 	if err != nil {
 		return "", nil, fmt.Errorf("[MC] ERROR: Routes failed to parse: %v", err)
 	}
@@ -246,7 +212,7 @@ func (mc *MangoCommander) RouteAdd(args map[string]interface{}) (string, map[str
 		rt.Id = fmt.Sprintf("%s_%d", id, i)
 		rt.Group = group
 		mc.Registry.AddRoute(rt)
-		ans = append(ans, map[string]interface{}{"id":rt.Id,"src":rt.Source,"dst":rt.Dest,"spec":rt.ToString()})
+		ans = append(ans, map[string]interface{}{"id":rt.Id,"src":rt.GetSource(),"dst":rt.GetDest(),"spec":rt.ToString()})
 	}
 	return "routeinfo",map[string]interface{}{"routes":ans},nil
 }
@@ -323,7 +289,7 @@ func (mc *MangoCommander) EMP(group, emp_file string, args map[string]string) er
 	new_routes := make([]*route.Route, 0)
 	route_idx := 0
 	for _, spec := range e.Routes {
-		routes, err := route.Parse(spec)
+		routes, err := route.Parse(spec, group)
 		if err != nil {
 			return fmt.Errorf("[MC] ERROR: Routes failed to parse: %v", err)
 		}
@@ -413,7 +379,7 @@ func (mc *MangoCommander) FindRoutes(args map[string]interface{}) (string, map[s
 	
 	ans := map[string]interface{}{"routes":make([]interface{}, len(routes))}
 	for i, rt := range routes {
-		ans["routes"].([]interface{})[i] = map[string]interface{}{"src":rt.Source,"dst":rt.Dest,"id":rt.Id,"spec":rt.ToString()}
+		ans["routes"].([]interface{})[i] = map[string]interface{}{"src":rt.GetSource(),"dst":rt.GetDest(),"id":rt.Id,"spec":rt.ToString()}
 	}
 	return "routeinfo",ans,nil
 }

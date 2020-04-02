@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+	"sync"
 	"mc/serializer"
 	"mc/transport"
 )
@@ -14,6 +15,7 @@ type MergeResultNode struct {
 	Identity string
 	Inputs []*MergeInputNode
 	OutputChannel chan transport.WrappedMessage
+	resultMux *sync.Mutex
 }
 
 // The received node
@@ -33,7 +35,8 @@ func MakeMergeNode(group, name string, merge_inputs []string, ch chan transport.
 		Group: group,
 		Name: name,
 		Identity: identity,
-		OutputChannel: ch}
+		OutputChannel: ch,
+		resultMux: &sync.Mutex{}}
 	ans := []Node{output}
 	inputs := make([]*MergeInputNode, len(merge_inputs))
 	for i, mi_name := range merge_inputs {
@@ -87,16 +90,27 @@ func (n *MergeResultNode) ToString() string {
 }
 
 func (n *MergeResultNode) CheckReady(mid string) {
+	fmt.Println("[MC] MERGE CheckReady",&n)
+	n.resultMux.Lock()
+	defer n.resultMux.Unlock()
+	all := true
 	for _, input := range n.Inputs {
+		fmt.Println("FROM",input.GetName(),input.received)
 		if _, ok := input.received[mid]; !ok {
-			return
+			fmt.Println("[MC] MERGE Nothing yet from",input.GetName())
+			all = false
 		}
 	}
+	if !all {
+		return
+	}
+	fmt.Println("[MC] MERGING!")
 	ans := make(map[string]interface{})
 	for _, input := range n.Inputs {
 		ans[input.GetName()] = input.received[mid]
 		delete(input.received, mid)
 	}
+	fmt.Println("[MC] MERGED", ans)
 	wmsg := transport.WrappedMessage {
 		Identity: n.ToString(),
 		Transport: nil,

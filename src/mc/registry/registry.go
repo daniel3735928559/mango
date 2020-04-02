@@ -59,7 +59,7 @@ func (reg *Registry) GetRoutes() []*route.Route {
 func (reg *Registry) FindRoutesBySrc(src string) []*route.Route {
 	ans := make([]*route.Route, 0)
 	for _, rt := range reg.Routes {
-		if rt.Source == src {
+		if rt.GetSource() == src {
 			ans = append(ans, rt)
 		}
 	}
@@ -69,7 +69,7 @@ func (reg *Registry) FindRoutesBySrc(src string) []*route.Route {
 func (reg *Registry) FindRoutesByDst(dst string) []*route.Route {
 	ans := make([]*route.Route, 0)
 	for _, rt := range reg.Routes {
-		if rt.Dest == dst {
+		if rt.GetDest() == dst {
 			ans = append(ans, rt)
 		}
 	}
@@ -79,7 +79,7 @@ func (reg *Registry) FindRoutesByDst(dst string) []*route.Route {
 func (reg *Registry) FindRoutesBySrcDst(src string, dst string) []*route.Route {
 	ans := make([]*route.Route, 0)
 	for _, rt := range reg.Routes {
-		if rt.Source == src && rt.Dest == dst {
+		if rt.GetSource() == src && rt.GetDest() == dst {
 			ans = append(ans, rt)
 		}
 	}

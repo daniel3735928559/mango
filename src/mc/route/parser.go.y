@@ -25,6 +25,7 @@
 	script []*Statement
 	node string
 }
+%type<routes> parseroot
 %type<routes> route
 %type<node> node
 %type<transforms> transforms
@@ -54,42 +55,36 @@
 %left '['
 %left '.'
 %%
+parseroot : route
+{
+	$$ = nil
+	if l, ok := RouteParserlex.(*RouteLexer); ok {
+		l.result = $1
+	}
+}
+;
 route   : node '>' node
 {
 	// fmt.Println("C")
-	$$ = nil
-	if l, ok := RouteParserlex.(*RouteLexer); ok {
-		l.result = []*Route{&Route{Source: $1, Dest: $3}}
-	}
-}
-| node '<' node
-{
-	// fmt.Println("B")
-	$$ = nil
-	if l, ok := RouteParserlex.(*RouteLexer); ok {
-		l.result = []*Route{&Route{Source: $3, Dest: $1}}
-	}
+	$$  = []*Route{&Route{Source: $1, Dest: $3}}
 }
 | node '<' '>' node
 {
-	$$ = nil
-	if l, ok := RouteParserlex.(*RouteLexer); ok {
-		l.result = []*Route{
-			&Route{Source: $1, Dest: $4},
-			&Route{Source: $4, Dest: $1}}
-	}
+	$$ = []*Route{
+		&Route{Source: $1, Dest: $4},
+		&Route{Source: $4, Dest: $1}}
 }
 | node '>' transforms
 {
-	$$ = nil
-	// fmt.Println("A")
-	if l, ok := RouteParserlex.(*RouteLexer); ok {
-		l.result = []*Route{
-				    &Route{
-				    Source: $1,
-				    Dest: $3.Dest,
-				    Transforms: $3.Transforms}}
+	$$ = []*Route{
+		&Route{
+			Source: $1,
+			Dest: $3.Dest,
+			Transforms: $3.Transforms}}
 }
+| node '>' route
+{
+	$$ = append([]*Route{&Route{Source: $1, Dest: $3[0].Source}}, $3...)
 }
 ;
 node    : IDENT
@@ -101,7 +96,13 @@ node    : IDENT
   $$ = fmt.Sprintf("%s/%s",$1.literal, $3.literal)
 }
 ;
-transforms : transform '>' node
+transforms : transform '>' route
+{
+	$$ = &Route{
+		Dest: $3[0].Source,
+		Transforms: []*Transform{$1}}
+}
+| transform '>' node
 {
 	$$ = &Route{
 		Dest: $3,
@@ -189,6 +190,20 @@ transform_replace : '{' mapexprs '}'
 		Type: TR_REPLACE,
 		CommandReplace: $1.literal,
 		Replace: $3}
+}
+| '{' '}'
+{
+	$$ = &Transform{
+		Type: TR_REPLACE,
+		CommandReplace: "",
+		Replace: &Expression{Operation: OP_MAP, Args: []*Expression{}}}
+}
+| IDENT '{' '}'
+{
+	$$ = &Transform{
+		Type: TR_REPLACE,
+		CommandReplace: $1.literal,
+		Replace: &Expression{Operation: OP_MAP, Args: []*Expression{}}}
 }
 | IDENT
 {
@@ -543,7 +558,7 @@ dstexpr : IDENT
 }
 ;
 %%
-func Parse(exp string) ([]*Route, error) {
+func Parse(exp string, gp string) ([]*Route, error) {
 	l := new(RouteLexer)
 	lexerErrors := make([]string, 0)
 	l.lexerErrors = &lexerErrors
@@ -553,6 +568,9 @@ func Parse(exp string) ([]*Route, error) {
 	RouteParserParse(l)
 	if len(lexerErrors) > 0 {
 		return nil, errors.New(strings.Join(lexerErrors, "\n"))
+	}
+	for _, rt := range l.result {
+		rt.Group = gp
 	}
 	return l.result, nil
 }

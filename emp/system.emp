@@ -9,11 +9,11 @@ instance notify alerter
 instance mx_agent cli {AGENT_PORT}
 
 [routes]
-system/testing123 > ? emp > system/mc
-system/testing123 > = excite {message:raw()} > system/an_exciter
-system/testing123 > = log {source:"system/testing123", timestamp:now(), message:raw()} > system/system_log
-system/an_exciter > = log {source:"system/an_exciter", timestamp:now(), message:raw()} > system/system_log
-system/testing123 > = notify {title:"test",message:raw()} > system/alerter
-system/an_exciter > ? excited = notify {urgency:"high",title:"excitement",message:message} > system/alerter
-system/cli > ? { control == true } % { del control; } > system/mc
-system/mc  > system/cli
+testing123 > ? emp > mc
+testing123 > = excite {message:raw()} > an_exciter
+testing123 > = log {source:"system/testing123", timestamp:now(), message:raw()} > system_log
+an_exciter > = log {source:"system/an_exciter", timestamp:now(), message:raw()} > system_log
+testing123 > = notify {title:"test",message:raw()} > alerter
+an_exciter > ? excited = notify {urgency:"high",title:"excitement",message:message} > alerter
+cli > ? { control == true } % { del control; } > mc
+mc  > cli

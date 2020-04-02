@@ -8,12 +8,12 @@ import (
 
 func TestParserError(t *testing.T) {
         examples := map[string][]string{
-		"node0 >":[]string{"node0 > node1"},
-		"node0 <>":[]string{"node0 > node1", "node1 > node0"},
-		"node0 < {}":[]string{"node1 > node0"}}
+		"node0 >":[]string{"testgroup/node0 > testgroup/node1"},
+		"node0 <>":[]string{"testgroup/node0 > testgroup/node1", "testgroup/node1 > testgroup/node0"},
+		"node0 < {}":[]string{"testgroup/node1 > testgroup/node0"}}
         for s, ans := range examples {
 		fmt.Println("PARSING",s)
-		rs, _ := Parse(s)
+		rs, _ := Parse(s, "testgroup")
 		fmt.Println("RS",rs,ans)
 		if len(rs) > 0 {
 			t.Errorf("expected no routes, got: %d", len(rs))
@@ -23,12 +23,12 @@ func TestParserError(t *testing.T) {
 
 func TestParserWithoutTransform(t *testing.T) {
         examples := map[string][]string{
-		"node0 > node1":[]string{"node0 > node1"},
-		"node0 <> node1":[]string{"node0 > node1", "node1 > node0"},
-		"node0 < node1":[]string{"node1 > node0"}}
+		"node0 > node1":[]string{"testgroup/node0 > testgroup/node1"},
+		"node0 <> node1":[]string{"testgroup/node0 > testgroup/node1", "testgroup/node1 > testgroup/node0"},
+		"node0 < node1":[]string{"testgroup/node1 > testgroup/node0"}}
         for s, ans := range examples {
 		fmt.Println("PARSING",s)
-		rs, _ := Parse(s)
+		rs, _ := Parse(s, "testgroup")
 		fmt.Println("RS",rs)
 		for i, r := range rs {
 			fmt.Println(r.ToString())
@@ -39,15 +39,32 @@ func TestParserWithoutTransform(t *testing.T) {
         }
 }
 
+func TestParserMultiRouteWithoutTransform(t *testing.T) {
+        examples := map[string][]string{
+		"node0 > node1 > node2":[]string{"testgroup/node0 > testgroup/node1", "testgroup/node1 > testgroup/node2"},
+		"node0 > node1 <> node2":[]string{"testgroup/node0 > testgroup/node1", "testgroup/node1 > testgroup/node2", "testgroup/node2 > testgroup/node1"}}
+        for s, ans := range examples {
+		fmt.Println("PARSING",s)
+		rs, _ := Parse(s, "testgroup")
+		fmt.Println("RS",rs)
+		for i, r := range rs {
+			fmt.Println(r.ToString())
+			if r.ToString() != ans[i] {
+				t.Errorf("test %s ans %d: expected: %s, got: %s", s, i, ans[i], r.ToString())
+			}
+		}
+        }
+}
+
 func TestParserSingleSimpleTransforms(t *testing.T) {
 	fmt.Println("ASD")
         examples := map[string]string{
-		`src > = {key1:"val1"} > dst`:`src > replace {key1:"val1"} > dst`,
-		`src > ? {key1 == "val1"} > dst`:`src > pass if {key1 == "val1"} > dst`,
-		`src > % {key1 = "val1";} > dst`:`src > edit {key1 = "val1";} > dst`}
+		`src > = {key1:"val1"} > dst`:`testgroup/src > replace {key1:"val1"} > testgroup/dst`,
+		`src > ? {key1 == "val1"} > dst`:`testgroup/src > pass if {key1 == "val1"} > testgroup/dst`,
+		`src > % {key1 = "val1";} > dst`:`testgroup/src > edit {key1 = "val1";} > testgroup/dst`}
         for s, ans := range examples {
 		fmt.Println("PARSING",s)
-		rs, _ := Parse(s)
+		rs, _ := Parse(s, "testgroup")
 		fmt.Println(rs)
 		if len(rs) != 1 {
 			t.Errorf("Expected 1 route in %s; got %d", s, len(rs))
@@ -64,12 +81,12 @@ func TestParserSingleSimpleTransforms(t *testing.T) {
 func TestParserSingleComplexTransforms(t *testing.T) {
 	fmt.Println("ASD")
         examples := map[string]string{
-		`src > ? {!(key2 >= 4 || key2 < 8)} = {key1:"val1",key2:-99,key3:1+1+1^6} > dst`: `src > replace {key1:"val1",key2:-99,key3:1 + 1 + 1 ^ 6} if {!key2 >= 4 || key2 < 8} > dst`,
-		`src > ? {key1 == "val1" && !(key2 == 4 || key2 >= 8)} > dst`: `src > pass if {key1 == "val1" && !key2 == 4 || key2 >= 8} > dst`,
-		`src > ? {key1 == "val1" && !(key2 <= 4 || key3 < -100.9)} % {key1 = "val1"; key2[4] = key3.key4[1+1];} > dst`: `src > edit {key1 = "val1";key2[4] = key3.key4[1 + 1];} if {key1 == "val1" && !key2 <= 4 || key3 < -100.9} > dst`}
+		`src > ? {!(key2 >= 4 || key2 < 8)} = {key1:"val1",key2:-99,key3:1+1+1^6} > dst`: `testgroup/src > replace {key1:"val1",key2:-99,key3:1 + 1 + 1 ^ 6} if {!key2 >= 4 || key2 < 8} > testgroup/dst`,
+		`src > ? {key1 == "val1" && !(key2 == 4 || key2 >= 8)} > dst`: `testgroup/src > pass if {key1 == "val1" && !key2 == 4 || key2 >= 8} > testgroup/dst`,
+		`src > ? {key1 == "val1" && !(key2 <= 4 || key3 < -100.9)} % {key1 = "val1"; key2[4] = key3.key4[1+1];} > dst`: `testgroup/src > edit {key1 = "val1";key2[4] = key3.key4[1 + 1];} if {key1 == "val1" && !key2 <= 4 || key3 < -100.9} > testgroup/dst`}
         for s, ans := range examples {
 		fmt.Println("PARSING",s)
-		rs, _ := Parse(s)
+		rs, _ := Parse(s, "testgroup")
 		fmt.Println(rs)
 		if len(rs) != 1 {
 			t.Errorf("Expected 1 route in %s; got %d", s, len(rs))
@@ -86,12 +103,12 @@ func TestParserSingleComplexTransforms(t *testing.T) {
 func TestParserSingleComplexCollectionTransforms(t *testing.T) {
 	fmt.Println("ASD")
         examples := map[string]string{
-		`src > % {key2.key3.key4 += 5;} > dst`: `src > edit {key2.key3.key4 = key2.key3.key4 + 5;} > dst`,
-		`src > % {key2[9].key4 += 5;} > dst`: `src > edit {key2[9].key4 = key2[9].key4 + 5;} > dst`,
-		`src > % {key2.key3[1] += 5;} > dst`: `src > edit {key2.key3[1] = key2.key3[1] + 5;} > dst`}
+		`src > % {key2.key3.key4 += 5;} > dst`: `testgroup/src > edit {key2.key3.key4 = key2.key3.key4 + 5;} > testgroup/dst`,
+		`src > % {key2[9].key4 += 5;} > dst`: `testgroup/src > edit {key2[9].key4 = key2[9].key4 + 5;} > testgroup/dst`,
+		`src > % {key2.key3[1] += 5;} > dst`: `testgroup/src > edit {key2.key3[1] = key2.key3[1] + 5;} > testgroup/dst`}
         for s, ans := range examples {
 		fmt.Println("PARSING",s)
-		rs, _ := Parse(s)
+		rs, _ := Parse(s, "testgroup")
 		fmt.Println(rs)
 		if len(rs) != 1 {
 			t.Errorf("Expected 1 route in %s; got %d", s, len(rs))
@@ -116,7 +133,7 @@ func RunMessagesThroughRoutes(t *testing.T, routes []string, messages []map[stri
 	route_list := make([]*Route, 0)
 	
 	for _, routespec := range routes {
-		rts, err := Parse(routespec)
+		rts, err := Parse(routespec, "testgroup")
 		if err != nil {
 			t.Errorf(fmt.Sprintf("Error parsing route: %s, Error: %v", routespec, err))
 		} else {
@@ -126,7 +143,7 @@ func RunMessagesThroughRoutes(t *testing.T, routes []string, messages []map[stri
 	
 	results := make(map[string][]string)
 	for _, rt := range route_list {
-		results[rt.Dest] = make([]string, 0)
+		results[rt.GetDest()] = make([]string, 0)
 		for _, msg := range messages {
 			args, err := value.FromObject(msg)
 			if err != nil {
@@ -134,13 +151,16 @@ func RunMessagesThroughRoutes(t *testing.T, routes []string, messages []map[stri
 			}
 			new_cmd, new_args, _ := rt.Run("test_cmd", args)
 			if new_args != nil {
-				fmt.Printf("%s recvd %s\n",rt.Dest,new_args.ToString())
-				results[rt.Dest] = append(results[rt.Dest], fmt.Sprintf("%s %s", new_cmd, new_args.ToString()))
+				fmt.Printf("%s recvd %s\n",rt.GetDest(),new_args.ToString())
+				results[rt.GetDest()] = append(results[rt.GetDest()], fmt.Sprintf("%s %s", new_cmd, new_args.ToString()))
 			}
 		}
 	}
 
 	for dst_node, answers := range results {
+		if dst_node[:len("testgroup/")] == "testgroup/" {
+			dst_node = dst_node[len("testgroup/"):]
+		}
 		if len(answers) != len(expected[dst_node]) {
 			t.Errorf("Expected %s to receive %d messages; got: %d", dst_node, len(expected[dst_node]), len(answers))
 		} else {

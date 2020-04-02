@@ -120,9 +120,9 @@ const RouteParserEofCode = 1
 const RouteParserErrCode = 2
 const RouteParserInitialStackSize = 16
 
-//line src/mc/route/parser.go.y:545
+//line src/mc/route/parser.go.y:560
 
-func Parse(exp string) ([]*Route, error) {
+func Parse(exp string, gp string) ([]*Route, error) {
 	l := new(RouteLexer)
 	lexerErrors := make([]string, 0)
 	l.lexerErrors = &lexerErrors
@@ -132,6 +132,9 @@ func Parse(exp string) ([]*Route, error) {
 	RouteParserParse(l)
 	if len(lexerErrors) > 0 {
 		return nil, errors.New(strings.Join(lexerErrors, "\n"))
+	}
+	for _, rt := range l.result {
+		rt.Group = gp
 	}
 	return l.result, nil
 }
@@ -145,187 +148,189 @@ var RouteParserExca = [...]int{
 
 const RouteParserPrivate = 57344
 
-const RouteParserLast = 893
+const RouteParserLast = 870
 
 var RouteParserAct = [...]int{
 
-	81, 52, 80, 44, 37, 153, 82, 32, 38, 146,
-	33, 34, 145, 6, 104, 60, 3, 78, 16, 31,
-	128, 78, 149, 93, 94, 95, 96, 97, 90, 91,
-	92, 35, 77, 36, 147, 89, 77, 79, 98, 39,
-	83, 84, 127, 85, 86, 42, 5, 4, 14, 88,
-	40, 131, 103, 99, 87, 102, 105, 3, 54, 106,
-	107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-	117, 118, 119, 120, 121, 122, 123, 124, 51, 126,
-	43, 10, 11, 12, 8, 130, 29, 30, 25, 22,
-	134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
-	60, 28, 68, 53, 144, 148, 78, 73, 74, 69,
-	70, 72, 71, 63, 64, 24, 21, 19, 23, 125,
-	20, 77, 60, 59, 68, 101, 100, 3, 78, 15,
-	76, 75, 152, 61, 62, 63, 64, 65, 66, 67,
-	45, 58, 41, 77, 18, 46, 17, 164, 9, 56,
-	55, 165, 73, 74, 69, 70, 72, 71, 49, 47,
-	48, 1, 0, 50, 0, 0, 166, 60, 59, 68,
-	0, 0, 0, 78, 0, 76, 75, 0, 61, 62,
-	63, 64, 65, 66, 67, 2, 58, 0, 77, 0,
-	7, 13, 129, 73, 74, 69, 70, 72, 71, 0,
-	26, 0, 27, 0, 0, 0, 0, 0, 60, 59,
-	68, 0, 0, 0, 78, 0, 76, 75, 0, 61,
-	62, 63, 64, 65, 66, 67, 0, 58, 0, 77,
-	0, 0, 132, 73, 74, 69, 70, 72, 71, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 60, 59,
-	68, 0, 0, 0, 78, 0, 76, 75, 0, 61,
-	62, 63, 64, 65, 66, 67, 0, 58, 0, 77,
-	162, 73, 74, 69, 70, 72, 71, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 60, 59, 68, 0,
-	0, 0, 78, 0, 76, 75, 0, 61, 62, 63,
-	64, 65, 66, 67, 0, 58, 0, 77, 161, 73,
-	74, 69, 70, 72, 71, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 60, 59, 68, 0, 0, 0,
-	78, 0, 76, 75, 0, 61, 62, 63, 64, 65,
-	66, 67, 0, 58, 0, 77, 160, 73, 74, 69,
-	70, 72, 71, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 60, 59, 68, 0, 0, 0, 78, 0,
-	76, 75, 0, 61, 62, 63, 64, 65, 66, 67,
-	0, 58, 0, 77, 159, 73, 74, 69, 70, 72,
-	71, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	60, 59, 68, 0, 0, 0, 78, 0, 76, 75,
-	0, 61, 62, 63, 64, 65, 66, 67, 0, 58,
-	0, 77, 158, 73, 74, 69, 70, 72, 71, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 60, 59,
-	68, 0, 0, 0, 78, 0, 76, 75, 0, 61,
-	62, 63, 64, 65, 66, 67, 0, 58, 0, 77,
-	157, 73, 74, 69, 70, 72, 71, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 60, 59, 68, 0,
-	0, 0, 78, 0, 76, 75, 0, 61, 62, 63,
-	64, 65, 66, 67, 0, 58, 0, 77, 156, 73,
-	74, 69, 70, 72, 71, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 60, 59, 68, 0, 0, 0,
-	78, 0, 76, 75, 0, 61, 62, 63, 64, 65,
-	66, 67, 0, 58, 0, 77, 155, 73, 74, 69,
-	70, 72, 71, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 60, 59, 68, 0, 0, 0, 78, 0,
-	76, 75, 0, 61, 62, 63, 64, 65, 66, 67,
-	0, 58, 0, 77, 154, 73, 74, 69, 70, 72,
-	71, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	60, 59, 68, 0, 0, 0, 78, 163, 76, 75,
-	0, 61, 62, 63, 64, 65, 66, 67, 0, 58,
-	0, 77, 73, 74, 69, 70, 72, 71, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 60, 59, 68,
-	0, 0, 0, 78, 151, 76, 75, 0, 61, 62,
-	63, 64, 65, 66, 67, 0, 58, 0, 77, 73,
-	74, 69, 70, 72, 71, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 60, 59, 68, 0, 0, 0,
-	78, 0, 76, 75, 150, 61, 62, 63, 64, 65,
-	66, 67, 0, 58, 0, 77, 73, 74, 69, 70,
-	72, 71, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 60, 59, 68, 0, 0, 133, 78, 0, 76,
-	75, 0, 61, 62, 63, 64, 65, 66, 67, 0,
-	58, 0, 77, 73, 74, 69, 70, 72, 71, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 60, 59,
-	68, 0, 0, 57, 78, 0, 76, 75, 0, 61,
-	62, 63, 64, 65, 66, 67, 0, 58, 0, 77,
-	73, 74, 69, 70, 72, 71, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 60, 0, 68, 0, 0,
-	0, 78, 0, 76, 75, 0, 61, 62, 63, 64,
-	65, 66, 67, 0, 58, 0, 77, 69, 70, 72,
-	71, 37, 0, 0, 32, 38, 0, 33, 34, 0,
-	60, 0, 68, 0, 0, 0, 78, 0, 76, 75,
-	0, 61, 62, 63, 64, 65, 66, 67, 35, 58,
-	36, 77, 0, 0, 0, 0, 39, 60, 0, 68,
-	0, 0, 42, 78, 0, 0, 0, 40, 61, 62,
-	63, 64, 65, 66, 67, 60, 58, 68, 77, 0,
-	0, 78, 0, 0, 0, 0, 61, 62, 63, 64,
-	0, 60, 0, 68, 58, 0, 77, 78, 0, 0,
-	0, 0, 61, 62, 63, 64, 0, 0, 0, 0,
-	0, 0, 77,
+	84, 54, 83, 46, 76, 77, 72, 73, 75, 74,
+	157, 96, 97, 98, 99, 100, 93, 94, 95, 63,
+	33, 71, 85, 92, 150, 81, 101, 79, 78, 81,
+	64, 65, 66, 67, 68, 69, 70, 149, 61, 82,
+	80, 102, 86, 87, 80, 88, 89, 7, 107, 6,
+	5, 91, 17, 15, 132, 56, 24, 105, 56, 108,
+	153, 151, 110, 111, 112, 113, 114, 115, 116, 117,
+	118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+	128, 131, 130, 109, 63, 106, 55, 90, 134, 59,
+	81, 21, 26, 138, 139, 140, 141, 142, 143, 144,
+	145, 146, 147, 57, 63, 80, 71, 53, 152, 45,
+	81, 76, 77, 72, 73, 75, 74, 66, 67, 25,
+	31, 32, 56, 58, 4, 80, 63, 62, 71, 148,
+	129, 104, 81, 103, 79, 78, 156, 64, 65, 66,
+	67, 68, 69, 70, 4, 61, 2, 80, 12, 13,
+	14, 168, 10, 16, 23, 169, 76, 77, 72, 73,
+	75, 74, 20, 47, 28, 43, 48, 18, 11, 1,
+	170, 63, 62, 71, 0, 9, 0, 81, 0, 79,
+	78, 22, 64, 65, 66, 67, 68, 69, 70, 19,
+	61, 0, 80, 30, 0, 0, 133, 76, 77, 72,
+	73, 75, 74, 51, 49, 50, 0, 0, 52, 0,
+	0, 0, 63, 62, 71, 0, 3, 0, 81, 0,
+	79, 78, 8, 64, 65, 66, 67, 68, 69, 70,
+	0, 61, 27, 80, 29, 0, 136, 76, 77, 72,
+	73, 75, 74, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 63, 62, 71, 0, 0, 0, 81, 0,
+	79, 78, 0, 64, 65, 66, 67, 68, 69, 70,
+	0, 61, 0, 80, 166, 76, 77, 72, 73, 75,
+	74, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	63, 62, 71, 0, 0, 0, 81, 0, 79, 78,
+	0, 64, 65, 66, 67, 68, 69, 70, 0, 61,
+	0, 80, 165, 76, 77, 72, 73, 75, 74, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 63, 62,
+	71, 0, 0, 0, 81, 0, 79, 78, 0, 64,
+	65, 66, 67, 68, 69, 70, 0, 61, 0, 80,
+	164, 76, 77, 72, 73, 75, 74, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 63, 62, 71, 0,
+	0, 0, 81, 0, 79, 78, 0, 64, 65, 66,
+	67, 68, 69, 70, 0, 61, 0, 80, 163, 76,
+	77, 72, 73, 75, 74, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 63, 62, 71, 0, 0, 0,
+	81, 0, 79, 78, 0, 64, 65, 66, 67, 68,
+	69, 70, 0, 61, 0, 80, 162, 76, 77, 72,
+	73, 75, 74, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 63, 62, 71, 0, 0, 0, 81, 0,
+	79, 78, 0, 64, 65, 66, 67, 68, 69, 70,
+	0, 61, 0, 80, 161, 76, 77, 72, 73, 75,
+	74, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	63, 62, 71, 0, 0, 0, 81, 0, 79, 78,
+	0, 64, 65, 66, 67, 68, 69, 70, 0, 61,
+	0, 80, 160, 76, 77, 72, 73, 75, 74, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 63, 62,
+	71, 0, 0, 0, 81, 0, 79, 78, 0, 64,
+	65, 66, 67, 68, 69, 70, 0, 61, 0, 80,
+	159, 76, 77, 72, 73, 75, 74, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 63, 62, 71, 0,
+	0, 0, 81, 0, 79, 78, 0, 64, 65, 66,
+	67, 68, 69, 70, 0, 61, 0, 80, 158, 76,
+	77, 72, 73, 75, 74, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 63, 62, 71, 0, 0, 0,
+	81, 167, 79, 78, 0, 64, 65, 66, 67, 68,
+	69, 70, 0, 61, 0, 80, 76, 77, 72, 73,
+	75, 74, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 63, 62, 71, 0, 0, 0, 81, 155, 79,
+	78, 0, 64, 65, 66, 67, 68, 69, 70, 0,
+	61, 0, 80, 76, 77, 72, 73, 75, 74, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 63, 62,
+	71, 0, 0, 0, 81, 0, 79, 78, 154, 64,
+	65, 66, 67, 68, 69, 70, 0, 61, 0, 80,
+	76, 77, 72, 73, 75, 74, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 63, 62, 71, 0, 0,
+	137, 81, 0, 79, 78, 0, 64, 65, 66, 67,
+	68, 69, 70, 0, 61, 0, 80, 76, 77, 72,
+	73, 75, 74, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 63, 62, 71, 0, 0, 60, 81, 0,
+	79, 78, 0, 64, 65, 66, 67, 68, 69, 70,
+	0, 61, 0, 80, 72, 73, 75, 74, 39, 0,
+	0, 34, 40, 0, 35, 36, 0, 63, 0, 71,
+	0, 0, 0, 81, 0, 79, 78, 0, 64, 65,
+	66, 67, 68, 69, 70, 37, 61, 38, 80, 0,
+	0, 39, 0, 41, 34, 40, 0, 35, 36, 44,
+	63, 0, 71, 0, 42, 135, 81, 0, 0, 0,
+	0, 64, 65, 66, 67, 68, 69, 70, 37, 61,
+	38, 80, 63, 0, 71, 0, 41, 0, 81, 0,
+	0, 0, 44, 64, 65, 66, 67, 42, 63, 0,
+	71, 61, 0, 80, 81, 0, 0, 0, 0, 64,
+	65, 66, 67, 0, 0, 0, 0, 0, 0, 80,
 }
 var RouteParserPact = [...]int{
 
-	123, -1000, 11, -28, 53, 12, 125, -1000, -1000, -18,
-	113, 85, 84, -1000, 123, -1000, 53, 57, 797, 49,
-	-1000, 154, 47, -1000, 99, 27, -1000, -1000, -1000, 85,
-	84, 711, -1000, -1000, -1000, 99, 797, -44, -1000, 797,
-	797, -1000, 797, 797, 22, 154, 5, 122, 121, -1000,
-	-1000, 154, 20, -23, 99, -1000, -1000, -1000, 797, 797,
+	140, -1000, -1000, 14, 6, 120, 17, 149, 14, -1000,
+	-1000, 16, 158, 150, 88, 140, -1000, 120, 91, 797,
+	78, -1000, 199, 76, -1000, 54, 72, -1000, -1000, 14,
+	-1000, 150, 88, 715, -1000, -1000, -1000, 118, 797, -28,
+	-1000, 797, 797, -1000, 797, 797, 55, 199, -7, 129,
+	127, -1000, -1000, 199, 53, -1000, 11, 51, -1000, -1000,
+	-1000, 797, 797, 797, 797, 797, 797, 797, 797, 797,
 	797, 797, 797, 797, 797, 797, 797, 797, 797, 797,
-	797, 797, 797, 797, 797, 797, 797, 115, 797, 10,
-	-14, 140, 0, -16, 181, -16, 674, -1000, -1000, 797,
-	797, 797, 797, 797, 797, 797, 797, 797, 797, 100,
-	-37, -40, 2, -1000, 797, -10, 844, 637, -16, 73,
-	73, -12, -12, 828, 828, 828, -12, 810, 810, 810,
-	810, 783, 783, 810, 810, -1000, 600, -1000, -1000, 797,
-	-46, -1000, -1000, -1000, 525, 487, 449, 411, 373, 335,
-	297, 259, 221, 563, -1000, -1000, -1000, -1000, 95, -1000,
-	797, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
-	-1000, -1000, -1000, -1000, 99, 748, -1000,
+	126, 797, 49, 20, 144, 764, -4, 185, -4, 678,
+	-1000, -1000, 797, 797, 797, 797, 797, 797, 797, 797,
+	797, 797, 125, -12, -25, 29, -1000, 797, 28, -1000,
+	821, 641, -4, 77, 77, 57, 57, 805, 805, 805,
+	57, 783, 783, 783, 783, 750, 750, 783, 783, -1000,
+	604, -1000, -1000, 797, -41, -1000, -1000, -1000, 529, 491,
+	453, 415, 377, 339, 301, 263, 225, 567, -1000, -1000,
+	-1000, -1000, 99, -1000, 797, -1000, -1000, -1000, -1000, -1000,
+	-1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, 118, -8,
+	-1000,
 }
 var RouteParserPgo = [...]int{
 
-	0, 161, 185, 84, 148, 146, 120, 118, 3, 145,
-	142, 140, 0, 1, 2,
+	0, 169, 146, 216, 175, 168, 167, 91, 56, 3,
+	166, 165, 163, 0, 1, 2,
 }
 var RouteParserR1 = [...]int{
 
-	0, 1, 1, 1, 1, 2, 2, 3, 3, 4,
-	4, 4, 4, 4, 5, 5, 5, 7, 7, 7,
-	6, 6, 8, 8, 11, 11, 11, 11, 11, 11,
-	11, 11, 11, 11, 11, 12, 12, 12, 12, 12,
-	12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-	12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-	12, 12, 12, 12, 12, 12, 13, 13, 14, 14,
-	10, 10, 10, 9, 9, 9, 9,
+	0, 1, 2, 2, 2, 2, 3, 3, 4, 4,
+	4, 5, 5, 5, 5, 5, 6, 6, 6, 8,
+	8, 8, 8, 8, 7, 7, 9, 9, 12, 12,
+	12, 12, 12, 12, 12, 12, 12, 12, 12, 13,
+	13, 13, 13, 13, 13, 13, 13, 13, 13, 13,
+	13, 13, 13, 13, 13, 13, 13, 13, 13, 13,
+	13, 13, 13, 13, 13, 13, 13, 13, 13, 13,
+	14, 14, 15, 15, 11, 11, 11, 10, 10, 10,
+	10,
 }
 var RouteParserR2 = [...]int{
 
-	0, 3, 3, 4, 3, 1, 3, 3, 3, 2,
-	2, 2, 4, 4, 3, 4, 1, 3, 4, 1,
-	3, 4, 1, 2, 4, 4, 4, 4, 4, 4,
-	4, 4, 4, 3, 3, 1, 1, 1, 3, 3,
-	4, 3, 1, 3, 5, 2, 3, 1, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 2, 3, 3, 3, 5, 1, 3,
-	3, 4, 1, 1, 1, 4, 3,
+	0, 1, 3, 4, 3, 3, 1, 3, 3, 3,
+	3, 2, 2, 2, 4, 4, 3, 4, 1, 3,
+	4, 2, 3, 1, 3, 4, 1, 2, 4, 4,
+	4, 4, 4, 4, 4, 4, 4, 3, 3, 1,
+	1, 1, 3, 3, 4, 3, 1, 3, 5, 2,
+	3, 1, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 2, 3, 3,
+	3, 5, 1, 3, 3, 4, 1, 1, 1, 4,
+	3,
 }
 var RouteParserChk = [...]int{
 
-	-1000, -1, -2, 4, 36, 35, 41, -2, -3, -4,
-	28, 29, 30, -2, 36, 4, 36, -5, 31, 4,
-	-6, 31, 4, -7, 31, 4, -2, -2, -3, 29,
-	30, -12, 7, 10, 11, 31, 33, 4, 8, 39,
-	50, -10, 45, 31, -8, -11, -9, 5, 6, 4,
-	9, 31, -13, 4, 31, -6, -7, 32, 46, 28,
-	27, 38, 39, 40, 41, 42, 43, 44, 29, 14,
-	15, 17, 16, 12, 13, 36, 35, 48, 33, -13,
-	-14, -12, 50, -12, -12, -12, -12, 32, -8, 30,
-	23, 24, 25, 18, 19, 20, 21, 22, 33, 48,
-	4, 4, -8, 32, 37, -13, -12, -12, -12, -12,
-	-12, -12, -12, -12, -12, -12, -12, -12, -12, -12,
-	-12, -12, -12, -12, -12, 4, -12, 32, 34, 52,
-	-14, 51, 51, 32, -12, -12, -12, -12, -12, -12,
-	-12, -12, -12, -12, 4, 49, 49, 32, -12, 32,
-	37, 34, -14, 51, 49, 49, 49, 49, 49, 49,
-	49, 49, 49, 34, 52, -12, -13,
+	-1000, -1, -2, -3, 4, 36, 35, 41, -3, -4,
+	-2, -5, 28, 29, 30, 36, 4, 36, -6, 31,
+	4, -7, 31, 4, -8, 31, 4, -3, -2, -3,
+	-4, 29, 30, -13, 7, 10, 11, 31, 33, 4,
+	8, 39, 50, -11, 45, 31, -9, -12, -10, 5,
+	6, 4, 9, 31, -14, 32, 4, 31, -7, -8,
+	32, 46, 28, 27, 38, 39, 40, 41, 42, 43,
+	44, 29, 14, 15, 17, 16, 12, 13, 36, 35,
+	48, 33, -14, -15, -13, 50, -13, -13, -13, -13,
+	32, -9, 30, 23, 24, 25, 18, 19, 20, 21,
+	22, 33, 48, 4, 4, -9, 32, 37, -14, 32,
+	-13, -13, -13, -13, -13, -13, -13, -13, -13, -13,
+	-13, -13, -13, -13, -13, -13, -13, -13, -13, 4,
+	-13, 32, 34, 52, -15, 51, 51, 32, -13, -13,
+	-13, -13, -13, -13, -13, -13, -13, -13, 4, 49,
+	49, 32, -13, 32, 37, 34, -15, 51, 49, 49,
+	49, 49, 49, 49, 49, 49, 49, 34, 52, -13,
+	-14,
 }
 var RouteParserDef = [...]int{
 
-	0, -2, 0, 5, 0, 0, 0, 1, 4, 0,
-	0, 0, 0, 2, 0, 6, 0, 9, 0, 16,
-	10, 0, 0, 11, 0, 19, 3, 7, 8, 0,
-	0, 0, 35, 36, 37, 0, 0, 72, 42, 0,
-	0, 47, 0, 0, 0, 22, 0, 0, 0, 73,
-	74, 0, 0, 0, 0, 12, 13, 14, 0, 0,
+	0, -2, 1, 0, 6, 0, 0, 0, 2, 4,
+	5, 0, 0, 0, 0, 0, 7, 0, 11, 0,
+	18, 12, 0, 0, 13, 0, 23, 3, 8, 9,
+	10, 0, 0, 0, 39, 40, 41, 0, 0, 76,
+	46, 0, 0, 51, 0, 0, 0, 26, 0, 0,
+	0, 77, 78, 0, 0, 21, 0, 0, 14, 15,
+	16, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 68, 0, 45, 0, 63, 0, 20, 23, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 17, 0, 0, 43, 0, 48, 49,
-	50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
-	60, 61, 62, 64, 65, 70, 0, 38, 39, 0,
-	0, 41, 46, 15, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 76, 33, 34, 21, 66, 18,
-	0, 71, 69, 40, 24, 25, 26, 27, 28, 29,
-	30, 31, 32, 75, 0, 44, 67,
+	0, 0, 0, 0, 72, 0, 49, 0, 67, 0,
+	24, 27, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 19, 0, 0, 22,
+	47, 0, 52, 53, 54, 55, 56, 57, 58, 59,
+	60, 61, 62, 63, 64, 65, 66, 68, 69, 74,
+	0, 42, 43, 0, 0, 45, 50, 17, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 80, 37,
+	38, 25, 70, 20, 0, 75, 73, 44, 28, 29,
+	30, 31, 32, 33, 34, 35, 36, 79, 0, 48,
+	71,
 }
 var RouteParserTok1 = [...]int{
 
@@ -691,108 +696,111 @@ RouteParserdefault:
 	switch RouteParsernt {
 
 	case 1:
-		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:58
+		RouteParserDollar = RouteParserS[RouteParserpt-1 : RouteParserpt+1]
+//line src/mc/route/parser.go.y:59
 		{
-			// fmt.Println("C")
 			RouteParserVAL.routes = nil
 			if l, ok := RouteParserlex.(*RouteLexer); ok {
-				l.result = []*Route{&Route{Source: RouteParserDollar[1].node, Dest: RouteParserDollar[3].node}}
+				l.result = RouteParserDollar[1].routes
 			}
 		}
 	case 2:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:66
+//line src/mc/route/parser.go.y:67
 		{
-			// fmt.Println("B")
-			RouteParserVAL.routes = nil
-			if l, ok := RouteParserlex.(*RouteLexer); ok {
-				l.result = []*Route{&Route{Source: RouteParserDollar[3].node, Dest: RouteParserDollar[1].node}}
-			}
+			// fmt.Println("C")
+			RouteParserVAL.routes = []*Route{&Route{Source: RouteParserDollar[1].node, Dest: RouteParserDollar[3].node}}
 		}
 	case 3:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:74
+//line src/mc/route/parser.go.y:72
 		{
-			RouteParserVAL.routes = nil
-			if l, ok := RouteParserlex.(*RouteLexer); ok {
-				l.result = []*Route{
-					&Route{Source: RouteParserDollar[1].node, Dest: RouteParserDollar[4].node},
-					&Route{Source: RouteParserDollar[4].node, Dest: RouteParserDollar[1].node}}
-			}
+			RouteParserVAL.routes = []*Route{
+				&Route{Source: RouteParserDollar[1].node, Dest: RouteParserDollar[4].node},
+				&Route{Source: RouteParserDollar[4].node, Dest: RouteParserDollar[1].node}}
 		}
 	case 4:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:83
+//line src/mc/route/parser.go.y:78
 		{
-			RouteParserVAL.routes = nil
-			// fmt.Println("A")
-			if l, ok := RouteParserlex.(*RouteLexer); ok {
-				l.result = []*Route{
-					&Route{
-						Source:     RouteParserDollar[1].node,
-						Dest:       RouteParserDollar[3].transforms.Dest,
-						Transforms: RouteParserDollar[3].transforms.Transforms}}
-			}
+			RouteParserVAL.routes = []*Route{
+				&Route{
+					Source:     RouteParserDollar[1].node,
+					Dest:       RouteParserDollar[3].transforms.Dest,
+					Transforms: RouteParserDollar[3].transforms.Transforms}}
 		}
 	case 5:
+		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
+//line src/mc/route/parser.go.y:86
+		{
+			RouteParserVAL.routes = append([]*Route{&Route{Source: RouteParserDollar[1].node, Dest: RouteParserDollar[3].routes[0].Source}}, RouteParserDollar[3].routes...)
+		}
+	case 6:
 		RouteParserDollar = RouteParserS[RouteParserpt-1 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:96
+//line src/mc/route/parser.go.y:91
 		{
 			RouteParserVAL.node = RouteParserDollar[1].token.literal
 		}
-	case 6:
+	case 7:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:100
+//line src/mc/route/parser.go.y:95
 		{
 			RouteParserVAL.node = fmt.Sprintf("%s/%s", RouteParserDollar[1].token.literal, RouteParserDollar[3].token.literal)
 		}
-	case 7:
+	case 8:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:105
+//line src/mc/route/parser.go.y:100
+		{
+			RouteParserVAL.transforms = &Route{
+				Dest:       RouteParserDollar[3].routes[0].Source,
+				Transforms: []*Transform{RouteParserDollar[1].transform}}
+		}
+	case 9:
+		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
+//line src/mc/route/parser.go.y:106
 		{
 			RouteParserVAL.transforms = &Route{
 				Dest:       RouteParserDollar[3].node,
 				Transforms: []*Transform{RouteParserDollar[1].transform}}
 		}
-	case 8:
+	case 10:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:111
+//line src/mc/route/parser.go.y:112
 		{
 			RouteParserVAL.transforms = &Route{
 				Dest:       RouteParserDollar[3].transforms.Dest,
 				Transforms: append([]*Transform{RouteParserDollar[1].transform}, RouteParserDollar[3].transforms.Transforms...)}
 		}
-	case 9:
+	case 11:
 		RouteParserDollar = RouteParserS[RouteParserpt-2 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:118
+//line src/mc/route/parser.go.y:119
 		{
 			RouteParserVAL.transform = &Transform{
 				Type:             TR_FILTER,
 				CommandCondition: RouteParserDollar[2].transform.CommandCondition,
 				Condition:        RouteParserDollar[2].transform.Condition}
 		}
-	case 10:
+	case 12:
 		RouteParserDollar = RouteParserS[RouteParserpt-2 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:125
+//line src/mc/route/parser.go.y:126
 		{
 			RouteParserVAL.transform = &Transform{
 				Type:           TR_EDIT,
 				CommandReplace: RouteParserDollar[2].transform.CommandReplace,
 				Script:         RouteParserDollar[2].transform.Script}
 		}
-	case 11:
+	case 13:
 		RouteParserDollar = RouteParserS[RouteParserpt-2 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:132
+//line src/mc/route/parser.go.y:133
 		{
 			RouteParserVAL.transform = &Transform{
 				Type:           TR_REPLACE,
 				CommandReplace: RouteParserDollar[2].transform.CommandReplace,
 				Replace:        RouteParserDollar[2].transform.Replace}
 		}
-	case 12:
+	case 14:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:139
+//line src/mc/route/parser.go.y:140
 		{
 			RouteParserVAL.transform = &Transform{
 				Type:             TR_COND_EDIT,
@@ -801,9 +809,9 @@ RouteParserdefault:
 				Condition:        RouteParserDollar[2].transform.Condition,
 				Script:           RouteParserDollar[4].transform.Script}
 		}
-	case 13:
+	case 15:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:148
+//line src/mc/route/parser.go.y:149
 		{
 			RouteParserVAL.transform = &Transform{
 				Type:             TR_COND_REPLACE,
@@ -812,212 +820,230 @@ RouteParserdefault:
 				CommandReplace:   RouteParserDollar[4].transform.CommandReplace,
 				Replace:          RouteParserDollar[4].transform.Replace}
 		}
-	case 14:
+	case 16:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:158
+//line src/mc/route/parser.go.y:159
 		{
 			RouteParserVAL.transform = &Transform{
 				Type:             TR_FILTER,
 				CommandCondition: "",
 				Condition:        RouteParserDollar[2].expression}
 		}
-	case 15:
+	case 17:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:165
+//line src/mc/route/parser.go.y:166
 		{
 			RouteParserVAL.transform = &Transform{
 				Type:             TR_EDIT,
 				CommandCondition: RouteParserDollar[1].token.literal,
 				Condition:        RouteParserDollar[3].expression}
 		}
-	case 16:
+	case 18:
 		RouteParserDollar = RouteParserS[RouteParserpt-1 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:172
+//line src/mc/route/parser.go.y:173
 		{
 			RouteParserVAL.transform = &Transform{
 				Type:             TR_EDIT,
 				CommandCondition: RouteParserDollar[1].token.literal,
 				Condition:        nil}
 		}
-	case 17:
+	case 19:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:180
+//line src/mc/route/parser.go.y:181
 		{
 			RouteParserVAL.transform = &Transform{
 				Type:           TR_REPLACE,
 				CommandReplace: "",
 				Replace:        RouteParserDollar[2].expression}
 		}
-	case 18:
+	case 20:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:187
+//line src/mc/route/parser.go.y:188
 		{
 			RouteParserVAL.transform = &Transform{
 				Type:           TR_REPLACE,
 				CommandReplace: RouteParserDollar[1].token.literal,
 				Replace:        RouteParserDollar[3].expression}
 		}
-	case 19:
+	case 21:
+		RouteParserDollar = RouteParserS[RouteParserpt-2 : RouteParserpt+1]
+//line src/mc/route/parser.go.y:195
+		{
+			RouteParserVAL.transform = &Transform{
+				Type:           TR_REPLACE,
+				CommandReplace: "",
+				Replace:        &Expression{Operation: OP_MAP, Args: []*Expression{}}}
+		}
+	case 22:
+		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
+//line src/mc/route/parser.go.y:202
+		{
+			RouteParserVAL.transform = &Transform{
+				Type:           TR_REPLACE,
+				CommandReplace: RouteParserDollar[1].token.literal,
+				Replace:        &Expression{Operation: OP_MAP, Args: []*Expression{}}}
+		}
+	case 23:
 		RouteParserDollar = RouteParserS[RouteParserpt-1 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:194
+//line src/mc/route/parser.go.y:209
 		{
 			RouteParserVAL.transform = &Transform{
 				Type:           TR_REPLACE,
 				CommandReplace: RouteParserDollar[1].token.literal,
 				Replace:        nil}
 		}
-	case 20:
+	case 24:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:202
+//line src/mc/route/parser.go.y:217
 		{
 			RouteParserVAL.transform = &Transform{
 				Type:           TR_EDIT,
 				CommandReplace: "",
 				Script:         RouteParserDollar[2].script}
 		}
-	case 21:
+	case 25:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:209
+//line src/mc/route/parser.go.y:224
 		{
 			RouteParserVAL.transform = &Transform{
 				Type:           TR_EDIT,
 				CommandReplace: RouteParserDollar[1].token.literal,
 				Script:         RouteParserDollar[3].script}
 		}
-	case 22:
+	case 26:
 		RouteParserDollar = RouteParserS[RouteParserpt-1 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:218
+//line src/mc/route/parser.go.y:233
 		{
 			RouteParserVAL.script = []*Statement{RouteParserDollar[1].statement}
 		}
-	case 23:
+	case 27:
 		RouteParserDollar = RouteParserS[RouteParserpt-2 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:222
+//line src/mc/route/parser.go.y:237
 		{
 			RouteParserVAL.script = append([]*Statement{RouteParserDollar[1].statement}, RouteParserDollar[2].script...)
 		}
-	case 24:
+	case 28:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:227
+//line src/mc/route/parser.go.y:242
 		{
 			RouteParserVAL.statement = MakeAssignmentStatement(RouteParserDollar[1].writeable, RouteParserDollar[3].expression)
 		}
-	case 25:
+	case 29:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:231
+//line src/mc/route/parser.go.y:246
 		{
 			RouteParserVAL.statement = MakeAssignmentStatement(RouteParserDollar[1].writeable, &Expression{
 				Operation: OP_BITWISEAND,
 				Args:      []*Expression{RouteParserDollar[1].writeable.ToExpression(), RouteParserDollar[3].expression}})
 		}
-	case 26:
+	case 30:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:237
+//line src/mc/route/parser.go.y:252
 		{
 			RouteParserVAL.statement = MakeAssignmentStatement(RouteParserDollar[1].writeable, &Expression{
 				Operation: OP_BITWISEOR,
 				Args:      []*Expression{RouteParserDollar[1].writeable.ToExpression(), RouteParserDollar[3].expression}})
 		}
-	case 27:
+	case 31:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:243
+//line src/mc/route/parser.go.y:258
 		{
 			RouteParserVAL.statement = MakeAssignmentStatement(RouteParserDollar[1].writeable, &Expression{
 				Operation: OP_BITWISEXOR,
 				Args:      []*Expression{RouteParserDollar[1].writeable.ToExpression(), RouteParserDollar[3].expression}})
 		}
-	case 28:
+	case 32:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:249
+//line src/mc/route/parser.go.y:264
 		{
 			RouteParserVAL.statement = MakeAssignmentStatement(RouteParserDollar[1].writeable, &Expression{
 				Operation: OP_PLUS,
 				Args:      []*Expression{RouteParserDollar[1].writeable.ToExpression(), RouteParserDollar[3].expression}})
 		}
-	case 29:
+	case 33:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:255
+//line src/mc/route/parser.go.y:270
 		{
 			RouteParserVAL.statement = MakeAssignmentStatement(RouteParserDollar[1].writeable, &Expression{
 				Operation: OP_MINUS,
 				Args:      []*Expression{RouteParserDollar[1].writeable.ToExpression(), RouteParserDollar[3].expression}})
 		}
-	case 30:
+	case 34:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:261
+//line src/mc/route/parser.go.y:276
 		{
 			RouteParserVAL.statement = MakeAssignmentStatement(RouteParserDollar[1].writeable, &Expression{
 				Operation: OP_MUL,
 				Args:      []*Expression{RouteParserDollar[1].writeable.ToExpression(), RouteParserDollar[3].expression}})
 		}
-	case 31:
+	case 35:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:267
+//line src/mc/route/parser.go.y:282
 		{
 			RouteParserVAL.statement = MakeAssignmentStatement(RouteParserDollar[1].writeable, &Expression{
 				Operation: OP_DIV,
 				Args:      []*Expression{RouteParserDollar[1].writeable.ToExpression(), RouteParserDollar[3].expression}})
 		}
-	case 32:
+	case 36:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:273
+//line src/mc/route/parser.go.y:288
 		{
 			RouteParserVAL.statement = MakeAssignmentStatement(RouteParserDollar[1].writeable, &Expression{
 				Operation: OP_MOD,
 				Args:      []*Expression{RouteParserDollar[1].writeable.ToExpression(), RouteParserDollar[3].expression}})
 		}
-	case 33:
+	case 37:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:279
+//line src/mc/route/parser.go.y:294
 		{
 			RouteParserVAL.statement = MakeDeclarationStatement(RouteParserDollar[2].token.literal)
 		}
-	case 34:
+	case 38:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:283
+//line src/mc/route/parser.go.y:298
 		{
 			RouteParserVAL.statement = MakeDeletionStatement(RouteParserDollar[2].token.literal)
 		}
-	case 35:
+	case 39:
 		RouteParserDollar = RouteParserS[RouteParserpt-1 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:288
+//line src/mc/route/parser.go.y:303
 		{
 			x, _ := strconv.ParseFloat(RouteParserDollar[1].token.literal, 64)
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_NUM,
 				Value:     value.MakeFloatValue(x)}
 		}
-	case 36:
+	case 40:
 		RouteParserDollar = RouteParserS[RouteParserpt-1 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:295
+//line src/mc/route/parser.go.y:310
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_BOOL,
 				Value:     value.MakeBoolValue(true)}
 		}
-	case 37:
+	case 41:
 		RouteParserDollar = RouteParserS[RouteParserpt-1 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:301
+//line src/mc/route/parser.go.y:316
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_BOOL,
 				Value:     value.MakeBoolValue(false)}
 		}
-	case 38:
+	case 42:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:307
+//line src/mc/route/parser.go.y:322
 		{
 			RouteParserVAL.expression = RouteParserDollar[2].expression
 		}
-	case 39:
+	case 43:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:311
+//line src/mc/route/parser.go.y:326
 		{
 			RouteParserVAL.expression = RouteParserDollar[2].expression
 		}
-	case 40:
+	case 44:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:315
+//line src/mc/route/parser.go.y:330
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_CALL,
@@ -1025,9 +1051,9 @@ RouteParserdefault:
 					MakeNameExpression(RouteParserDollar[1].token.literal),
 					RouteParserDollar[3].expression}}
 		}
-	case 41:
+	case 45:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:323
+//line src/mc/route/parser.go.y:338
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_CALL,
@@ -1037,197 +1063,197 @@ RouteParserdefault:
 						Operation: OP_LIST,
 						Args:      []*Expression{}}}}
 		}
-	case 42:
+	case 46:
 		RouteParserDollar = RouteParserS[RouteParserpt-1 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:333
+//line src/mc/route/parser.go.y:348
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_STRING,
 				Value:     &value.Value{Type: value.VAL_STRING, StringVal: RouteParserDollar[1].token.literal}}
 		}
-	case 43:
+	case 47:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:339
+//line src/mc/route/parser.go.y:354
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_MATCH,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 44:
+	case 48:
 		RouteParserDollar = RouteParserS[RouteParserpt-5 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:345
+//line src/mc/route/parser.go.y:360
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_TERNARY,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression, RouteParserDollar[5].expression}}
 		}
-	case 45:
+	case 49:
 		RouteParserDollar = RouteParserS[RouteParserpt-2 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:351
+//line src/mc/route/parser.go.y:366
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_UMINUS,
 				Args:      []*Expression{RouteParserDollar[2].expression}}
 		}
-	case 46:
+	case 50:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:357
+//line src/mc/route/parser.go.y:372
 		{
 			RouteParserVAL.expression = RouteParserDollar[2].expression
 		}
-	case 47:
+	case 51:
 		RouteParserDollar = RouteParserS[RouteParserpt-1 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:361
+//line src/mc/route/parser.go.y:376
 		{
 			RouteParserVAL.expression = RouteParserDollar[1].expression
 		}
-	case 48:
+	case 52:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:365
+//line src/mc/route/parser.go.y:380
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_EXP,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 49:
+	case 53:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:371
+//line src/mc/route/parser.go.y:386
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_PLUS,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 50:
+	case 54:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:377
+//line src/mc/route/parser.go.y:392
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_MINUS,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 51:
+	case 55:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:383
+//line src/mc/route/parser.go.y:398
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_MUL,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 52:
+	case 56:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:389
+//line src/mc/route/parser.go.y:404
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_DIV,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 53:
+	case 57:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:395
+//line src/mc/route/parser.go.y:410
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_BITWISEAND,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 54:
+	case 58:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:401
+//line src/mc/route/parser.go.y:416
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_BITWISEOR,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 55:
+	case 59:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:407
+//line src/mc/route/parser.go.y:422
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_BITWISEXOR,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 56:
+	case 60:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:413
+//line src/mc/route/parser.go.y:428
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_MOD,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 57:
+	case 61:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:419
+//line src/mc/route/parser.go.y:434
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_EQ,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 58:
+	case 62:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:425
+//line src/mc/route/parser.go.y:440
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_NE,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 59:
+	case 63:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:431
+//line src/mc/route/parser.go.y:446
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_GE,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 60:
+	case 64:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:437
+//line src/mc/route/parser.go.y:452
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_LE,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 61:
+	case 65:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:443
+//line src/mc/route/parser.go.y:458
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_AND,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 62:
+	case 66:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:449
+//line src/mc/route/parser.go.y:464
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_OR,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 63:
+	case 67:
 		RouteParserDollar = RouteParserS[RouteParserpt-2 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:455
+//line src/mc/route/parser.go.y:470
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_NOT,
 				Args:      []*Expression{RouteParserDollar[2].expression}}
 		}
-	case 64:
+	case 68:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:461
+//line src/mc/route/parser.go.y:476
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_GT,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 65:
+	case 69:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:467
+//line src/mc/route/parser.go.y:482
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_LT,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 66:
+	case 70:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:474
+//line src/mc/route/parser.go.y:489
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_MAP,
@@ -1235,9 +1261,9 @@ RouteParserdefault:
 					MakeNameExpression(RouteParserDollar[1].token.literal),
 					RouteParserDollar[3].expression}}
 		}
-	case 67:
+	case 71:
 		RouteParserDollar = RouteParserS[RouteParserpt-5 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:482
+//line src/mc/route/parser.go.y:497
 		{
 			args := []*Expression{
 				MakeNameExpression(RouteParserDollar[1].token.literal),
@@ -1246,71 +1272,71 @@ RouteParserdefault:
 				Operation: OP_MAP,
 				Args:      append(args, RouteParserDollar[5].expression.Args...)}
 		}
-	case 68:
+	case 72:
 		RouteParserDollar = RouteParserS[RouteParserpt-1 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:492
+//line src/mc/route/parser.go.y:507
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_LIST,
 				Args:      []*Expression{RouteParserDollar[1].expression}}
 		}
-	case 69:
+	case 73:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:498
+//line src/mc/route/parser.go.y:513
 		{
 			args := []*Expression{RouteParserDollar[1].expression}
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_LIST,
 				Args:      append(args, RouteParserDollar[3].expression.Args...)}
 		}
-	case 70:
+	case 74:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:506
+//line src/mc/route/parser.go.y:521
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_MAPVAR,
 				Args:      []*Expression{RouteParserDollar[1].expression, MakeNameExpression(RouteParserDollar[3].token.literal)}}
 		}
-	case 71:
+	case 75:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:512
+//line src/mc/route/parser.go.y:527
 		{
 			RouteParserVAL.expression = &Expression{
 				Operation: OP_LISTVAR,
 				Args:      []*Expression{RouteParserDollar[1].expression, RouteParserDollar[3].expression}}
 		}
-	case 72:
+	case 76:
 		RouteParserDollar = RouteParserS[RouteParserpt-1 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:518
+//line src/mc/route/parser.go.y:533
 		{
 			RouteParserVAL.expression = MakeVarExpression(RouteParserDollar[1].token.literal)
 		}
-	case 73:
+	case 77:
 		RouteParserDollar = RouteParserS[RouteParserpt-1 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:523
+//line src/mc/route/parser.go.y:538
 		{
 			RouteParserVAL.writeable = &WriteableValue{
 				Base: RouteParserDollar[1].token.literal,
 				Path: []PathEntry{}}
 		}
-	case 74:
+	case 78:
 		RouteParserDollar = RouteParserS[RouteParserpt-1 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:529
+//line src/mc/route/parser.go.y:544
 		{
 			RouteParserVAL.writeable = &WriteableValue{
 				Base: "this",
 				Path: []PathEntry{}}
 		}
-	case 75:
+	case 79:
 		RouteParserDollar = RouteParserS[RouteParserpt-4 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:535
+//line src/mc/route/parser.go.y:550
 		{
 			RouteParserDollar[1].writeable.Path = append(RouteParserDollar[1].writeable.Path, PathEntry{Type: PATH_LIST, ListIndex: RouteParserDollar[3].expression})
 			RouteParserVAL.writeable = RouteParserDollar[1].writeable
 		}
-	case 76:
+	case 80:
 		RouteParserDollar = RouteParserS[RouteParserpt-3 : RouteParserpt+1]
-//line src/mc/route/parser.go.y:540
+//line src/mc/route/parser.go.y:555
 		{
 			RouteParserDollar[1].writeable.Path = append(RouteParserDollar[1].writeable.Path, PathEntry{Type: PATH_MAP, MapKey: RouteParserDollar[3].token.literal})
 			RouteParserVAL.writeable = RouteParserDollar[1].writeable

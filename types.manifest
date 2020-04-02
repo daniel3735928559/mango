@@ -12,5 +12,6 @@ nodes/jam.node
 nodes/otto.node
 nodes/checkemail.node
 nodes/dummy.node
-nodes/merge.node
+nodes/merge_input.node
+nodes/merge_output.node
 nodes/sigjam.node

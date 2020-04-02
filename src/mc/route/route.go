@@ -14,6 +14,20 @@ type Route struct {
 	Dest string
 }
 
+func (rt *Route) GetSource() string {
+	if strings.Contains(rt.Source, "/") {
+		return rt.Source
+	}
+	return fmt.Sprintf("%s/%s", rt.Group, rt.Source)
+}
+
+func (rt *Route) GetDest() string {
+	if strings.Contains(rt.Dest, "/") {
+		return rt.Dest
+	}
+	return fmt.Sprintf("%s/%s", rt.Group, rt.Dest)
+}
+
 func (rt *Route) ToString() string {
 	if rt.Transforms != nil && len(rt.Transforms) > 0 {
 		tforms_strings := make([]string, len(rt.Transforms))
@@ -21,13 +35,14 @@ func (rt *Route) ToString() string {
 			tforms_strings[i] = t.ToString()
 		}
 		tforms := strings.Join(tforms_strings, " > ")
-		return fmt.Sprintf("%s > %s > %s", rt.Source, tforms, rt.Dest)
+		return fmt.Sprintf("%s > %s > %s", rt.GetSource(), tforms, rt.GetDest())
 	}
-	return fmt.Sprintf("%s > %s", rt.Source, rt.Dest)
+	return fmt.Sprintf("%s > %s", rt.GetSource(), rt.GetDest())
 }
 
 func (rt *Route) Run(command string, args *value.Value) (string, *value.Value, error) {
 	for _, t := range rt.Transforms {
+		fmt.Println("[MC] TRANSFORM",t.ToString())
 		new_command, new_args, err := t.Execute(command, args)
 		if err != nil {
 			fmt.Println("Error executing transform",t.ToString(),"on",args.ToString(),"ERROR",err)
@@ -37,7 +52,7 @@ func (rt *Route) Run(command string, args *value.Value) (string, *value.Value, e
 			return "", nil, nil
 		}
 		
-		fmt.Println("TRANSFORMED",new_args.ToString())
+		fmt.Println("[MC] TRANSFORMED",new_args.ToString())
 		args = new_args
 		command = new_command
 	}
