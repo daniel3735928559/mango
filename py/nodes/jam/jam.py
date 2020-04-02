@@ -172,7 +172,7 @@ def run_recv_thread(ctx):
 
     # OLD
     bus.add_signal_receiver(_recv, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="ReceivedImMsg")
-    bus.add_signal_receiver(_recv, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="ReceivedChatMsg")
+    #bus.add_signal_receiver(_recv, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="ReceivedChatMsg")
     
     bus.add_signal_receiver(_sent, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="SentImMsg")
     bus.add_signal_receiver(_sentchat, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="SentChatMsg")
