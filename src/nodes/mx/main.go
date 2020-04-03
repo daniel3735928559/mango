@@ -45,7 +45,6 @@ func sendrecv(srv, data string) string {
 	identity := fmt.Sprintf("%04X-%04X", rand.Intn(0x10000), rand.Intn(0x10000))
 	socket.SetIdentity(identity)
 	socket.Connect(srv)
-	socket.SetIdentity("aaaa")
 	
 	socket.Send("",zmq.SNDMORE)
 	socket.Send(data, 0)
@@ -57,6 +56,26 @@ func sendrecv(srv, data string) string {
 	}
 	socket.Disconnect(srv)
 	return data
+}
+
+func sendonerecvall(srv, data string, ch chan string) string {
+	socket, _ = ctx.NewSocket(zmq.DEALER)
+	rand.Seed(time.Now().UnixNano())
+	identity := fmt.Sprintf("%04X-%04X", rand.Intn(0x10000), rand.Intn(0x10000))
+	socket.SetIdentity(identity)
+	socket.Connect(srv)
+	
+	socket.Send("",zmq.SNDMORE)
+	socket.Send(data, 0)
+
+	for {
+		data, err := socket.Recv(0)
+		if err != nil {
+			fmt.Println("ERROR: Failed receiving from agent",err)
+			os.Exit(1)
+		}
+		ch <- data
+	}
 }
 
 func main() {
@@ -75,6 +94,7 @@ func main() {
   mx peek
   mx pop
   mx get <id>
+  mx listen <types>...
 `
 	args, err := docopt.ParseDoc(usage)
 	if err != nil {
@@ -228,5 +248,19 @@ func main() {
 			os.Exit(1)
 		}
 		fmt.Println(sendrecv(agent_srv, string(bs)))
+	} else if args["listen"].(bool) {
+		data := make(map[string]interface{})
+		data["operation"] = "listen"
+		data["types"] = args["<types>"].([]string)
+		bs, err := json.Marshal(data)
+		if err != nil {
+			fmt.Printf("ERROR: Failed to serialize data: %v\n",data)
+			os.Exit(1)
+		}
+		c := make(chan string, 1000)
+		go sendonerecvall(agent_srv, string(bs), c)
+		for msg := range c {
+			fmt.Println(msg)
+		}
 	}
 }

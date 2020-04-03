@@ -11,6 +11,7 @@ nodes/excite_c.node
 nodes/jam.node
 nodes/otto.node
 nodes/checkemail.node
+nodes/sendemail.node
 nodes/dummy.node
 nodes/merge_input.node
 nodes/merge_output.node

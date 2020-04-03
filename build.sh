@@ -9,4 +9,5 @@ GOPATH=$(realpath .) go install nodes/notify
 GOPATH=$(realpath .) go install nodes/mx/agent
 GOPATH=$(realpath .) go install nodes/mx
 GOPATH=$(realpath .) go install nodes/imap
+GOPATH=$(realpath .) go install nodes/smtp
 GOPATH=$(realpath .) go install nodes/sigjam

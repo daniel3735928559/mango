@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"time"
+	"net"
 	"io"
 	"io/ioutil"
 	"strconv"
@@ -77,7 +77,7 @@ func (mi *MboxInfo) Stop() {
 }
 		
 func (mi *MboxInfo) count_messages() (int, error) {
-	c, err := client.DialTLS(mi.server, nil)
+	c, err := client.DialWithDialerTLS(&net.Dialer{Timeout:15*time.Second},mi.server, nil)
 	if err != nil {
 		return -1, err
 	}
@@ -92,16 +92,16 @@ func (mi *MboxInfo) count_messages() (int, error) {
 	return int(mbox.Messages), nil
 }
 
-func (mi *MboxInfo) fetch() []MailMessage {
+func (mi *MboxInfo) fetch() ([]MailMessage, error) {
 	fmt.Println("Connecting to server...",mi.server)
-	c, err := client.DialTLS(mi.server, nil)
+	c, err := client.DialWithDialerTLS(&net.Dialer{Timeout:15*time.Second},mi.server, nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("Connection to %s timed out", mi.server)
 	}
 	fmt.Println("Connected")
 	defer c.Logout()
 	if err := c.Login(mi.username, mi.password); err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("Login to %s failed", mi.server)
 	}
 	fmt.Println("Logged in")
 
@@ -124,17 +124,17 @@ func (mi *MboxInfo) fetch() []MailMessage {
 	// Select INBOX
 	mbox, err := c.Select("INBOX", false)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("Error selecting inbox on %s: %v", mi.server, err)
 	}
 	//fmt.Println("Flags for INBOX:", mbox.Flags)
 
 	if mbox.Messages == 0 {
 		fmt.Println("No messages")
-		return nil
+		return nil, nil
 	}
 	if int(mbox.Messages) == mi.last_seqnum {
 		fmt.Println("No new messages")
-		return nil
+		return nil, nil
 	}
 	seqset := new(imap.SeqSet)
 	seqset.AddRange(uint32(mi.last_seqnum+1), mbox.Messages)
@@ -161,7 +161,7 @@ func (mi *MboxInfo) fetch() []MailMessage {
 		
 		r := msg.GetBody(&section)
 		if r == nil {
-			log.Fatal("body not found")
+			return nil, fmt.Errorf("Body not found in a message on %s", mi.server)
 		}
 		
 		// Create a new mail reader
@@ -194,7 +194,7 @@ func (mi *MboxInfo) fetch() []MailMessage {
 			if err == io.EOF {
 				break
 			} else if err != nil {
-				log.Fatal(err)
+				return nil, fmt.Errorf("Error getting part of message on %s", mi.server)
 			}
 
 			switch h := p.Header.(type) {
@@ -216,12 +216,12 @@ func (mi *MboxInfo) fetch() []MailMessage {
 	}
 
 	if err := <-done; err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("Error processing messages %s: %v", mi.server, err)
 	}
 
 	fmt.Println("Done!")
 	mi.last_seqnum = int(mbox.Messages)
-	return ans
+	return ans, nil
 }
 
 func Logout(args map[string]interface{}) (string, map[string]interface{}, error) {
@@ -254,9 +254,13 @@ func main() {
 		case <-current_mbox.done:
 			return
 		case <-ticker.C:
-			msgs := current_mbox.fetch()
-			for _, m := range msgs {
-				n.Send("recv",m.ToObject())
+			msgs, err := current_mbox.fetch()
+			if err != nil {
+
+			} else {
+				for _, m := range msgs {
+					n.Send("recv",m.ToObject())
+				}
 			}
 		}
 	}

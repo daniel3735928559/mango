@@ -7,6 +7,7 @@ import (
 	"strings"
 	"encoding/json"
 	"libmango"
+	"sync"
 	docopt "github.com/docopt/docopt-go"
 	zmq "github.com/pebbe/zmq4"
 )
@@ -14,8 +15,8 @@ import (
 type MxHandler func(map[string]interface{}, chan string)
 
 type MxMsg struct {
-	Command string
-	Args map[string]interface{}
+	Command string `json:"command"`
+	Args map[string]interface{} `json:"args"`
 }
 
 type MxAgent struct {
@@ -25,6 +26,8 @@ type MxAgent struct {
 	target_type string
 	MsgQueue []MxMsg
 	handlers map[string]MxHandler
+	listeners []chan MxMsg
+	listener_mux *sync.Mutex
 }
 
 func NewMx() *MxAgent {
@@ -34,7 +37,6 @@ func NewMx() *MxAgent {
 		return nil
 	}
 
-	
 	sock, _ := zmq.NewSocket(zmq.ROUTER)
 	mx := &MxAgent{
 		node:n,
@@ -42,7 +44,9 @@ func NewMx() *MxAgent {
 		route_ids: make([]string, 0),
 		target_type: "",
 		MsgQueue: make([]MxMsg, 0),
-		handlers: make(map[string]MxHandler)}
+		handlers: make(map[string]MxHandler),
+		listeners: make([]chan MxMsg, 0),
+		listener_mux: &sync.Mutex{}}
 
 	mx.handlers["send"] = mx.Send
 	mx.handlers["start"] = mx.StartNode
@@ -58,7 +62,7 @@ func NewMx() *MxAgent {
 	mx.handlers["peek"] = mx.Peek
 	mx.handlers["clear"] = mx.Clear
 	mx.handlers["get"] = mx.Get
-
+	
 	n.DefaultHandler = mx.HandleFromWorld
 	go n.Start()
 	return mx
@@ -66,7 +70,13 @@ func NewMx() *MxAgent {
 
 func (mx *MxAgent) HandleFromWorld(command string, args map[string]interface{}) (string, map[string]interface{}, error) {
 	fmt.Println("Got")
-	mx.MsgQueue = append([]MxMsg{MxMsg{Command:command, Args:args}}, mx.MsgQueue...)
+	msg := MxMsg{Command:command, Args:args}
+	mx.MsgQueue = append([]MxMsg{msg}, mx.MsgQueue...)
+	mx.listener_mux.Lock()
+	for _, l := range mx.listeners {
+		l <- msg
+	}	
+	mx.listener_mux.Unlock()
 	return "", nil, nil
 }
 
@@ -275,20 +285,61 @@ func (mx *MxAgent) Get(req map[string]interface{}, rep chan string) {
 	}
 }
 
-func (mx *MxAgent) HandleFromClient(req map[string]interface{}) string {
+
+func (mx *MxAgent) ListenServer(id string, types map[string]bool) {
+	fmt.Println("[MX AGENT] Listener",id,"START")
+	c := make(chan MxMsg, 1000)
+	mx.listener_mux.Lock()
+	mx.listeners = append(mx.listeners, c)
+	mx.listener_mux.Unlock()
+	for msg := range c {
+		fmt.Println("[MX AGENT] Listener",id,"GOT",msg.Command)
+		if types[msg.Command] {
+			bs, _ := json.Marshal(msg)
+			ans := string(bs)
+			fmt.Println("[MX AGENT] Listener",id,"SENDING",ans)
+			mx.sock.Send(id, zmq.SNDMORE)
+			count, err := mx.sock.Send(ans, 0)
+			if count == 0 || err != nil {
+				fmt.Println("[MX AGENT] Listener",id,"FINISHED")
+				return
+			}
+		}
+	}
+}
+
+func (mx *MxAgent) HandleFromClient(id string, req map[string]interface{}) {
 	op := req["operation"].(string)
+	fmt.Println("Handling",op)
+	if op == "listen" {
+		types := req["types"].([]interface{})
+		fmt.Println("ready?",types)
+		tys := make(map[string]bool)
+		for _, ty := range types {
+			tys[ty.(string)] = true
+		}
+		
+		fmt.Println("Listening",id,tys)
+		go mx.ListenServer(id, tys)
+		return
+	}
 	if handler, ok := mx.handlers[op]; ok {
 		rep := make(chan string, 10)
 		handler(req, rep)
 		select {
 		case ans := <- rep:
 			fmt.Println("[MX AGENT] REPLIED")
-			return ans
+			mx.sock.Send(id, zmq.SNDMORE)
+			mx.sock.Send(ans, 0)
+			return 
 		case <- time.After(3*time.Second):
-			return "Timeout"
+			mx.sock.Send(id, zmq.SNDMORE)
+			mx.sock.Send("Timeout", 0)
+			return
 		}
 	}
-	return fmt.Sprintf("Unknown operation: %s", op)
+	mx.sock.Send(id, zmq.SNDMORE)
+	mx.sock.Send(fmt.Sprintf("Unknown operation: %s", op), 0)
 }
 
 func (mx *MxAgent) RunZmqServer(port int) {
@@ -305,9 +356,7 @@ func (mx *MxAgent) RunZmqServer(port int) {
 		fmt.Println("[MX AGENT] RECV",data)
 		req := make(map[string]interface{})
 		json.Unmarshal([]byte(data), &req)
-		response := mx.HandleFromClient(req)
-		mx.sock.Send(client_identity, zmq.SNDMORE)
-		mx.sock.Send(response, 0)
+		mx.HandleFromClient(client_identity, req)
 	}
 }
 
