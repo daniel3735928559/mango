@@ -95,6 +95,17 @@ typedesc : STR
 		MapArgRequired: map_required,
 		MapDefaults: map_defaults}
 }
+| '{' '}'
+{
+	map_defaults := make(map[string]*value.Value)
+	map_required := make(map[string]bool)
+	map_types := make(map[string]*ValueType)
+	$$ = &ValueType{
+		Type: TY_MAP,
+		MapArgTypes: map_types,
+		MapArgRequired: map_required,
+		MapDefaults: map_defaults}
+}
 ;
 oneofentries : typedesc
 {

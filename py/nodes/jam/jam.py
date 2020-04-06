@@ -134,7 +134,19 @@ def run_recv_thread(ctx):
         name = purple.PurpleBuddyGetName(buddy)
         alias = purple.PurpleBuddyGetAlias(buddy)
         print("BUDDY NAME",name,"ALIAS",alias)
-        data = {"command":"recv", "msg":message, "from":"{} ({})".format(name,alias), "conv":str(conv), "account":account}
+        data = {"command":"recv", "msg":message, "from":"{} ({})".format(name,alias), "conv":str(conv), "account":account, "ischat":False}
+        tx.send_string(json.dumps(data))
+        print("sender: {} message: {}, account: {}, conversation: {}, flags: {}, conv: {}".format(sender,message,account,conv,flags,conv))
+
+    def _recvchat(account, sender, message, conv, flags):
+        print("maybe got one chat?",account,sender,message,conv,flags,tx)        
+        print(account)
+        buddy = purple.PurpleFindBuddy(account,sender)
+        print("BUDDY",buddy)
+        name = purple.PurpleBuddyGetName(buddy)
+        alias = purple.PurpleBuddyGetAlias(buddy)
+        print("BUDDY NAME",name,"ALIAS",alias)
+        data = {"command":"recv", "msg":message, "from":"{} ({})".format(name,alias), "conv":str(conv), "account":account, "ischat":True}
         tx.send_string(json.dumps(data))
         print("sender: {} message: {}, account: {}, conversation: {}, flags: {}, conv: {}".format(sender,message,account,conv,flags,conv))
 
@@ -172,7 +184,7 @@ def run_recv_thread(ctx):
 
     # OLD
     bus.add_signal_receiver(_recv, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="ReceivedImMsg")
-    #bus.add_signal_receiver(_recv, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="ReceivedChatMsg")
+    bus.add_signal_receiver(_recvchat, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="ReceivedChatMsg")
     
     bus.add_signal_receiver(_sent, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="SentImMsg")
     bus.add_signal_receiver(_sentchat, dbus_interface="im.pidgin.purple.PurpleInterface", signal_name="SentChatMsg")

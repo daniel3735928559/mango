@@ -16,3 +16,4 @@ nodes/dummy.node
 nodes/merge_input.node
 nodes/merge_output.node
 nodes/sigjam.node
+nodes/tttt.node
