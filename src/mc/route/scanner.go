@@ -2,6 +2,7 @@ package route
 
 import (
 	"fmt"
+	"strconv"
 )
 
 const (
@@ -203,11 +204,17 @@ func (s *RouteScanner) scanNumber() string {
 
 func (s *RouteScanner) scanString() string {
 	var ret []rune
+	ret = append(ret, s.peek())
 	s.next()
 	for s.peek() != '"' || (len(ret) > 0 && ret[len(ret)-1] == '\\') {
 		ret = append(ret, s.peek())
 		s.next()
 	}
+	ret = append(ret, s.peek())
 	s.next()
-	return string(ret)
+	ans, err := strconv.Unquote(string(ret))
+	if err != nil {
+		return "FAILED UNQUOTE:"+string(ret)
+	}
+	return ans
 }

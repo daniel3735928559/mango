@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 	"errors"
+	"strconv"
 )
 
 type ValueKind int
@@ -131,7 +132,6 @@ func FromObject(args interface{}) (*Value, error) {
 			Type: VAL_MAP,
 			MapVal: mapval}, nil
 	} else if listvals, ok := args.([]interface{}); ok {
-		fmt.Println("MAKEVALUE list")
 		listval := make([]*Value, len(listvals))
 		for i, v := range listvals {
 			listval[i], err = FromObject(v)
@@ -214,7 +214,7 @@ func (v *Value) ToString() string {
 	} else if v.Type == VAL_NUM {
 		return fmt.Sprintf("%v",v.NumVal)
 	} else if v.Type == VAL_STRING {
-		return fmt.Sprintf(`"%s"`,v.StringVal)
+		return strconv.Quote(v.StringVal)
 	} else if v.Type == VAL_BOOL {
 		if v.BoolVal {
 			return "true"
@@ -222,4 +222,45 @@ func (v *Value) ToString() string {
 		return "false"
 	}
 	return "[unknown type]"
+}
+
+func (v *Value) ToPrettyStringHelper(level int) string {
+	indent_prefix := ""
+	for i := 0; i < level; i++ {
+		indent_prefix += " "
+	}
+	if v.Type == VAL_MAP {
+		map_keys := make([]string, 0)
+		for k, _ := range v.MapVal {
+			map_keys = append(map_keys, k)
+		}
+		sort.Strings(map_keys)
+		val_strs := make([]string, len(map_keys))
+		for i, k := range map_keys {
+			val_strs[i] = fmt.Sprintf("%s- %s: %s\n", indent_prefix, k, v.MapVal[k].ToPrettyStringHelper(level+1))
+		}
+		return "\n"+strings.Join(val_strs ,"")
+	} else if v.Type == VAL_LIST {
+		val_strs := make([]string, len(v.ListVal))
+		for i, val := range v.ListVal {
+			val_strs[i] = fmt.Sprintf("%s- %d: %s\n", indent_prefix, i, val.ToPrettyStringHelper(level+1))
+		}
+		return "\n"+strings.Join(val_strs ,"")
+	} else if v.Type == VAL_NAME {
+		return fmt.Sprintf("%s",v.NameVal)
+	} else if v.Type == VAL_NUM {
+		return fmt.Sprintf("%v",v.NumVal)
+	} else if v.Type == VAL_STRING {
+		return v.StringVal
+	} else if v.Type == VAL_BOOL {
+		if v.BoolVal {
+			return "true"
+		}
+		return "false"
+	}
+	return "[unknown type]"
+}
+
+func (v *Value) ToPrettyString() string {
+	return v.ToPrettyStringHelper(0)
 }

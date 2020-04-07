@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	docopt "github.com/docopt/docopt-go"
 	zmq "github.com/pebbe/zmq4"
+	"nodes/mx/tui"
 )
 
 var (
-	socket *zmq.Socket
 	ctx *zmq.Context
 )
 
@@ -22,12 +22,11 @@ func send(srv, data string) {
 		fmt.Println("CONTEXT IS nil")
 		return
 	}
-	s, err := ctx.NewSocket(zmq.DEALER)
+	socket, err := ctx.NewSocket(zmq.DEALER)
 	if err != nil {
 		fmt.Println("ERROR making socket:",err)
 		return
 	}
-	socket = s
 	rand.Seed(time.Now().UnixNano())
 	identity := fmt.Sprintf("%04X-%04X", rand.Intn(0x10000), rand.Intn(0x10000))
 	socket.SetIdentity(identity)
@@ -40,7 +39,7 @@ func send(srv, data string) {
 }
 
 func sendrecv(srv, data string) string {
-	socket, _ = ctx.NewSocket(zmq.DEALER)
+	socket, _ := ctx.NewSocket(zmq.DEALER)
 	rand.Seed(time.Now().UnixNano())
 	identity := fmt.Sprintf("%04X-%04X", rand.Intn(0x10000), rand.Intn(0x10000))
 	socket.SetIdentity(identity)
@@ -58,24 +57,25 @@ func sendrecv(srv, data string) string {
 	return data
 }
 
-func sendonerecvall(srv, data string, ch chan string) string {
-	socket, _ = ctx.NewSocket(zmq.DEALER)
+func sendonerecvall(srv, data string, ch chan string) {
+	s, _ := ctx.NewSocket(zmq.DEALER)
 	rand.Seed(time.Now().UnixNano())
 	identity := fmt.Sprintf("%04X-%04X", rand.Intn(0x10000), rand.Intn(0x10000))
-	socket.SetIdentity(identity)
-	socket.Connect(srv)
+	s.SetIdentity(identity)
+	s.Connect(srv)
 	
-	socket.Send("",zmq.SNDMORE)
-	socket.Send(data, 0)
+	s.Send("",zmq.SNDMORE)
+	s.Send(data, 0)
 
 	for {
-		data, err := socket.Recv(0)
+		data, err := s.Recv(0)
 		if err != nil {
 			fmt.Println("ERROR: Failed receiving from agent",err)
-			os.Exit(1)
+		} else {
+			ch <- data
 		}
-		ch <- data
 	}
+	fmt.Println("LISTENING ENDED OOPS")
 }
 
 func main() {
@@ -95,6 +95,7 @@ func main() {
   mx pop
   mx get <id>
   mx listen <types>...
+  mx shell
 `
 	args, err := docopt.ParseDoc(usage)
 	if err != nil {
@@ -261,6 +262,37 @@ func main() {
 		go sendonerecvall(agent_srv, string(bs), c)
 		for msg := range c {
 			fmt.Println(msg)
+		}
+	} else if args["shell"].(bool) {
+		bs, _ := json.Marshal(map[string]interface{}{"operation":"help"})
+		iface := sendrecv(agent_srv, string(bs))
+		if iface == "Not connected" {
+			fmt.Println(iface)
+			return
+		}
+		
+		input_ch := make(chan string, 1000)
+		cmd_ch := make(chan string, 1000)
+		done_ch := make(chan bool)
+		
+		bs, _ = json.Marshal(map[string]interface{}{"operation":"listen","types":[]string{"any"}})
+		go sendonerecvall(agent_srv, string(bs), input_ch)
+		
+		t := tui.MakeTui(iface, cmd_ch, done_ch)
+		go t.Run()
+		for {
+			select{
+			case msg := <- input_ch:
+				d := map[string]interface{}{}
+				json.Unmarshal([]byte(msg), &d)
+				a, _ := json.Marshal(d["args"])
+				t.GotOutput(d["command"].(string), string(a))
+			case cmd := <- cmd_ch:
+				send(agent_srv, cmd)
+			case <- done_ch:
+				fmt.Println("MX DONE")
+				break
+			}
 		}
 	}
 }

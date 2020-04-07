@@ -24,9 +24,10 @@ type MxAgent struct {
 	sock *zmq.Socket
 	route_ids []string
 	target_type string
+	target string
 	MsgQueue []MxMsg
 	handlers map[string]MxHandler
-	listeners []chan MxMsg
+	listener chan MxMsg
 	listener_mux *sync.Mutex
 }
 
@@ -45,7 +46,7 @@ func NewMx() *MxAgent {
 		target_type: "",
 		MsgQueue: make([]MxMsg, 0),
 		handlers: make(map[string]MxHandler),
-		listeners: make([]chan MxMsg, 0),
+		listener: nil,
 		listener_mux: &sync.Mutex{}}
 
 	mx.handlers["send"] = mx.Send
@@ -73,9 +74,9 @@ func (mx *MxAgent) HandleFromWorld(command string, args map[string]interface{}) 
 	msg := MxMsg{Command:command, Args:args}
 	mx.MsgQueue = append([]MxMsg{msg}, mx.MsgQueue...)
 	mx.listener_mux.Lock()
-	for _, l := range mx.listeners {
-		l <- msg
-	}	
+	if mx.listener != nil {
+		mx.listener <- msg
+	}
 	mx.listener_mux.Unlock()
 	return "", nil, nil
 }
@@ -104,6 +105,7 @@ func (mx *MxAgent) Connect(req map[string]interface{}, rep chan string) {
 			if len(foundnodes) == 1 {
 				f := foundnodes[0].(map[string]interface{})
 				mx.target_type = f["type"].(string)
+				mx.target = req["target"].(string)
 			}
 		}
 		mx.node.SendForReply("findnodes", map[string]interface{}{"control":true,"name":req["target"].(string)}, FindReplyHandler)
@@ -120,6 +122,7 @@ func (mx *MxAgent) Disconnect(req map[string]interface{}, rep chan string) {
 			mx.node.Send("routedel", map[string]interface{}{"control":true,"id":route_id})
 		}
 		mx.route_ids = []string{}
+		mx.target = ""
 		rep <- "Connecting"
 		close(rep)
 	}
@@ -136,7 +139,7 @@ func (mx *MxAgent) Help(req map[string]interface{}, rep chan string) {
 	fmt.Println("[MX AGENT] HELP",args,mx.target_type)
 	DocReplyHandler := func(c string, a map[string]interface{}) {
 		fmt.Println("[MX AGENT] DocReply", c, a)
-		rep <- a["doc"].(string)
+		rep <- mx.target + "\n" + a["doc"].(string)
 		close(rep)
 	}
 	mx.node.SendForReply("doc", args, DocReplyHandler)
@@ -290,11 +293,12 @@ func (mx *MxAgent) ListenServer(id string, types map[string]bool) {
 	fmt.Println("[MX AGENT] Listener",id,"START")
 	c := make(chan MxMsg, 1000)
 	mx.listener_mux.Lock()
-	mx.listeners = append(mx.listeners, c)
+	mx.listener = c
 	mx.listener_mux.Unlock()
 	for msg := range c {
 		fmt.Println("[MX AGENT] Listener",id,"GOT",msg.Command)
-		if types[msg.Command] {
+		if types[msg.Command] || types["any"] {
+			fmt.Println("[MX AGENT] Listener FWDING")
 			bs, _ := json.Marshal(msg)
 			ans := string(bs)
 			fmt.Println("[MX AGENT] Listener",id,"SENDING",ans)

@@ -570,12 +570,16 @@ func TestRouterSimpleReplace(t *testing.T) {
 func TestRouterFuncReplace(t *testing.T) {
 	routes := []string{
 		"node0 > node1",
-		`node0 > = {key1:raw()} > node2`}
+		`node0 > = {key1:raw()} > node2`,
+		`node0 > = {key1:split(key1,".")} > node3`,
+		`node0 > = {key1:match(key1,"a.*a")} > node4`}
 	messages := []map[string]interface{}{
-		map[string]interface{}{"key1":"val2"}}
+		map[string]interface{}{"key1":"a.val2"}}
 	expected := map[string][]string{
-		"node1":[]string{`test_cmd {"key1":"val2"}`},
-		"node2":[]string{`test_cmd {"key1":"{"key1":"val2"}"}`}}
+		"node1":[]string{`test_cmd {"key1":"a.val2"}`},
+		"node2":[]string{`test_cmd {"key1":"{\"key1\":\"a.val2\"}"}`},
+		"node3":[]string{`test_cmd {"key1":["a","val2"]}`},
+		"node4":[]string{`test_cmd {"key1":"a.va"}`}}
 	RunMessagesThroughRoutes(t, routes, messages, expected)
 }
 
@@ -617,14 +621,16 @@ func TestRouterStringEdit(t *testing.T) {
 		"node0 > node1",
 		`node0 > % {key1 += "val2";} > node2`,
 		`node0 > % {key1 = key1*2+key1;} > node3`,
-		`node0 > % {key1 = key1[2];} > node4`}
+		`node0 > % {key1 = key1[2];} > node4`,
+		`node0 > % {key1 = key1 + " " + key1 + " " + key1;} > node5`}
 	messages := []map[string]interface{}{
 		map[string]interface{}{"key1":"val1"}}
 	expected := map[string][]string{
 		"node1":[]string{`test_cmd {"key1":"val1"}`},
 		"node2":[]string{`test_cmd {"key1":"val1val2"}`},
 		"node3":[]string{`test_cmd {"key1":"val1val1val1"}`},
-		"node4":[]string{`test_cmd {"key1":"l"}`}}
+		"node4":[]string{`test_cmd {"key1":"l"}`},
+		"node5":[]string{`test_cmd {"key1":"val1 val1 val1"}`}}
 	RunMessagesThroughRoutes(t, routes, messages, expected)
 }
 

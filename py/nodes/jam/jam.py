@@ -134,7 +134,7 @@ def run_recv_thread(ctx):
         name = purple.PurpleBuddyGetName(buddy)
         alias = purple.PurpleBuddyGetAlias(buddy)
         print("BUDDY NAME",name,"ALIAS",alias)
-        data = {"command":"recv", "msg":message, "from":"{} ({})".format(name,alias), "conv":str(conv), "account":account, "ischat":False}
+        data = {"command":"recv", "msg":message, "buddy":str(buddy), "from":"{} ({})".format(name,alias), "conv":str(conv), "account":account, "ischat":False}
         tx.send_string(json.dumps(data))
         print("sender: {} message: {}, account: {}, conversation: {}, flags: {}, conv: {}".format(sender,message,account,conv,flags,conv))
 
@@ -146,7 +146,7 @@ def run_recv_thread(ctx):
         name = purple.PurpleBuddyGetName(buddy)
         alias = purple.PurpleBuddyGetAlias(buddy)
         print("BUDDY NAME",name,"ALIAS",alias)
-        data = {"command":"recv", "msg":message, "from":"{} ({})".format(name,alias), "conv":str(conv), "account":account, "ischat":True}
+        data = {"command":"recv", "msg":message, "buddy":str(buddy), "from":"{} ({})".format(name,alias), "conv":str(conv), "account":account, "ischat":True}
         tx.send_string(json.dumps(data))
         print("sender: {} message: {}, account: {}, conversation: {}, flags: {}, conv: {}".format(sender,message,account,conv,flags,conv))
 

@@ -289,9 +289,13 @@ func (mc *MangoCommander) EMP(group, emp_file string, args map[string]string) er
 	new_routes := make([]*route.Route, 0)
 	route_idx := 0
 	for _, spec := range e.Routes {
-		routes, err := route.Parse(spec, group)
+		// Replace arguments as they occur in route spec:
+		argspec := arg_replacer.Replace(spec)
+
+		// Parse route
+		routes, err := route.Parse(argspec, group)
 		if err != nil {
-			return fmt.Errorf("[MC] ERROR: Routes failed to parse: %v", err)
+			return fmt.Errorf("[MC] ERROR: Routes failed to parse: %v: %s -> %s", err, spec, argspec)
 		}
 		for _, rt := range routes {
 			rt.Id = fmt.Sprintf("%s_r%d", group, route_idx)
