@@ -1,0 +1,10 @@
+[usage]
+checkemail <server> <username> <password> [<interval>]
+
+[config]
+name checkemail
+command ./bin/imap
+
+[interface]
+input logout {name:string=""}
+output recv {senttime:string,recvtime:string,subject:string,from:[string],to:[string],body:[string],attachments*:[{name:string,content:string}]}

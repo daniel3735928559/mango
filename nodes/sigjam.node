@@ -1,0 +1,9 @@
+[config]
+name sigjam
+command './bin/sigjam'
+
+[interface]
+input contacts {number:string,msg:string,attachments*:[{filename:string}]}
+input send {to:string,msg:string,attachments*:[{filename:string}]}
+input sendgrp {grpid:string,msg:string,attachments*:[{filename:string}]}
+output recv {msg:string,from:string,time:num}

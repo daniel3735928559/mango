@@ -1,0 +1,21 @@
+[config]
+name jam
+command 'python -u ./py/nodes/jam/jam.py'
+env PYTHONPATH ./libmango/py/
+
+[interface]
+input finduser {name:string}
+input sendto {id:string,msg:string}
+input sendconv {conv:string,msg:string}
+input getconvs {all:bool=true}
+input getbuddies {all:bool=true}
+output buddies {buddylist:[{id:string,name:string,alias:string,account:string}]}
+output users {users:[{id:string,name:string,alias:string}]}
+output convs {convs:[{id:string,participants:[string]}]}
+output recv {msg:string,from:string,buddy:string,conv:string,account:num,ischat:bool}
+output send {msg:string,to*:string,conv*:string,account:num}
+output signon {who:string}
+output signoff {who:string}
+output status {who:string,status:string}
+output idle {who:string}
+output unidle {who:string}

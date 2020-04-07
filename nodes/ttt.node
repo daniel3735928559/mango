@@ -1,0 +1,10 @@
+[config]
+name tttt
+command 'python -u ./py/nodes/ttt/ttt.py'
+env PYTHONPATH ./libmango/py
+
+[interface]
+input move {turn:string,bx:num,by:num,x:num,y:num}
+input state {}
+output state {turn:string,board:[[[[string]]]],boardstr:string,nextboard:string}
+output message {text:string}

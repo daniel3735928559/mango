@@ -1,0 +1,4 @@
+[config]
+name mx_agent
+command ./bin/agent
+validate no

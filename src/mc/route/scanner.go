@@ -1,7 +1,7 @@
 package route
 
 import (
-	"fmt"
+	//"fmt"
 	"strconv"
 )
 
@@ -198,7 +198,6 @@ func (s *RouteScanner) scanNumber() string {
 		}
 		s.next()
 	}
-	fmt.Println("SN",string(ret))
 	return string(ret)
 }
 

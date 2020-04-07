@@ -195,10 +195,10 @@ func (n *Node) deserialize(data string) (*Msg, error) {
 		return nil, fmt.Errorf("Invalid data received: %s", data)
 	}
 	header, body := parts[0], parts[1]
-	fmt.Println("BODY",body)
+	//fmt.Println("BODY",body)
 	var header_info MsgHeader
 	json.Unmarshal([]byte(header), &header_info)
-	fmt.Println("HEADER",header_info)
+	//fmt.Println("HEADER",header_info)
 	if header_info.Format == "json" {
 		var body_info map[string]interface{}
 		json.Unmarshal([]byte(body), &body_info)

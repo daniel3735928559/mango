@@ -13,7 +13,7 @@ func CallHandler(this *value.Value, local_vars map[string]*value.Value, args []*
 	name := args[0].NameVal
 	func_args := args[1].ListVal
 	
-	fmt.Println("CALL",name,func_args,args[1].ToString())
+	//fmt.Println("CALL",name,func_args,args[1].ToString())
 	f, err := GetFunction(name, func_args)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func StringGetHandler(this *value.Value, local_vars map[string]*value.Value, arg
 // 	return nil, nil, nil
 // }
 func VarHandler(this *value.Value, local_vars map[string]*value.Value, args []*value.Value, primitive *value.Value) (*value.Value, error) {
-	fmt.Println("VAR Handler",primitive)
+	//fmt.Println("VAR Handler",primitive)
 	if primitive.NameVal == "this" {
 		return this, nil
 	}

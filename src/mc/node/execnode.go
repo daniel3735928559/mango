@@ -120,7 +120,7 @@ func (n *ExecNode) GotAlive(tid string, t transport.MangoTransport) {
 	n.Transport = t
 	n.Status = NODE_STATUS_RUNNING
 	// Send any enqueued things
-	fmt.Println("GOT ALIVE--sending queue of length", len(n.TransportQueue))
+	//fmt.Println("GOT ALIVE--sending queue of length", len(n.TransportQueue))
 	for _, bs := range n.TransportQueue {
 		n.Transport.Tx(n.TransportId, bs)
 	}
@@ -129,10 +129,10 @@ func (n *ExecNode) GotAlive(tid string, t transport.MangoTransport) {
 
 func (n *ExecNode) SendToNode(m serializer.Msg) error {
 	if n.Status == NODE_STATUS_RUNNING && len(n.TransportId) > 0 {
-		fmt.Println("Sending")
+		//fmt.Println("Sending")
 		return n.Transport.Tx(n.TransportId, m)
 	}
-	fmt.Println("Appending to queue")
+	//fmt.Println("Appending to queue")
 	n.TransportQueue = append(n.TransportQueue, m)
 	return nil
 }

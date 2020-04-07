@@ -140,7 +140,6 @@ func (s *ValueScanner) scanNumber() string {
 		}
 		s.next()
 	}
-	//fmt.Println("SN",string(ret))
 	return string(ret)
 }
 

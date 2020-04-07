@@ -1,0 +1,13 @@
+[config]
+name tttt
+command 'python -u ./py/nodes/tttt/tttt.py'
+env PYTHONPATH ./libmango/py
+
+[interface]
+input move {turn:string,bx:num,by:num,x:num,y:num}
+input rules {}
+input state {}
+input restart {turn:string}
+output state {turn:string,board:[[[[string]]]],boardstr:string,nextboard:[num]}
+output 
+output problem {description:string}

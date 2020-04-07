@@ -1,0 +1,7 @@
+[config]
+name tester
+command ./bin/tester
+
+[interface]
+input cmd any
+output cmd any

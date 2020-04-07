@@ -95,7 +95,7 @@ func main() {
   mx pop
   mx get <id>
   mx listen <types>...
-  mx shell
+  mx shell <node>
 `
 	args, err := docopt.ParseDoc(usage)
 	if err != nil {
@@ -264,6 +264,8 @@ func main() {
 			fmt.Println(msg)
 		}
 	} else if args["shell"].(bool) {
+		bsc, _ := json.Marshal(map[string]interface{}{"operation":"connect","target":args["<node>"].(string)})
+		sendrecv(agent_srv, string(bsc))
 		bs, _ := json.Marshal(map[string]interface{}{"operation":"help"})
 		iface := sendrecv(agent_srv, string(bs))
 		if iface == "Not connected" {

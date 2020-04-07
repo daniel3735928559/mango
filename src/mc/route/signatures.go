@@ -1,7 +1,7 @@
 package route
 
 import (
-	"fmt"
+	//"fmt"
 	value "mc/value"
 )
 
@@ -13,9 +13,9 @@ type Signature struct {
 }
 
 func FindSignature(op ExpressionOperationType, args []*value.Value) *Signature {
-	for i, a := range args {
-		fmt.Printf("arg[%d]:%d\n",i,a.Type)
-	}
+	// for i, a := range args {
+	// 	fmt.Printf("arg[%d]:%d\n",i,a.Type)
+	// }
 	for _, s := range ExpressionSignatures {
 		if s.Operation == op {
 			if len(s.ArgTypes) == 1 && s.ArgTypes[0] == value.VAL_ANYANY {
@@ -23,7 +23,7 @@ func FindSignature(op ExpressionOperationType, args []*value.Value) *Signature {
 			}
 			if len(s.ArgTypes) == len(args) {
 				ok := true
-				fmt.Println("AT",s.ArgTypes)
+				//fmt.Println("AT",s.ArgTypes)
 				for i, a := range args {
 					if a.Type != s.ArgTypes[i] && s.ArgTypes[i] != value.VAL_ANY {
 						ok = false

@@ -56,6 +56,14 @@ func (reg *Registry) GetRoutes() []*route.Route {
 	return ans
 }
 
+func (reg *Registry) GetGroups() []string {
+	ans := make([]string, 0)
+	for g, _ := range reg.Groups {
+		ans = append(ans, g)
+	}
+	return ans
+}
+
 func (reg *Registry) FindRoutesBySrc(src string) []*route.Route {
 	ans := make([]*route.Route, 0)
 	for _, rt := range reg.Routes {
@@ -150,6 +158,7 @@ func (reg *Registry) DelGroup(name string) {
 	for _, rt := range rts {
 		reg.DelRoute(rt.Id)
 	}
+	delete(reg.Groups, name)
 }
 
 func (reg *Registry) DelNode(node_id string) bool {

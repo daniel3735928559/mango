@@ -71,8 +71,8 @@ func (mc *MangoCommander) Run() {
 
 	for wrapped_msg := range mc.MessageInput {
 		msg := wrapped_msg.Message
-		fmt.Println("[MC] FROM",msg.Sender)
-		fmt.Println("[MC] DATA",msg.Data)
+		// fmt.Println("[MC] FROM",msg.Sender)
+		// fmt.Println("[MC] DATA",msg.Data)
 		src := mc.Registry.FindNodeById(msg.Cookie)
 		if src == nil {
 			fmt.Println("[MC] ERROR: node not found:", msg.Cookie)
@@ -367,6 +367,11 @@ func (mc *MangoCommander) FindTypes(args map[string]interface{}) (string, map[st
 	return "typeinfo",ans,nil
 }
 
+func (mc *MangoCommander) FindGroups(args map[string]interface{}) (string, map[string]interface{}, error)  {
+	groups := mc.Registry.GetGroups()
+	return "groupinfo",map[string]interface{}{"groups":groups},nil
+}
+
 func (mc *MangoCommander) FindRoutes(args map[string]interface{}) (string, map[string]interface{}, error)  {
 	// group, by_group := args["group"]
 	// name, by_name := args["name"]
@@ -471,6 +476,7 @@ Options:
 	MC.Commands = map[string]libmango.MangoHandler{
 		"start":MC.RunNode,
 		"routeadd":MC.RouteAdd,
+		"findgroups":MC.FindGroups,
 		"findroutes":MC.FindRoutes,
 		"findtypes":MC.FindTypes,
 		"findnodes":MC.FindNodes,

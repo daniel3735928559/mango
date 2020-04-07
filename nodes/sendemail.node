@@ -1,0 +1,9 @@
+[usage]
+sendemail <server> <username> <password>
+
+[config]
+name sendemail
+command ./bin/smtp
+
+[interface]
+input send {to:string,body:string,cc:[string]=[],subject:string="[No subject]",from:string="",attachments*:[{filename:string,contentfile:string}]}

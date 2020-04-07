@@ -1,0 +1,12 @@
+[config]
+name otto
+command 'python -u ./py/nodes/otto/otto.py'
+env PYTHONPATH ./libmango/py/
+
+[interface]
+input joke {addr*:string}
+input insult {addr*:string}
+input quote {addr*:string}
+output joke {addr*:string,text:string}
+output insult {addr*:string,text:string}
+output quote {addr*:string,text:string}

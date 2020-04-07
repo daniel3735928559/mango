@@ -1,0 +1,8 @@
+[config]
+name excite_py
+command 'python ./py/nodes/excite/excite.py'
+env PYTHONPATH ./libmango/py/
+
+[interface]
+input excite {message:string}
+output excited {message:string}

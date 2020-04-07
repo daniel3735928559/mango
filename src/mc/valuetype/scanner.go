@@ -1,7 +1,7 @@
 package valuetype
 
 import (
-	"fmt"
+	//"fmt"
 )
 
 const (
@@ -142,7 +142,6 @@ func (s *ValueTypeScanner) scanNumber() string {
 		}
 		s.next()
 	}
-	fmt.Println("SN",string(ret))
 	return string(ret)
 }
 

@@ -89,11 +89,11 @@ func (e *Expression) ToString() string {
 	} else if e.Operation == OP_LISTGET {
 		return fmt.Sprintf("%s[%s]", e.Args[0].ToString(), e.Args[1].ToString())
 	} else if e.Operation == OP_MAP {
-		fmt.Println("MA",e.Args,len(e.Args))
+		//fmt.Println("MA",e.Args,len(e.Args))
 		mapargs := make([]string, len(e.Args)/2)
 		for i := 0; i < len(e.Args)/2; i++ {
 			mapargs[i] = fmt.Sprintf("%s:%s", e.Args[2*i].ToString(), e.Args[2*i+1].ToString())
-			fmt.Println("ma",mapargs[i])
+			//fmt.Println("ma",mapargs[i])
 		}
 		return fmt.Sprintf("{%s}",strings.Join(mapargs, ","))
 	} else if e.Operation == OP_LIST {
@@ -219,7 +219,7 @@ func (e *Expression) Evaluate(this *value.Value, vars map[string]*value.Value) (
 	if e == nil {
 		return nil, errors.New("Invalid expression")
 	}
-	fmt.Println("EVAL",e.ToString())
+	//fmt.Println("EVAL",e.ToString())
 	args := make([]*value.Value, len(e.Args))
 	local_vars := vars
 	var err error
@@ -231,17 +231,17 @@ func (e *Expression) Evaluate(this *value.Value, vars map[string]*value.Value) (
 		}
 		args[i] = arg
 	}
-	fmt.Println("Searching signature",e.ToString())
+	//fmt.Println("Searching signature",e.ToString())
 	sig := FindSignature(e.Operation, args)
 	if sig == nil {
 		return nil, errors.New("No valid type found for expression")
 	}
 	ans, err := sig.Handler(this, local_vars, args, e.Value)
-	if ans != nil {
-		fmt.Println("EVALed",e.ToString(),"=",ans.ToString())
-	} else {
-		fmt.Println("EVALed",e.ToString(),"= nil")
-	}
+	// if ans != nil {
+	// 	fmt.Println("EVALed",e.ToString(),"=",ans.ToString())
+	// } else {
+	// 	fmt.Println("EVALed",e.ToString(),"= nil")
+	// }
 	//fmt.Println("EVALed",e.ToString(),"=",ans.ToString())
 	return ans, err
 }

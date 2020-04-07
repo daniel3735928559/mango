@@ -1,0 +1,6 @@
+[config]
+name notify
+command ./bin/notify
+
+[interface]
+input notify {urgency:string="normal",title:string,message:string}

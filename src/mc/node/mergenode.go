@@ -90,27 +90,27 @@ func (n *MergeResultNode) ToString() string {
 }
 
 func (n *MergeResultNode) CheckReady(mid string) {
-	fmt.Println("[MC] MERGE CheckReady",&n)
+	fmt.Println("[MC MERGE] CheckReady",&n)
 	n.resultMux.Lock()
 	defer n.resultMux.Unlock()
 	all := true
 	for _, input := range n.Inputs {
-		fmt.Println("FROM",input.GetName(),input.received)
+		fmt.Println("[MC MERGE] FROM",input.GetName(),input.received)
 		if _, ok := input.received[mid]; !ok {
-			fmt.Println("[MC] MERGE Nothing yet from",input.GetName())
+			//fmt.Println("[MC] MERGE Nothing yet from",input.GetName())
 			all = false
 		}
 	}
 	if !all {
 		return
 	}
-	fmt.Println("[MC] MERGING!")
+	fmt.Println("[MC MERGE] MERGING!")
 	ans := make(map[string]interface{})
 	for _, input := range n.Inputs {
 		ans[input.GetName()] = input.received[mid]
 		delete(input.received, mid)
 	}
-	fmt.Println("[MC] MERGED", ans)
+	fmt.Println("[MC MERGE] MERGED", ans)
 	wmsg := transport.WrappedMessage {
 		Identity: n.ToString(),
 		Transport: nil,
