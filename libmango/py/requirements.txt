@@ -1,4 +1,4 @@
 ply==3.10
-lxml==3.8.0
+lxml==4.6.3
 PyYAML==3.12
 pyzmq==17.0.0b1
